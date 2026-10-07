@@ -336,6 +336,7 @@ export async function playtest() {
     await page.selectOption('#format', 'flatPouch');
     await page.click('[data-tab="3d"]');
     await page.waitForSelector('.view3d[data-ready="1"]', { timeout: 90000 });
+    assert.equal(await page.evaluate(() => window.wertis.stage.view3d.sceneName), 'shop', 'pouches start on the shop hooks');
     // The clutch kit lies in every pouch and sags to the bottom of the hanging bags;
     // "Nothing" empties them, and back; the film can be changed.
     const kit = await page.evaluate(async () => {
@@ -374,8 +375,15 @@ export async function playtest() {
     await page.selectOption('#format', 'tuckBox');
     await page.click('[data-tab="3d"]');
     await page.waitForFunction(() => window.wertis.stage.view3d?.pack?.kind === 'box', null, { timeout: 90000 });
-    await page.waitForTimeout(2000);
-    await page.screenshot({ path: `${shots}3d-box-stack.png` });
+    const boxScenes = await page.evaluate(() => [...document.querySelectorAll('#scene3d option')].map((o) => o.value));
+    assert.equal(boxScenes[0], 'shop', 'boxes start on the shop shelves');
+    for (const scene of boxScenes) {
+      await page.selectOption('#scene3d', scene);
+      await page.waitForTimeout(2000);
+      await page.screenshot({ path: `${shots}3d-box-${scene}.png` });
+    }
+    await page.selectOption('#scene3d', 'stack');
+    await page.waitForTimeout(1500);
     const moved = await page.evaluate(async () => {
       const v = window.wertis.stage.view3d;
       const before = v.items.map((i) => i.body.position.x + i.body.position.z);
@@ -384,7 +392,7 @@ export async function playtest() {
       return v.items.some((i, k) => Math.abs(i.body.position.x + i.body.position.z - before[k]) > 0.01);
     });
     assert.ok(moved, 'a push moves the stack');
-    step('the 3D tab hangs, piles and stacks the packs, and pushing moves them');
+    step('the 3D tab shows the packs in the shop (pouches on hooks, boxes on shelves), hangs, piles and stacks them, and pushing moves them');
     await page.click('[data-tab="design"]');
 
     assert.deepEqual(await page.evaluate(() => window.wertis.misses()), [], 'no untranslated text');

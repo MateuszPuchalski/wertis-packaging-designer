@@ -137,6 +137,7 @@ export default {
   'GRACoL 2013, coated (CRPC6)': 'GRACoL 2013, powlekany (CRPC6)',
 
   // The 3D view.
+  'In the shop': 'W sklepie',
   'Neat stack': 'Równy stos',
   'Drop a pile': 'Zrzucona sterta',
   'On a peg hook': 'Na haczyku',

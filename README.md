@@ -47,7 +47,12 @@ logos, label and recycling marks on the preview. The editor speaks Polish or Eng
 - **Mockup PNG.** The finished bag (front, back or both) with your product photo behind the
   window film, at 96, 150 or 300 dpi.
 
-- **3D tab.** The packs as real objects, printed with the design's own faces:
+- **3D tab.** The packs as real objects, printed with the design's own faces. It opens
+  **in the shop**: a store gondola aisle like a parts shop's walls, with perforated steel back
+  panels between uprights, base decks and lit WERTIS header signs, under ceiling LED strips
+  (which the glossy film reflects). Pouches hang on a grid of scan hooks with label holders,
+  one product per hook and more behind; boxes stand front out on the eye-level shelf, up to
+  six across and three deep, over the price strips. The other scenes are the studio ones:
   - **Boxes** are rigid board under physics (cannon-es). They sit in a neat stack you can
     **Push** over, or drop into a pile.
   - **Pouches** are soft film, simulated as the real thing (position-based dynamics):
@@ -83,9 +88,14 @@ logos, label and recycling marks on the preview. The editor speaks Polish or Eng
 
   **The look:**
   - the printed film is a glossy laminate and the board a satin varnish;
-  - soft shadows and room reflections;
-  - a photo-studio sweep, and for the hook a pegboard;
+  - soft shadows; in the studio a key, a fill and a rim light with room reflections, in the
+    shop the ceiling LEDs and the light from the aisle;
+  - a photo-studio sweep, and for the hook a pegboard; the shop's tiled floor and back wall;
   - neutral tone mapping, so the brand orange stays as printed.
+
+  **At rest the parts keep still.** Contacts hold by static friction (PET on PET μs ≈ 0.45),
+  a part resting on its film is held where its film puts it, and a part that is all but still
+  loses most of its speed, so nothing creeps or rattles; the tests check it.
 
   **Save PNG** takes a snapshot. Drag to orbit the camera; scroll to zoom.
 
