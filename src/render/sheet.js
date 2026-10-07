@@ -30,9 +30,9 @@ export function panelsWithElements(design, env, geo = geometry(design)) {
   });
 }
 
-function renderContext(design, env, mode) {
+function renderContext(design, env, mode, labelOf) {
   let i = 0;
-  return { design, text: env.text, defs: new Map(), used: new Set(), cmyk: new Map(), mode, bleed: geometryBleed(design), uid: (p) => `${p}${++i}` };
+  return { design, text: env.text, defs: new Map(), used: new Set(), cmyk: new Map(), mode, labelOf, bleed: geometryBleed(design), uid: (p) => `${p}${++i}` };
 }
 
 function geometryBleed(design) {
@@ -40,10 +40,12 @@ function geometryBleed(design) {
 }
 
 // Returns { svg, inner, defs, hits, used, geo, box } where box is the drawn area in mm.
-// `art: false` draws only the dieline (the second page of the print PDF).
-export function renderSheet(design, env, { mode = 'design', margin = 0, dieline = true, guides = true, labels = true, art: withArt = true, inlineUses = false } = {}) {
+// `art: false` draws only the dieline (the second page of the print PDF). `labelOf` turns
+// the preview's own words (panel names, the window mark) into the editor's language; files
+// for the printer always use the English ones.
+export function renderSheet(design, env, { mode = 'design', margin = 0, dieline = true, guides = true, labels = true, art: withArt = true, inlineUses = false, labelOf = (s) => s } = {}) {
   const geo = geometry(design);
-  const rc = renderContext(design, env, mode);
+  const rc = renderContext(design, env, mode, labelOf);
   rc.inlineUses = inlineUses;
   // The construction lines print in pure process colours.
   const lines = dielineColors(geo);
@@ -72,7 +74,7 @@ export function renderSheet(design, env, { mode = 'design', margin = 0, dieline 
   if (dieline) over += el('g', { id: mode === 'print' ? 'dieline' : null, 'data-layer': 'dieline' }, dielineSvg(geo, { style: mode === 'print' ? 'print' : guides ? 'design' : 'proof', windows }));
   if (mode === 'design' && labels && geo.labels !== false) {
     for (const p of geo.panels) {
-      const t = env.text.layout({ text: p.label.toUpperCase(), x: p.x + p.w / 2, y: p.y - b - 2.2, font: 'bold', size: 3.4, align: 'center', valign: 'baseline', spacing: 0.08 });
+      const t = env.text.layout({ text: labelOf(p.label).toUpperCase(), x: p.x + p.w / 2, y: p.y - b - 2.2, font: 'bold', size: 3.4, align: 'center', valign: 'baseline', spacing: 0.08 });
       over += el('g', { fill: '#7a7570' }, t.svg);
     }
   }

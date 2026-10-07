@@ -275,7 +275,7 @@ export function panelArt(rc, panel, elements) {
     if (rc.mode === 'design') {
       for (const w of windows) {
         const size = Math.min(w.box.w, w.box.h) * 0.06;
-        mark += el('g', { fill: mix(tr?.hex ?? '#cfe9f7', '#000000', 0.25) }, rc.text.layout({ text: 'TRANSPARENT', x: w.box.x, y: w.box.y, w: w.box.w, h: w.box.h, font: 'bold', size, align: 'center', valign: 'middle', spacing: 0.15 }).svg);
+        mark += el('g', { fill: mix(tr?.hex ?? '#cfe9f7', '#000000', 0.25) }, rc.text.layout({ text: rc.labelOf ? rc.labelOf('TRANSPARENT') : 'TRANSPARENT', x: w.box.x, y: w.box.y, w: w.box.w, h: w.box.h, font: 'bold', size, align: 'center', valign: 'middle', spacing: 0.15 }).svg);
       }
     }
     svg += rc.mode === 'design' ? el('g', { 'data-el': windows[0].id }, mark) : mark;

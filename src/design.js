@@ -10,6 +10,8 @@ export const SCHEMA = 'wertis-packaging';
 export const SCHEMA_VERSION = 1;
 
 const clone = (v) => JSON.parse(JSON.stringify(v));
+// An error with an i18n descriptor, so the editor can say it in its own language.
+const fail = (message, key, params) => Object.assign(new Error(message), { i18n: { key, params } });
 
 export function defaultsOf(fields) {
   return normalizeDims(fields, {});
@@ -43,9 +45,9 @@ export function createDesign({ format = 'flatPouch', template, date = '' } = {})
 // Loads any saved project: fills in what newer versions added and rejects what isn't ours.
 export function migrate(input) {
   const json = typeof input === 'string' ? JSON.parse(input) : input;
-  if (!json || typeof json !== 'object' || json.schema !== SCHEMA) throw new Error('This file is not a WERTIS packaging project.');
-  if (!Number.isInteger(json.version) || json.version < 1) throw new Error('This project has no valid version number.');
-  if (json.version > SCHEMA_VERSION) throw new Error(`This project was saved by a newer version of the app (v${json.version}); update the app to open it.`);
+  if (!json || typeof json !== 'object' || json.schema !== SCHEMA) throw fail('This file is not a WERTIS packaging project.', 'err.notProject');
+  if (!Number.isInteger(json.version) || json.version < 1) throw fail('This project has no valid version number.', 'err.noVersion');
+  if (json.version > SCHEMA_VERSION) throw fail(`This project was saved by a newer version of the app (v${json.version}); update the app to open it.`, 'err.newer', { version: json.version });
   const base = createDesign({ format: json.format, template: json.template, date: json.proof?.date ?? '' });
   const f = FORMATS[base.format];
   const t = TEMPLATES[base.template];
@@ -138,10 +140,10 @@ export function slotsUsingSwatch(design, panelsWithElements, swatchId) {
 export function removeSwatch(design, panelsWithElements, swatchId, replacementId) {
   const sw = findSwatch(design.palette, swatchId);
   if (!sw) return design;
-  if (!canDeleteSwatch(sw)) throw new Error('The window colour marks the transparent area; it can be edited but not deleted.');
+  if (!canDeleteSwatch(sw)) throw fail('The window colour marks the transparent area; it can be edited but not deleted.', 'err.windowSwatch');
   const users = slotsUsingSwatch(design, panelsWithElements, swatchId);
   if (users.length && (!replacementId || replacementId === swatchId || !findSwatch(design.palette, replacementId))) {
-    throw new Error('Pick another colour for the elements that use this one.');
+    throw fail('Pick another colour for the elements that use this one.', 'err.pickReplacement');
   }
   const colors = { ...design.colors };
   for (const s of users) colors[s.key] = { swatch: replacementId };

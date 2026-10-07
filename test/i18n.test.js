@@ -131,3 +131,70 @@ test('every message the code asks for exists', () => {
   const missing = [...asked].filter((x) => !(x.split('\t')[0] in EN));
   assert.deepEqual(missing, []);
 });
+
+// Designs that between them set off most preflight findings.
+function troubledDesigns() {
+  const out = [];
+  const base = () => createDesign({ date: '2026-10-07' });
+  out.push(base(), createDesign({ format: 'tuckBox' }), createDesign({ format: 'standUpPouch' }));
+  for (const ean of ['59059475966', '5905947596677', '59O5947594658', '5905947594658', '', '2000000000008']) {
+    const d = base();
+    d.content.ean = ean;
+    out.push(d);
+  }
+  const d = base();
+  d.dims = { ...d.dims, bleed: 1 };
+  d.export = { ...d.export, bwr: 0.02 };
+  d.palette = d.palette.map((s) => (s.id === 'silver' ? { ...s, asSpot: true, spot: '' } : s.id === 'black' ? { ...s, cmyk: [100, 100, 100, 100] } : s.role || s.spot ? s : { ...s, spot: 'PANTONE 151 C' }));
+  // Pushed into the seals; shrunk under 5 pt.
+  d.layout = { 'front-logo': { x: 0, y: 0, w: 0.5, h: 0.1 }, window: { x: 0, y: 0, w: 1, h: 0.5 } };
+  d.content.sku = 'A very long product code that has to shrink a lot to fit its box on the front of the bag';
+  out.push(d);
+  return out;
+}
+
+test('every preflight finding and EAN error reads in both languages, and the English is the message itself', async () => {
+  const { preflight } = await import('../src/preflight.js');
+  const keys = new Set();
+  for (const d of troubledDesigns()) {
+    for (const item of preflight(d, env()).items) {
+      assert.ok(item.i18n?.key, `no descriptor: ${item.message}`);
+      keys.add(item.i18n.key);
+      setLang('en');
+      assert.equal(msgOf(item), item.message);
+      setLang('pl');
+      const pl = msgOf(item);
+      assert.ok(pl && !/\{\w+\}/.test(pl) && pl !== item.i18n.key, `${item.i18n.key}: ${pl}`);
+    }
+  }
+  setLang('en');
+  assert.deepEqual(misses(), []);
+  for (const k of ['pf.ean.bad', 'pf.ean.ok', 'pf.ean.none', 'pf.ean.store', 'pf.ean.bwr', 'pf.colour.noSpot', 'pf.colour.tac', 'pf.colour.namedSpot', 'pf.colour.inksWhite', 'pf.bleed.low', 'pf.bleed.ok', 'pf.colour.richBlack']) assert.ok(keys.has(k), k);
+  // Errors thrown by the core carry one too.
+  const { migrate } = await import('../src/design.js');
+  for (const input of ['{"schema":"x"}', '{"schema":"wertis-packaging","version":0}', '{"schema":"wertis-packaging","version":99}']) {
+    try { migrate(input); assert.fail('should throw'); } catch (err) {
+      assert.equal(msgOf(err), err.message);
+      setLang('pl');
+      assert.notEqual(msgOf(err), err.message);
+      setLang('en');
+    }
+  }
+});
+
+test('the language never changes what is printed or sent to the factory', async () => {
+  const { printSvg, proofSvg } = await import('../src/export/documents.js');
+  const { dielineDxf } = await import('../src/export/dxf.js');
+  const { preflight } = await import('../src/preflight.js');
+  const out = () => {
+    const d = createDesign({ date: '2026-10-07' });
+    const b = createDesign({ format: 'tuckBox', date: '2026-10-07' });
+    return [printSvg(d, env()), proofSvg(d, env(), 'a3'), dielineDxf(d, env()), printSvg(b, env()), JSON.stringify(preflight(d, env()).items.map((i) => i.message))];
+  };
+  setLang('en');
+  const en = out();
+  setLang('pl');
+  const pl = out();
+  setLang('en');
+  en.forEach((s, i) => assert.ok(s === pl[i], `output ${i} differs`));
+});

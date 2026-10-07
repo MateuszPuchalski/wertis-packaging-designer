@@ -35,8 +35,10 @@ export function plural(n, code = lang) {
 }
 
 // A number the way the language writes it: 0.5 mm in English, 0,5 mm in Polish. `digits`
-// rounds to at most that many decimals.
+// rounds to at most that many decimals. A string that is a decimal number ('4.0', from
+// toFixed) keeps its digits and gets the comma too.
 export function fmtNum(v, digits = null, code = lang) {
+  if (typeof v === 'string' && /^-?\d+\.\d+$/.test(v)) return code === 'pl' ? v.replace('.', ',') : v;
   if (typeof v !== 'number' || !Number.isFinite(v)) return String(v ?? '');
   const x = digits === null ? v : Number(v.toFixed(digits));
   const s = String(x);
@@ -77,13 +79,20 @@ export function label(en) {
   return v;
 }
 
-// A finding from the core (preflight, the EAN check, project import): its i18n descriptor
-// in the current language, else the English message it carries.
+// A finding from the core (preflight, the EAN check, project import, a thrown Error): its
+// i18n descriptor in the current language, else the English message it carries. A param
+// can be a data label ({ label, lower }) or a nested finding ({ message, i18n }).
 export function msgOf(item) {
   const d = item?.i18n;
   if (d && hasKey(d.key)) {
     const params = {};
-    for (const [k, v] of Object.entries(d.params ?? {})) params[k] = v && typeof v === 'object' && 'label' in v ? label(v.label) : v;
+    for (const [k, v] of Object.entries(d.params ?? {})) {
+      if (v && typeof v === 'object' && 'label' in v) {
+        const s = label(v.label);
+        params[k] = v.lower ? s.toLowerCase() : s;
+      } else if (v && typeof v === 'object') params[k] = msgOf(v);
+      else params[k] = v;
+    }
     return t(d.key, params);
   }
   return item?.message ?? String(item ?? '');

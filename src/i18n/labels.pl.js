@@ -162,6 +162,9 @@ export default {
   'Air filter (tall)': 'Filtr powietrza (wysoki)',
   'Carburettor': 'Gaźnik',
 
+  // The editor preview's own words (render/sheet.js labelOf).
+  'TRANSPARENT': 'PRZEZROCZYSTE',
+
   // Logo colour presets.
   'Colour': 'Kolorowe',
   'On orange': 'Na pomarańczowym',

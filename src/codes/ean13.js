@@ -18,14 +18,15 @@ export function eanCheckDigit(first12) {
 }
 
 // Accepts 12 digits (the check digit is added) or 13 (the check digit is verified).
-// Spaces and dashes are ignored.
+// Spaces and dashes are ignored. An error carries an i18n descriptor for the editor; the
+// English `error` is what the artwork prints.
 export function validateEan13(input) {
   const code = String(input ?? '').replace(/[\s-]/g, '');
-  if (!/^\d+$/.test(code)) return { ok: false, error: 'An EAN-13 has only digits.' };
+  if (!/^\d+$/.test(code)) return { ok: false, error: 'An EAN-13 has only digits.', i18n: { key: 'ean.digits' } };
   if (code.length === 12) return { ok: true, code: code + eanCheckDigit(code), added: true };
-  if (code.length !== 13) return { ok: false, error: `An EAN-13 has 13 digits (this has ${code.length}).` };
+  if (code.length !== 13) return { ok: false, error: `An EAN-13 has 13 digits (this has ${code.length}).`, i18n: { key: 'ean.length', params: { n: code.length } } };
   const check = eanCheckDigit(code.slice(0, 12));
-  if (Number(code[12]) !== check) return { ok: false, error: `Wrong check digit: the last digit should be ${check}.` };
+  if (Number(code[12]) !== check) return { ok: false, error: `Wrong check digit: the last digit should be ${check}.`, i18n: { key: 'ean.check', params: { check } } };
   return { ok: true, code };
 }
 
