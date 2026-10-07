@@ -6,7 +6,7 @@ import { LOGO_PRESETS } from '../brand/wertis.js';
 
 export const SLOT_LABELS = {
   fill: 'Fill', ink: 'Icons', gear: 'Gear', arc: 'Arc', word: 'WERTIS', line: 'Shop line',
-  text: 'Text', accent: 'Accent', outline: 'Outline', bars: 'Barcode & QR',
+  text: 'Text', accent: 'Accent', outline: 'Outline', bars: 'Bars', bg: 'Background', dots: 'Dots', edge: 'Edge',
 };
 
 const r1 = (v) => Math.round(v * 10) / 10;

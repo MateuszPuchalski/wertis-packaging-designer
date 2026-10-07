@@ -14,9 +14,14 @@ function panelGroup(p, inner) {
 }
 
 // style: 'print' (lines only), 'design' (lines, seals, safe area) or 'proof'.
+export function dielineColors(geo) {
+  return { cut: geo.colors?.cut ?? DIELINE_COLOR, fold: geo.colors?.fold ?? FOLD_COLOR };
+}
+
 export function dielineSvg(geo, { style = 'design', windows = [] } = {}) {
   const w = style === 'print' ? 0.25 : 0.35;
-  const cut = { fill: 'none', stroke: DIELINE_COLOR, 'stroke-width': w };
+  const C = dielineColors(geo);
+  const cut = { fill: 'none', stroke: C.cut, 'stroke-width': w };
   let out = '';
   for (const p of geo.panels) {
     const L = p.lines;
@@ -31,16 +36,26 @@ export function dielineSvg(geo, { style = 'design', windows = [] } = {}) {
     for (const z of L.zip) {
       g += el('path', { d: `M0 ${n(z.y - z.w / 2)}H${n(p.w)}M0 ${n(z.y + z.w / 2)}H${n(p.w)}`, fill: 'none', stroke: DIELINE_COLOR, 'stroke-width': w * 0.8, 'stroke-dasharray': '3 1.5' });
     }
-    for (const d of L.fold ?? []) g += el('path', { d, fill: 'none', stroke: FOLD_COLOR, 'stroke-width': w, 'stroke-dasharray': '4 2' });
+    for (const d of L.fold ?? []) g += el('path', { d, fill: 'none', stroke: C.fold, 'stroke-width': w, 'stroke-dasharray': '4 2' });
     for (const d of L.cut) g += el('path', { d, ...cut });
     for (const d of L.holes) g += el('path', { d, ...cut, fill: style === 'print' ? 'none' : '#ffffff' });
     for (const d of L.notches) g += el('path', { d, ...cut });
     out += panelGroup(p, g);
   }
-  for (const d of geo.sheetLines?.fold ?? []) out += el('path', { d, fill: 'none', stroke: FOLD_COLOR, 'stroke-width': w, 'stroke-dasharray': '4 2' });
+  for (const d of geo.sheetLines?.fold ?? []) out += el('path', { d, fill: 'none', stroke: C.fold, 'stroke-width': w, 'stroke-dasharray': '4 2' });
+  for (const d of geo.sheetLines?.cut ?? []) out += el('path', { d, ...cut });
+  if (style === 'design') {
+    for (const p of geo.panels) {
+      if (p.lines.cut.length || !p.info?.safe) continue;
+      for (const f of p.info.faces ?? [{ safe: p.info.safe }]) {
+        const s = f.safe;
+        out += el('path', { d: rectPath(p.x + s.x, p.y + s.y, s.w, s.h), fill: 'none', stroke: SAFE_COLOR, 'stroke-width': 0.25, 'stroke-dasharray': '2 1.2' });
+      }
+    }
+  }
   // In a print file the window is marked too (no ink there), as a dashed outline.
   if (style === 'print') {
-    for (const win of windows) out += el('path', { d: win.d, fill: 'none', stroke: DIELINE_COLOR, 'stroke-width': 0.2, 'stroke-dasharray': '2 1', transform: `translate(${n(win.px)} ${n(win.py)})` });
+    for (const win of windows) out += el('path', { d: win.d, fill: 'none', stroke: C.cut, 'stroke-width': 0.2, 'stroke-dasharray': '2 1', transform: `translate(${n(win.px)} ${n(win.py)})` });
   }
   return out;
 }

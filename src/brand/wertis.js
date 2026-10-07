@@ -86,7 +86,6 @@ const COMMON_CONTENT = {
   lang: 'pl',
   specsTitle: 'Dane techniczne:',
   note1: 'ZAMIENNIK WYSOKIEJ JAKOŚCI',
-  note2: 'PRODUKT NIEORYGINALNY',
   category: 'CZĘŚCI ZAMIENNE',
   categoryEn: 'SPARE PARTS',
   producedFor: 'Produced for:',

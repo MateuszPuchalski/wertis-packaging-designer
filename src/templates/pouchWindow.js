@@ -93,11 +93,9 @@ export function front(ctx) {
   els.push({ id: 'front.sku', label: 'Product code', type: 'text', layer: 'fg', text: c.sku, font: 'semibold', align: 'right', valign: 'middle',
     box: { x: F.x + F.w * 0.5, y: F.y + F.h * 0.08, w: F.w * 0.5, h: F.h * 0.14 }, size: F.h * 0.14 / 0.7, colors: { fill: 'white' } });
   els.push({ id: 'front.name', label: 'Product name', type: 'text', layer: 'fg', text: c.productName?.[c.lang] ?? '', font: 'bold', align: 'center', valign: 'middle',
-    box: { x: F.x, y: F.y + F.h * 0.36, w: F.w, h: F.h * 0.15 }, size: F.h * 0.15 / 0.7, minSize: 2, colors: { fill: 'dark' } });
-  els.push({ id: 'front.note1', label: 'Note (line 1)', type: 'text', layer: 'fg', text: c.note1, font: 'bold', upper: true, align: 'center', valign: 'middle', spacing: 0.02,
-    box: { x: F.x, y: F.y + F.h * 0.64, w: F.w, h: F.h * 0.1 }, size: F.h * 0.1 / 0.7, minSize: 1.6, colors: { fill: 'white' } });
-  els.push({ id: 'front.note2', label: 'Note (line 2)', type: 'text', layer: 'fg', text: c.note2, font: 'extrabold', upper: true, align: 'center', valign: 'middle', spacing: 0.02,
-    box: { x: F.x, y: F.y + F.h * 0.82, w: F.w, h: F.h * 0.1 }, size: F.h * 0.1 / 0.7, minSize: 1.6, colors: { fill: 'dark' } });
+    box: { x: F.x, y: F.y + F.h * 0.4, w: F.w, h: F.h * 0.16 }, size: F.h * 0.16 / 0.7, minSize: 2, colors: { fill: 'dark' } });
+  els.push({ id: 'front.note1', label: 'Note', type: 'text', layer: 'fg', text: c.note1, font: 'bold', upper: true, align: 'center', valign: 'middle', spacing: 0.02,
+    box: { x: F.x, y: F.y + F.h * 0.7, w: F.w, h: F.h * 0.11 }, size: F.h * 0.11 / 0.7, minSize: 1.6, colors: { fill: 'white' } });
   return els;
 }
 

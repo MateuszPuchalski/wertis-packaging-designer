@@ -158,18 +158,30 @@ export async function playtest() {
 
     const formats = await page.evaluate(() => [...document.querySelectorAll('#format option')].map((o) => o.value));
     await page.click('[data-tab="design"]');
+    const seen = [];
     for (const f of formats) {
       await page.selectOption('#format', f);
       await page.waitForTimeout(400);
-      await page.screenshot({ path: `${shots}format-${f}.png` });
-      const s = await page.evaluate(() => window.wertis.printSvg());
-      assert.ok(s.length > 10_000, `${f} renders a print file`);
-      await page.click('[data-tab="mockup"]');
-      await page.waitForTimeout(400);
-      await page.screenshot({ path: `${shots}mockup-${f}.png` });
-      await page.click('[data-tab="design"]');
+      const templates = await page.evaluate(() => [...document.querySelectorAll('#template option')].map((o) => o.value));
+      for (const t of templates) {
+        await page.selectOption('#template', t);
+        await page.waitForTimeout(400);
+        await page.screenshot({ path: `${shots}format-${f}-${t}.png` });
+        const s = await page.evaluate(() => window.wertis.printSvg());
+        assert.ok(s.length > 10_000 && !s.includes('NaN'), `${f} / ${t} renders a print file`);
+        const pdf = await page.evaluate(async () => (await window.wertis.pdfBlob(window.wertis.printSvg())).size);
+        assert.ok(pdf > 20_000, `${f} / ${t} makes a PDF`);
+        await page.click('[data-tab="mockup"]');
+        await page.waitForTimeout(400);
+        await page.screenshot({ path: `${shots}mockup-${f}-${t}.png` });
+        await page.click('[data-tab="proof"]');
+        await page.waitForTimeout(400);
+        await page.screenshot({ path: `${shots}proof-${f}-${t}.png` });
+        await page.click('[data-tab="design"]');
+        seen.push(`${f}/${t}`);
+      }
     }
-    step(`every format draws (${formats.join(', ')})`);
+    step(`every format and template draws and exports (${seen.join(', ')})`);
 
     assert.deepEqual(errors, [], `console errors:\n${errors.join('\n')}`);
     step('no console errors');

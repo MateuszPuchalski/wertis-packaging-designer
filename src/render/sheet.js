@@ -57,12 +57,14 @@ export function renderSheet(design, env, { mode = 'design', margin = 0, dieline 
   if (mode === 'design') {
     // Dim the bleed: it is printed but cut away.
     const outer = rectPath(-b, -b, geo.size.w + 2 * b, geo.size.h + 2 * b);
-    const trims = geo.panels.map((p) => p.lines.cut.map((d) => el('path', { d, transform: `translate(${n(p.x)} ${n(p.y)})` })).join('')).join('');
+    const trims = geo.trims
+      ? geo.trims.map((d) => el('path', { d })).join('')
+      : geo.panels.map((p) => p.lines.cut.map((d) => el('path', { d, transform: `translate(${n(p.x)} ${n(p.y)})` })).join('')).join('');
     over += el('mask', { id: 'bleed-mask' }, el('path', { d: outer, fill: '#fff' }) + el('g', { fill: '#000' }, trims));
     over += el('path', { d: outer, fill: '#ffffff', 'fill-opacity': 0.55, mask: 'url(#bleed-mask)' });
   }
   if (dieline) over += el('g', { id: mode === 'print' ? 'dieline' : null, 'data-layer': 'dieline' }, dielineSvg(geo, { style: mode === 'print' ? 'print' : guides ? 'design' : 'proof', windows }));
-  if (mode === 'design' && labels) {
+  if (mode === 'design' && labels && geo.labels !== false) {
     for (const p of geo.panels) {
       const t = env.text.layout({ text: p.label.toUpperCase(), x: p.x + p.w / 2, y: p.y - b - 2.2, font: 'bold', size: 3.4, align: 'center', valign: 'baseline', spacing: 0.08 });
       over += el('g', { fill: '#7a7570' }, t.svg);

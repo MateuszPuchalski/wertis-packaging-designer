@@ -30,6 +30,25 @@ material under *Layout*.
   Type in the real codes.
 - **Boxes** start with the W09-0414 carburettor from its box artwork.
 
+## Formats
+
+- **Flat zip pouch.** Front and back side by side, as on the factory proof. Seals, zip, hang
+  hole (euro slot, sombrero or round), tear notches and rounded corners are all editable.
+- **Stand-up pouch (doypack, W × H + G).** Front and back, plus the bottom gusset as its own
+  strip with its fold line. K-seal, round or plain bottom. Text stays above the part of the
+  face that folds under.
+- **Folding box (L × W × H).** Laid out like the WERTIS boxes:
+  - Pieces: glue flap, back, side, front, side. The lid with its tuck flap hangs on the back,
+    the dust flaps sit on the sides, and the thumb notch is cut into the front.
+  - Bottom: a snap-lock (1-2-3) bottom as on W09-0414, or a tuck end (reverse tuck end).
+  - Cut lines are cyan and folds red, as in the printer's files. The tuck and bottom flaps
+    stay unprinted.
+  - Two templates: the product box (W09-0414 style) and the generic "CZĘŚCI ZAMIENNE /
+    SPARE PARTS" box.
+  - The flap shapes are scaled from the W09-0414 dieline. Note that this file is named
+    "L95 W65 H50", but its walls measure about 95 × 75 × 49 mm. The generic box proof
+    matches 95 × 65 × 50, which is the default.
+
 ## Run it
 
 ```bash

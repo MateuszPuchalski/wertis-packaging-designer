@@ -4,7 +4,7 @@
 // sign-off box.
 import { el, n, rectPath } from './svg.js';
 import { renderSheet, wrapSvg } from './sheet.js';
-import { measuresSvg, DIELINE_COLOR, FOLD_COLOR } from './dieline.js';
+import { measuresSvg, dielineColors } from './dieline.js';
 import { logoSvg } from '../brand/logo.js';
 import { TRANSPARENT, luminance } from '../brand/palette.js';
 import { FORMATS } from '../registry.js';
@@ -100,22 +100,25 @@ export function renderProof(design, env, { page = 'a3' } = {}) {
   const ox = (P.w - artBox.w * s) / 2 - artBox.x * s;
   const oy = areaY + (areaH - artBox.h * s) / 2 - artBox.y * s;
   const dims = measuresSvg(geo, t, { size: 3.2 / s });
-  const names = geo.panels.map((p) => el('g', { fill: MUTED }, t.layout({ text: p.label.toUpperCase(), x: p.x + p.w / 2, y: p.y + p.h + geo.bleed + 6 / s, font: 'bold', size: 3 / s, align: 'center', valign: 'baseline', spacing: 0.08 }).svg)).join('');
+  const names = geo.labels === false ? '' : geo.panels.map((p) => el('g', { fill: MUTED }, t.layout({ text: p.label.toUpperCase(), x: p.x + p.w / 2, y: p.y + p.h + geo.bleed + 6 / s, font: 'bold', size: 3 / s, align: 'center', valign: 'baseline', spacing: 0.08 }).svg)).join('');
   out += el('g', { transform: `translate(${n(ox)} ${n(oy)}) scale(${Number(s.toPrecision(6))})` }, art.inner + dims + names);
 
   // --- legend ---
   const ly = P.h - M - legendH + 4;
   let lx = M;
+  // Only what this format has.
+  const C = dielineColors(geo);
+  const has = (key) => geo.panels.some((p) => p.lines[key]?.length) || (geo.sheetLines?.[key]?.length ?? 0) > 0;
   const legend = [
-    ['line', DIELINE_COLOR, 'Cut line', null],
-    ['dash', DIELINE_COLOR, 'Zip', '3 1.5'],
-    ['dash', FOLD_COLOR, 'Fold', '4 2'],
-    ['seal', '#ffffff', 'Seal area', null],
-    ['box', transparent?.hex ?? '#cfe9f7', 'Transparent window (no ink)', null],
-  ];
+    ['line', C.cut, 'Cut line', null],
+    has('zip') && ['dash', C.cut, 'Zip', '3 1.5'],
+    has('fold') && ['dash', C.fold, 'Fold', '4 2'],
+    has('seal') && ['seal', '#ffffff', 'Seal area', null],
+    transparent && ['box', transparent.hex, 'Transparent window (no ink)', null],
+  ].filter(Boolean);
   for (const [kind, color, label, dash] of legend) {
     if (kind === 'line' || kind === 'dash') out += el('path', { d: `M${n(lx)} ${n(ly + 2)}h10`, stroke: color, 'stroke-width': 0.5, 'stroke-dasharray': dash, fill: 'none' });
-    else out += el('path', { d: rectPath(lx, ly, 10, 4, 0.6), fill: color, stroke: kind === 'seal' ? DIELINE_COLOR : 'none', 'stroke-width': 0.2, 'stroke-dasharray': kind === 'seal' ? '0.8 0.8' : null });
+    else out += el('path', { d: rectPath(lx, ly, 10, 4, 0.6), fill: color, stroke: kind === 'seal' ? C.cut : 'none', 'stroke-width': 0.2, 'stroke-dasharray': kind === 'seal' ? '0.8 0.8' : null });
     const laid = t.layout({ text: label, x: lx + 12, y: ly + 0.6, font: 'semibold', size: 2.8 });
     out += el('g', { fill: INK }, laid.svg);
     lx += 12 + laid.width + 8;

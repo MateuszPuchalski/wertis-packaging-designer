@@ -113,6 +113,34 @@ function labelSvg(rc, e) {
   return { svg: bg + r.out, box: e.box };
 }
 
+// A standalone EAN-13, as big as its box allows but never under 80 % (GS1's minimum).
+function eanSvg(rc, e) {
+  const k = e.bars ?? 1; // bar height as a share of the nominal (truncated codes on small boxes)
+  const m = Math.max(0.264, Math.min(e.box.w / 113, e.box.h / (69.24 * k + 11.3)));
+  const w = 113 * m, h = (69.24 * k + 11) * m;
+  const x = e.align === 'right' ? e.box.x + e.box.w - w : e.align === 'left' ? e.box.x : e.box.x + (e.box.w - w) / 2;
+  const y = e.valign === 'bottom' ? e.box.y + e.box.h - h : e.valign === 'top' ? e.box.y : e.box.y + (e.box.h - h) / 2;
+  const r = ean13Svg({ code: e.code, x, y: y + m, module: m, barHeight: 69.24 * k * m, color: colorOf(rc, e, 'bars'), bg: colorOf(rc, e, 'bg'), text: rc.text });
+  if (r.error) return { svg: el('g', { fill: '#d0021b' }, rc.text.layout({ text: r.error, ...e.box, font: 'semibold', size: 2.4, minSize: 1.2, wrap: true }).svg), box: e.box };
+  return { svg: r.svg, box: { x, y, w, h } };
+}
+
+function qrElementSvg(rc, e) {
+  const size = Math.min(e.box.w, e.box.h);
+  const x = e.box.x + (e.box.w - size) / 2, y = e.box.y + (e.box.h - size) / 2;
+  const r = qrSvg({ text: e.text, x, y, size, color: colorOf(rc, e, 'dots'), bg: colorOf(rc, e, 'bg'), quiet: 2 });
+  return { svg: r.error ? '' : r.svg, box: { x, y, w: size, h: size } };
+}
+
+// A picture (the product photo on a box lid), fitted inside its box.
+function imageSvg(e) {
+  if (!e.src) return { svg: '', box: e.box };
+  const s = Math.min(e.box.w / (e.pw || 1), e.box.h / (e.ph || 1));
+  const w = (e.pw || 1) * s, h = (e.ph || 1) * s;
+  const x = e.box.x + (e.box.w - w) / 2, y = e.box.y + (e.box.h - h) / 2;
+  return { svg: el('image', { href: e.src, x, y, width: w, height: h, preserveAspectRatio: 'none' }), box: { x, y, w, h } };
+}
+
 // The disposal marks in a row, as tall as the box.
 function marksSvg(rc, e) {
   const color = colorOf(rc, e, 'fill');
@@ -155,14 +183,14 @@ function elementSvg(rc, e, panel) {
     case 'logo': {
       const colors = {};
       for (const role of ['gear', 'arc', 'word', 'line']) colors[role] = colorOf(rc, e, role);
-      const r = logoSvg({ box: e.box, layout: e.layout, colors, align: e.align ?? 'center', valign: e.valign ?? 'middle' });
-      if (!e.rotate) return r;
-      const cx = r.box.x + r.box.w / 2, cy = r.box.y + r.box.h / 2;
-      return { svg: el('g', { transform: `rotate(${e.rotate} ${n(cx)} ${n(cy)})` }, r.svg), box: r.box };
+      return logoSvg({ box: e.box, layout: e.layout, colors, align: e.align ?? 'center', valign: e.valign ?? 'middle' });
     }
     case 'text': return textSvg(rc, e, colorOf(rc, e, 'fill'));
     case 'label': return labelSvg(rc, e);
     case 'marks': return marksSvg(rc, e);
+    case 'image': return imageSvg(e);
+    case 'ean': return eanSvg(rc, e);
+    case 'qr': return qrElementSvg(rc, e);
     default: return { svg: '', box: e.box };
   }
 }
@@ -182,6 +210,12 @@ export function panelArt(rc, panel, elements) {
   for (const e of shown) {
     if (e.type === 'window') continue;
     const r = elementSvg(rc, e, panel);
+    // Turned elements (the lid's content reads the right way once the box is closed).
+    if (e.rotate && r.svg) {
+      const pivot = e.pivot ?? { x: r.box.x + r.box.w / 2, y: r.box.y + r.box.h / 2 };
+      r.svg = el('g', { transform: `rotate(${e.rotate} ${n(pivot.x)} ${n(pivot.y)})` }, r.svg);
+      if (Math.abs(e.rotate) === 180) r.box = { x: 2 * pivot.x - r.box.x - r.box.w, y: 2 * pivot.y - r.box.y - r.box.h, w: r.box.w, h: r.box.h };
+    }
     if (r.svg) {
       const g = rc.mode === 'design' ? el('g', { 'data-el': e.id }, r.svg) : r.svg;
       if (e.layer === 'bg') bg += g; else fg += g;
