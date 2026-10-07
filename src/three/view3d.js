@@ -7,7 +7,7 @@
 // only when the tab opens.
 import { placements, scenesFor, UNIT } from './scenes.js';
 import { productOf, PARTS, MATERIALS } from './products.js';
-import { createBag, createSoftWorld, stepSoft, shove, renderLayout, writeRender, quatFromEuler } from './softPouch.js';
+import { createBag, createSoftWorld, stepSoft, shove, renderLayout, writeRender, quatFromEuler, followPart } from './softPouch.js';
 import { mulberry32 } from '../util/rng.js';
 
 let libs = null;
@@ -357,10 +357,12 @@ export class View3D {
     writeRender(it.bag, it.layout, g.attributes.position.array, g.attributes.normal.array, MM);
     g.attributes.position.needsUpdate = true;
     g.attributes.normal.needsUpdate = true;
+    it.shown ??= [];
     it.bag.parts.forEach((part, i) => {
       const m = it.partMeshes[i];
-      m.position.set(part.c[0] * MM, part.c[1] * MM, part.c[2] * MM);
-      m.quaternion.set(...part.quat);
+      const s = (it.shown[i] = followPart(it.shown[i], part));
+      m.position.set(s.c[0] * MM, s.c[1] * MM, s.c[2] * MM);
+      m.quaternion.set(s.quat[0], s.quat[1], s.quat[2], s.quat[3]);
     });
   }
 
