@@ -7,7 +7,8 @@ Written by `npm run playtest`.
 - dragging the window moves it 20 mm
 - editing a swatch recolours the preview and the print file
 - undo restores the swatch
-- print PDF is 506 × 356 mm, 2 pages, all colours CMYK
+- print PDF: PDF/X-1a, FOGRA39, trim/bleed boxes, CMYK only, spot inks Dieline, Crease, All, White
+- the dieline DXF downloads and preflight lists its checks
 - proof PNG renders
 - the print-svg button downloads filtr-paliwa-torebka-z-okienkiem-print.svg
 - the proof-pdf button downloads filtr-paliwa-torebka-z-okienkiem-proof.pdf

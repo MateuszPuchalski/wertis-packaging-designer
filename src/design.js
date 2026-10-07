@@ -35,6 +35,7 @@ export function createDesign({ format = 'flatPouch', template, date = '' } = {})
     content: example.content,
     proof: { version: 'V1', date, author: '', notes: 'Please check all texts, colours, sizes, the window and both codes before approving.' },
     mockup: { photo: null, background: '#e8e4dc', angle: 0 },
+    export: exportDefaults(f.id),
   };
 }
 
@@ -63,9 +64,25 @@ export function migrate(input) {
     content: { ...base.content, ...(json.content ?? {}), productName: { ...base.content.productName, ...(json.content?.productName ?? {}) } },
     proof: { ...base.proof, ...(json.proof ?? {}) },
     mockup: { ...base.mockup, ...(json.mockup ?? {}) },
+    export: { ...base.export, ...(json.export ?? {}) },
   };
   if (!d.palette.some((s) => s.role === 'transparent')) d.palette.push(clone(WERTIS_PALETTE.find((s) => s.role === 'transparent')));
   return d;
+}
+
+// Print settings, after the usual prepress norms: the printing condition the PDF/X file
+// declares, the names of the spot inks the dieline uses, printer's marks, a white underprint
+// plate (clear film only) and the barcode's bar width reduction.
+export function exportDefaults(format) {
+  return {
+    outputIntent: 'FOGRA39',
+    cutInk: 'Dieline',
+    creaseInk: 'Crease',
+    marks: true,
+    whitePlate: format !== 'tuckBox',
+    whiteInk: 'White',
+    bwr: 0,
+  };
 }
 
 export function serialize(design) {

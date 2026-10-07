@@ -29,15 +29,17 @@ export function paletteEditor(store, getParts) {
     const autoCmyk = h('button', { class: 'ghost tiny', title: 'Fill CMYK from the hex value (approximate)', onclick: () => { set(sw.id, { cmyk: cmykFromHex(store.get().palette.find((s) => s.id === sw.id).hex) }); store.settle(); } }, 'auto');
     const up = h('button', { class: 'ghost tiny', title: 'Move up', onclick: () => store.update((d) => ({ ...d, palette: moveSwatch(d.palette, sw.id, -1) })) }, '↑');
     const down = h('button', { class: 'ghost tiny', title: 'Move down', onclick: () => store.update((d) => ({ ...d, palette: moveSwatch(d.palette, sw.id, 1) })) }, '↓');
+    const asSpot = h('input', { type: 'checkbox', title: 'Print this colour as its own spot ink (a named Separation in the PDF) instead of CMYK',
+      onchange: () => { set(sw.id, { asSpot: asSpot.checked }); store.settle(); } });
     const del = h('button', { class: 'ghost tiny danger', title: canDeleteSwatch(sw) ? 'Delete' : 'The window colour can be edited but not deleted', disabled: !canDeleteSwatch(sw), onclick: () => remove(sw.id) }, '✕');
     const el = h('div', { class: 'swatch', dataset: { swatch: sw.id } },
       h('div', { class: 'sw-top' }, color, name, up, down, del),
       h('div', { class: 'sw-mid' }, hex, h('span', { class: 'sw-cmyk-row' }, cmyk), autoCmyk),
-      h('div', { class: 'sw-bot' }, spot, uses));
+      h('div', { class: 'sw-bot' }, spot, h('label', { class: 'sw-spotflag', hidden: sw.role === 'transparent' }, asSpot, 'Spot ink'), uses));
     return {
       el,
       sync(s, used) {
-        syncValue(color, s.hex); syncValue(name, s.name); syncValue(hex, s.hex.toUpperCase()); syncValue(spot, s.spot);
+        syncValue(color, s.hex); syncValue(name, s.name); syncValue(hex, s.hex.toUpperCase()); syncValue(spot, s.spot); syncValue(asSpot, s.asSpot);
         cmyk.forEach((c, i) => syncValue(c, s.cmyk[i]));
         uses.textContent = s.role === 'transparent' ? 'marks the window' : used ? `used ${used}×` : 'not used';
         el.classList.toggle('unused', !used && s.role !== 'transparent');

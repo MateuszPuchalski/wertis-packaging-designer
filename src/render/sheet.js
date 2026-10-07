@@ -41,9 +41,10 @@ function geometryBleed(design) {
 
 // Returns { svg, inner, defs, hits, used, geo, box } where box is the drawn area in mm.
 // `art: false` draws only the dieline (the second page of the print PDF).
-export function renderSheet(design, env, { mode = 'design', margin = 0, dieline = true, guides = true, labels = true, art: withArt = true } = {}) {
+export function renderSheet(design, env, { mode = 'design', margin = 0, dieline = true, guides = true, labels = true, art: withArt = true, inlineUses = false } = {}) {
   const geo = geometry(design);
   const rc = renderContext(design, env, mode);
+  rc.inlineUses = inlineUses;
   // The construction lines print in pure process colours.
   const lines = dielineColors(geo);
   for (const hex of [lines.cut, lines.fold]) rc.cmyk.set(hex, cmykFromHex(hex).map((v) => (v >= 50 ? 100 : 0)));

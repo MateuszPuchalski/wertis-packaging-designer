@@ -48,7 +48,8 @@ function isGuard(i) {
 // The barcode with its quiet zones at (x, y). Returns { svg, w, h } or { error }.
 //   module      module width in mm          barHeight  normal bar height in mm (22.85 at 100 %)
 //   text        the TextEngine, to draw the digits (they are left out without it)
-export function ean13Svg({ code, x = 0, y = 0, module = EAN_MODULE, barHeight, color = '#000000', bg = '#ffffff', text, font = 'regular', marker = true }) {
+// bwr: bar width reduction in mm (GS1), the ink spread on press taken off each bar.
+export function ean13Svg({ code, x = 0, y = 0, module = EAN_MODULE, barHeight, color = '#000000', bg = '#ffffff', text, font = 'regular', marker = true, bwr = 0 }) {
   const v = validateEan13(code);
   if (!v.ok) return { error: v.error };
   const m = module;
@@ -61,7 +62,8 @@ export function ean13Svg({ code, x = 0, y = 0, module = EAN_MODULE, barHeight, c
     let j = i;
     while (j < 95 && bits[j] === '1' && isGuard(j) === isGuard(i)) j++;
     const h = isGuard(i) ? bh + 5 * m : bh;
-    bars += `M${n(x0 + i * m)} ${n(y)}h${n((j - i) * m)}v${n(h)}h${n(-(j - i) * m)}Z`;
+    const bw = Math.max((j - i) * m - bwr, m * 0.3);
+    bars += `M${n(x0 + i * m + ((j - i) * m - bw) / 2)} ${n(y)}h${n(bw)}v${n(h)}h${n(-bw)}Z`;
     i = j;
   }
   const w = EAN_WIDTH_MODULES * m;

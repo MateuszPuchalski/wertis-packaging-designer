@@ -97,16 +97,33 @@ export async function playtest() {
     assert.ok(svg.includes('id="dieline"'), 'the print file has a dieline group');
     const pdf = await page.evaluate(async () => {
       const doc = window.wertis.printDocument();
-      const blob = await window.wertis.pdfBlob(doc.pages, { cmyk: doc.cmyk, compress: false });
+      const blob = await window.wertis.pdfBlob(doc.pages, { ...doc, compress: false });
       const text = await blob.text();
-      return { size: blob.size, box: text.match(/\/MediaBox\s*\[([^\]]+)\]/)?.[1], pages: (text.match(/\/Type \/Page\b/g) || []).length,
-        cmyk: (text.match(/ k\n/g) || []).length, rgb: (text.match(/\d (rg|RG)\n/g) || []).length };
+      const box = (name) => text.match(new RegExp(`/${name}\\s*\\[([^\\]]+)\\]`))?.[1].trim().split(/\s+/).map(Number);
+      return { size: blob.size, media: box('MediaBox'), trim: box('TrimBox'), bleed: box('BleedBox'), pages: (text.match(/\/Type \/Page\b/g) || []).length,
+        cmyk: (text.match(/ k\n/g) || []).length, rgb: (text.match(/\d (rg|RG)\n/g) || []).length,
+        pdfx: text.includes('/GTS_PDFXVersion (PDF/X-1a:2001)') && text.includes('/Trapped /False') && /\/OutputIntents \[\d+ 0 R\]/.test(text) && text.includes('/OutputConditionIdentifier (FOGRA39)'),
+        inks: [...text.matchAll(/\/Separation \/(\S+)/g)].map((m) => m[1]) };
     });
-    const [, , pw, ph] = pdf.box.trim().split(/\s+/).map(Number);
-    assert.ok(Math.abs(pw - (506 * 72) / 25.4) < 0.5 && Math.abs(ph - (356 * 72) / 25.4) < 0.5, `PDF page is ${pw} × ${ph} pt`);
-    assert.equal(pdf.pages, 2, 'artwork + dieline, then the dieline alone');
+    const pt = (mm) => (mm * 72) / 25.4;
+    assert.ok(Math.abs(pdf.media[2] - pt(530)) < 0.5 && Math.abs(pdf.media[3] - pt(380)) < 0.5, `PDF page is ${pdf.media}`);
+    assert.ok(Math.abs(pdf.trim[0] - pt(15)) < 0.1 && Math.abs(pdf.trim[2] - pt(515)) < 0.1, `TrimBox ${pdf.trim}`);
+    assert.ok(Math.abs(pdf.bleed[0] - pt(12)) < 0.1, `BleedBox ${pdf.bleed}`);
+    assert.equal(pdf.pages, 3, 'artwork + dieline, the dieline alone, the white plate');
     assert.ok(pdf.cmyk > 20 && pdf.rgb === 0, `colours are CMYK (${pdf.cmyk} CMYK fills, ${pdf.rgb} RGB)`);
-    step(`print PDF is 506 × 356 mm, 2 pages, all colours CMYK`);
+    assert.ok(pdf.pdfx, 'PDF/X-1a keys and the FOGRA39 output intent');
+    assert.deepEqual(pdf.inks, ['Dieline', 'Crease', 'All', 'White']);
+    step('print PDF: PDF/X-1a, FOGRA39, trim/bleed boxes, CMYK only, spot inks Dieline, Crease, All, White');
+
+    const [dxf] = await Promise.all([page.waitForEvent('download'), page.click('[data-export="dieline-dxf"]')]);
+    assert.match(dxf.suggestedFilename(), /-dieline\.dxf$/);
+    await page.click('#preflight');
+    await page.waitForSelector('.preflight-list .pf-item');
+    const pfText = await page.locator('.preflight-list').innerText();
+    assert.match(pfText, /Bleed 3 mm/);
+    await page.click('.modal-buttons button');
+    step('the dieline DXF downloads and preflight lists its checks');
+
     const proofPng = await page.evaluate(async () => (await window.wertis.pngBlob(window.wertis.proofSvg('a3'), { dpi: 100 })).size);
     assert.ok(proofPng > 50_000, 'proof PNG has content');
     step('proof PNG renders');

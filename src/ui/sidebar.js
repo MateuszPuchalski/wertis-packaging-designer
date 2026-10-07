@@ -10,6 +10,7 @@ import { PATTERN_ICONS } from '../brand/patternIcons.js';
 import { PATTERN_STYLES } from '../render/pattern.js';
 import { PROOF_PAGES } from '../render/proof.js';
 import { MOCKUP_VIEWS } from '../render/mockup.js';
+import { OUTPUT_INTENTS } from '../export/documents.js';
 
 export function sidebar(store, { getParts, project }) {
   const el = h('div', { class: 'sidebar-inner' });
@@ -111,6 +112,20 @@ export function sidebar(store, { getParts, project }) {
     P('size', 'Icon size', 18, 3, 120, 0.5), P('spacing', 'Spacing', 30, 6, 200, 0.5), P('rotation', 'Rotation (±)', 180, 0, 180, 5, '°'),
     P('jitter', 'Irregularity', 0.35, 0, 1, 0.05, ''), P('sizeJitter', 'Size variation', 0.2, 0, 0.6, 0.05, ''), P('seed', 'Seed', 1, 0, 99999, 1, ''));
   pat.body.append(h('button', { class: 'secondary', onclick: () => { store.set(['pattern', 'seed'], Math.floor(Math.random() * 99999)); store.settle(); } }, 'Shuffle the pattern'));
+
+  // --- Print & export (prepress) ---
+  const px = section('Print & export', { id: 'sec-print' });
+  px.body.append(h('p', { class: 'help' }, 'The print PDF is PDF/X-1a: CMYK and spot inks only, trim and bleed boxes, and the printing condition below. The dieline is in its own spot inks, set to overprint.'));
+  const X = (key, label, type, extra = {}) => fieldControl(store, ['export'], { key, label, type, ...extra });
+  add(px,
+    X('outputIntent', 'Printing condition', 'select', { default: 'FOGRA39', options: Object.entries(OUTPUT_INTENTS).map(([k, v]) => [k, v.label]) }),
+    textControl(store, ['export', 'cutInk'], 'Spot ink for cut lines'),
+    textControl(store, ['export', 'creaseInk'], 'Spot ink for folds (creases)'),
+    X('marks', 'Crop marks and slug', 'checkbox', { default: true }),
+    X('whitePlate', 'White underprint plate (clear film)', 'checkbox', { default: true }),
+    textControl(store, ['export', 'whiteInk'], 'Spot ink for the white plate'),
+    X('bwr', 'Barcode bar width reduction', 'number', { default: 0, min: 0, max: 0.1, step: 0.005, unit: 'mm' }),
+  );
 
   // --- Proof ---
   const pr = section('Proof details', { id: 'sec-proof' });

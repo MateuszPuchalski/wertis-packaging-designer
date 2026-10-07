@@ -64,16 +64,23 @@ export function placements(box, settings, key = '') {
   return out;
 }
 
-// The pattern for a box in one colour. `defs` (a Map) collects the icon definitions.
-export function patternSvg(box, settings, color, defs, key = '') {
+// The pattern for a box in one colour. `defs` (a Map) collects the icon definitions. With
+// `inline`, every icon is written out in full instead of placed with <use> (PDF/X files:
+// svg2pdf would hide the strokes of reused symbols with a transparent graphics state).
+export function patternSvg(box, settings, color, defs, key = '', { inline = false } = {}) {
   if (color === 'none') return '';
   const style = settings?.style === 'outline' ? 'outline' : 'solid';
   const width = Number(settings?.outline) || PATTERN_DEFAULTS.outline;
   let out = '';
   for (const p of placements(box, settings, key)) {
     const id = iconDefId(p.icon, color, style, width);
+    const transform = `translate(${n(p.x)} ${n(p.y)}) rotate(${n(p.rotate)}) scale(${n(p.scale)})`;
+    if (inline) {
+      out += iconDef(p.icon, color, style, width).replace(/^<g id="[^"]*"/, `<g transform="${transform}"`);
+      continue;
+    }
     if (!defs.has(id)) defs.set(id, iconDef(p.icon, color, style, width));
-    out += el('use', { href: `#${id}`, transform: `translate(${n(p.x)} ${n(p.y)}) rotate(${n(p.rotate)}) scale(${n(p.scale)})` });
+    out += el('use', { href: `#${id}`, transform });
   }
   return out;
 }
