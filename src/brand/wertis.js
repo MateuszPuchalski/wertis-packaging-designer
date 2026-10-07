@@ -83,6 +83,9 @@ const EXAMPLES = {
   },
 };
 
+// The lines of the "Produced for" block, in order.
+export const ADDRESS = ['producedFor', 'company', 'address', 'email'];
+
 const COMMON_CONTENT = {
   lang: 'pl',
   specsTitle: 'Dane techniczne:',

@@ -72,7 +72,6 @@ export default {
   'side.tabs': 'Settings',
   'side.project': 'Project',
   'side.format': 'Format',
-  'side.texts': 'Texts',
   'side.colours': 'Colours',
   'side.print': 'Print',
   'side.mockup': 'Mockup',
@@ -81,7 +80,6 @@ export default {
   'side.template': 'Template',
   'side.layoutSection': 'Layout & window',
   'side.layoutHelp': 'Drag the window, logos, label and marks on the preview; pull a corner to resize. Edges snap to the panel, the safe area and other elements (hold Alt to place freely). Arrow keys nudge by 1 mm (Shift: 10 mm).',
-  'side.textsSection': 'Texts',
   'side.coloursSection': 'Colours',
   'side.patternSection': 'Parts pattern',
   'side.printSection': 'Print & export',
@@ -128,6 +126,11 @@ export default {
   'texts.address': 'Address',
   'texts.email': 'E-mail',
   'texts.specs': 'Technical data (one per line)',
+  'texts.subtitle': 'Subtitle',
+  'texts.specsTitle': 'Technical data heading',
+  'texts.category': 'Category',
+  'texts.categoryEn': 'Category (English)',
+  'texts.otherLangs': 'Other languages ({n})',
 
   // Colours.
   'pal.help': 'Elements point at these swatches: change one and everything that uses it follows. Pick an element on the preview to give it another swatch or its own colour.',
@@ -236,6 +239,7 @@ export default {
   'insp.panel': '{panel} panel',
   'insp.deselect': 'Deselect (Esc)',
   'insp.colours': 'Colours',
+  'insp.text': 'Text',
   'insp.resetColours': 'Reset',
   'insp.slotColour': '{slot} colour',
   'insp.customColour': 'Custom colour',
@@ -255,8 +259,6 @@ export default {
   'insp.show': 'Show this element',
   'insp.windowHelp': 'The window is printed with no ink at all, so the film stays clear.',
   'insp.toLayout': 'Shape and corners…',
-  'insp.textHelp': 'The wording is set in the Texts tab.',
-  'insp.toTexts': 'Edit the texts…',
 
   // Colour slots of an element.
   'slot.fill': 'Fill',
@@ -322,7 +324,7 @@ export default {
   'menu.hide': 'Hide',
   'menu.resetPos': 'Reset position',
   'menu.resetColours': 'Reset colours',
-  'menu.editTexts': 'Edit the texts',
+  'menu.editText': 'Edit the text',
   'menu.showAll': 'Show all hidden ({n})',
 
   // Keyboard shortcuts.
@@ -338,6 +340,8 @@ export default {
   'keys.deselect': 'Deselect',
   'keys.rightClick': 'Right click',
   'keys.more': 'More actions for the element',
+  'keys.dblClick': 'Double-click',
+  'keys.editText': 'Edit the element’s text',
   'keys.wheel': 'Ctrl + wheel',
   'keys.zoomAt': 'Zoom at the pointer',
   'keys.zoom': 'Zoom in / out',

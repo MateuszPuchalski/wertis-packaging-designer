@@ -25,12 +25,12 @@ const SNAP_PX = 6; // how near (screen px) an edge has to come to catch on a lin
 const mm1 = (v) => fmtNum(Math.round(v * 10) / 10);
 
 export class Stage {
-  constructor(root, { store, env, onSelect, renderMockup, showSection }) {
+  constructor(root, { store, env, onSelect, renderMockup, editText }) {
     this.store = store;
     this.env = env;
     this.onSelect = onSelect;
     this.renderMockup = renderMockup;
-    this.showSection = showSection;
+    this.editText = editText;
     this.tab = 'design';
     this.zoom = null; // null = fit; else px per mm
     this.fitPpm = null;
@@ -106,6 +106,11 @@ export class Stage {
     this.viewport.addEventListener('mousedown', (e) => { if (e.button === 1 && this.tab !== '3d') e.preventDefault(); });
     this.viewport.addEventListener('wheel', (e) => this.wheel(e), { passive: false });
     this.viewport.addEventListener('contextmenu', (e) => this.contextMenu(e));
+    // Double-click a text to type in it (on its card in the inspector).
+    this.viewport.addEventListener('dblclick', (e) => {
+      const id = this.tab === 'design' && e.target.closest?.('[data-el]')?.dataset.el;
+      if (id && this.hit(id)?.edits.length) this.editText(id);
+    });
     let scrollQueued = false;
     this.viewport.addEventListener('scroll', () => {
       if (scrollQueued) return;
@@ -483,7 +488,7 @@ export class Stage {
         hit = this.hit(id);
       }
     }
-    contextMenu(elementMenuEntries({ store: this.store, hit, design: this.store.get(), view: this, showSection: this.showSection }), e.clientX, e.clientY, { label: t('menu.label') });
+    contextMenu(elementMenuEntries({ store: this.store, hit, design: this.store.get(), view: this, editText: this.editText }), e.clientX, e.clientY, { label: t('menu.label') });
   }
 
   // Arrow keys: 1 mm (10 with Shift).

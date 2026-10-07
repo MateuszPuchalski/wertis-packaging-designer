@@ -100,13 +100,19 @@ material under **Format → Layout & window**.
 - **Top bar:** the design's name and save state, undo and redo, the PL / EN switch,
   **Preflight** with its badge, the **Export** menu (grouped: for the printer, for approval,
   presentation) and **Print PDF**.
-- **Left:** six tabs, which remember where you were: **Project** (name, new, duplicate, the
+- **Left:** five tabs, which remember where you were: **Project** (name, new, duplicate, the
   `.wertis.json` file, the designs saved in this browser), **Format** (format, template, sizes,
-  layout and window), **Texts**, **Colours** (swatches, presets and the parts pattern),
-  **Print** (printing condition, spot inks, white plate, proof details) and **Mockup**.
-- **Right:** the selected element's card (colours, position in mm, show/hide, reset) above the
-  list of every element, grouped by panel, with a search, a show/hide eye per row and
-  **Show all**.
+  layout and window), **Colours** (swatches, presets and the parts pattern), **Print**
+  (printing condition, spot inks, white plate, proof details) and **Mockup**.
+- **Right:** the selected element's card (its texts, colours, position in mm, show/hide,
+  reset) above the list of every element, grouped by panel, with a search, a show/hide eye per
+  row and **Show all**. The card stays in view while the list scrolls.
+- **Texts are edited on the element that shows them.** Select a text (or double-click it, or
+  right-click → Edit the text) and its card offers exactly its words: the label its product
+  name (the pack's main language first, the other languages folded under it), product code,
+  EAN-13 (checked as you type), QR link and website; "Produced for" its four lines; the box's
+  technical data its heading and one line per item; and so on. A box drops its barcode when the
+  EAN is empty, so its product code offers the EAN too.
 
 ### Editing on the preview
 

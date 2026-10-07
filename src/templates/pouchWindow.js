@@ -5,8 +5,10 @@
 // A template returns, for one panel, a list of elements in the panel's own millimetres.
 // Positions are fractions of the panel, so the layout follows any bag size. Elements the
 // user can move read their box through ctx.box(id, default), which applies the override.
+// `edits` names the design.content keys an element shows, so the editor can offer exactly
+// those texts when the element is selected.
 import { clamp } from '../render/svg.js';
-import { LANGS } from '../brand/wertis.js';
+import { LANGS, ADDRESS } from '../brand/wertis.js';
 import { MATERIALS } from '../brand/marks.js';
 import { fitLogo, partBox, taglineUnder } from '../brand/logo.js';
 import { num, choice, toggle } from '../formats/common.js';
@@ -91,11 +93,11 @@ export function front(ctx) {
     box: ctx.box('front.footerLogo', { x: F.x, y: F.y + F.h * 0.06, w: F.w * 0.3, h: F.h * 0.18 }), align: 'left',
     colors: { gear: 'dark', arc: 'white', word: 'dark', line: 'dark' },
   });
-  els.push({ id: 'front.sku', label: 'Product code', type: 'text', layer: 'fg', text: c.sku, font: 'semibold', align: 'right', valign: 'middle',
+  els.push({ id: 'front.sku', label: 'Product code', edits: ['sku'], type: 'text', layer: 'fg', text: c.sku, font: 'semibold', align: 'right', valign: 'middle',
     box: { x: F.x + F.w * 0.5, y: F.y + F.h * 0.08, w: F.w * 0.5, h: F.h * 0.14 }, size: F.h * 0.14 / 0.7, colors: { fill: 'white' } });
-  els.push({ id: 'front.name', label: 'Product name', type: 'text', layer: 'fg', text: c.productName?.[c.lang] ?? '', font: 'bold', align: 'center', valign: 'middle',
+  els.push({ id: 'front.name', label: 'Product name', edits: ['productName'], type: 'text', layer: 'fg', text: c.productName?.[c.lang] ?? '', font: 'bold', align: 'center', valign: 'middle',
     box: { x: F.x, y: F.y + F.h * 0.4, w: F.w, h: F.h * 0.16 }, size: F.h * 0.16 / 0.7, minSize: 2, colors: { fill: 'dark' } });
-  els.push({ id: 'front.note1', label: 'Note', type: 'text', layer: 'fg', text: c.note1, font: 'bold', upper: true, align: 'center', valign: 'middle', spacing: 0.02,
+  els.push({ id: 'front.note1', label: 'Note', edits: ['note1'], type: 'text', layer: 'fg', text: c.note1, font: 'bold', upper: true, align: 'center', valign: 'middle', spacing: 0.02,
     box: { x: F.x, y: F.y + F.h * 0.7, w: F.w, h: F.h * 0.11 }, size: F.h * 0.11 / 0.7, minSize: 1.6, colors: { fill: 'white' } });
   return els;
 }
@@ -128,10 +130,10 @@ export function back(ctx) {
   // The tagline sits under the right end of WERTIS, small, as on the boxes.
   const fit = fitLogo(logo, 'markWord');
   const tag = taglineUnder(partBox(fit, 'word'), { scale: (ctx.options.taglineSize ?? 100) / 100, gap: 0.55 });
-  els.push({ id: 'back.tagline', label: 'Tagline', type: 'text', layer: 'fg', text: c.tagline, font: 'condSemibold', align: 'right', valign: 'top', spacing: 0.02,
+  els.push({ id: 'back.tagline', label: 'Tagline', edits: ['tagline'], type: 'text', layer: 'fg', text: c.tagline, font: 'condSemibold', align: 'right', valign: 'top', spacing: 0.02,
     box: tag.box, size: tag.size, minSize: 1.4, colors: { fill: 'white' } });
 
-  els.push({ id: 'back.label', label: 'Label', type: 'label', layer: 'fg', movable: true, resizable: true,
+  els.push({ id: 'back.label', label: 'Label', edits: ['productName', 'sku', 'ean', 'qr', 'url'], type: 'label', layer: 'fg', movable: true, resizable: true,
     box: ctx.box('back.label', { x: S.x + S.w * 0.02, y: headerH + bodyH * 0.38, w: S.w * 0.96, h: bodyH * 0.56 }),
     content: {
       name: c.productName?.[c.lang] ?? '', sku: c.sku, ean: c.ean, qr: c.qr, url: c.url,
@@ -140,7 +142,7 @@ export function back(ctx) {
     colors: { fill: 'white', text: 'dark', accent: 'boxOrange', bars: 'black' } });
 
   const F = { x: S.x, y: footerTop + 2, w: S.w, h: Math.max(S.y + S.h - footerTop - 2, 6) };
-  els.push({ id: 'back.address', label: 'Produced for', type: 'text', layer: 'fg', font: 'regular', align: 'left', valign: 'middle', lineHeight: 1.25,
+  els.push({ id: 'back.address', label: 'Produced for', edits: ADDRESS, type: 'text', layer: 'fg', font: 'regular', align: 'left', valign: 'middle', lineHeight: 1.25,
     text: [c.producedFor, c.company, c.address, c.email].filter(Boolean).join('\n'),
     box: { x: F.x, y: F.y + F.h * 0.12, w: F.w * 0.46, h: F.h * 0.76 }, size: F.h * 0.1 / 0.7, minSize: 1.4, colors: { fill: 'white' } });
   const material = MATERIALS[ctx.options.recycle];
@@ -154,7 +156,7 @@ export function back(ctx) {
     els.push({ id: 'back.marks', label: 'Recycling marks', type: 'marks', layer: 'fg', marks, material, movable: true, resizable: true, keepAspect: true, box: mb, colors: { fill: 'black' } });
     urlX = Math.max(urlX, mb.x + mb.w + F.w * 0.03);
   }
-  els.push({ id: 'back.url', label: 'Website', type: 'text', layer: 'fg', text: c.url, font: 'bold', align: 'right', valign: 'middle',
+  els.push({ id: 'back.url', label: 'Website', edits: ['url'], type: 'text', layer: 'fg', text: c.url, font: 'bold', align: 'right', valign: 'middle',
     box: { x: urlX, y: F.y + F.h * 0.35, w: F.x + F.w - urlX, h: F.h * 0.3 }, size: F.h * 0.15 / 0.7, minSize: 1.6, colors: { fill: 'white' } });
   return els;
 }

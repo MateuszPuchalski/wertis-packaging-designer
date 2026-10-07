@@ -1,5 +1,5 @@
-// The right-hand panel. On top, a card for the selected element: its colours, position and
-// visibility. Below, every element grouped by panel, with a search, a show/hide toggle per
+// The right-hand panel. On top, a card for the selected element: its texts, colours,
+// position and visibility. Below, every element grouped by panel, with a search, a show/hide toggle per
 // row and Show all.
 import { h, clear, syncValue } from './dom.js';
 import { icon } from './icons.js';
@@ -7,12 +7,14 @@ import { t, label } from '../i18n/index.js';
 import { resolveColor, refSwatchId, findSwatch, normalizeHex } from '../brand/palette.js';
 import { LOGO_PRESETS } from '../brand/wertis.js';
 import { showAll, resetColors, hasOwnColors, hiddenCount } from '../edit/actions.js';
+import { textFields } from './textFields.js';
 
 const r1 = (v) => Math.round(v * 10) / 10;
 // Search ignores case and Polish letters' accents (ł is not decomposed by NFD).
 const fold = (s) => String(s).normalize('NFD').replace(/\p{Diacritic}/gu, '').replace(/ł/g, 'l').replace(/Ł/g, 'L').toLowerCase();
 
 export function inspector(store, { getParts, getHit, select, getSelected, showSection }) {
+  let texts = null; // the selected element's text fields
   const SLOTS = {
     fill: t('slot.fill'), ink: t('slot.ink'), gear: t('slot.gear'), arc: t('slot.arc'), word: t('slot.word'), line: t('slot.line'),
     text: t('slot.text'), accent: t('slot.accent'), outline: t('slot.outline'), bars: t('slot.bars'), bg: t('slot.bg'), dots: t('slot.dots'), edge: t('slot.edge'),
@@ -110,6 +112,7 @@ export function inspector(store, { getParts, getHit, select, getSelected, showSe
   function buildCard(id) {
     clear(card);
     const found = id && find(id);
+    texts = null;
     card.hidden = !found;
     if (!found) return [];
     const { elem, panel } = found;
@@ -118,6 +121,13 @@ export function inspector(store, { getParts, getHit, select, getSelected, showSe
     card.append(h('div', { class: 'insp-head' },
       h('div', {}, h('div', { class: 'insp-title' }, label(elem.label)), h('div', { class: 'insp-sub' }, t('insp.panel', { panel: label(panel.label) }))),
       h('button', { class: 'ghost tiny', title: t('insp.deselect'), 'aria-label': t('insp.deselect'), onclick: () => select(null) }, icon('close', 16))));
+
+    // Its texts first: what it says is what you most often change.
+    texts = textFields(store, elem.edits);
+    if (texts) {
+      card.append(h('div', { class: 'insp-block insp-texts' }, h('h4', {}, t('insp.text')), texts.el));
+      syncs.push(texts.sync);
+    }
 
     const slots = Object.keys(elem.colors ?? {});
     if (slots.length) {
@@ -154,7 +164,6 @@ export function inspector(store, { getParts, getHit, select, getSelected, showSe
     card.append(h('div', { class: 'insp-block' }, h('label', { class: 'row check' }, vis, h('span', {}, t('insp.show')))));
     syncs.push((d) => syncValue(vis, !d.hidden[id]));
     if (elem.type === 'window') card.append(h('p', { class: 'help' }, t('insp.windowHelp'), ' ', h('button', { class: 'link', onclick: () => showSection('sec-layout') }, t('insp.toLayout'))));
-    if (elem.type === 'text' || elem.type === 'label') card.append(h('p', { class: 'help' }, t('insp.textHelp'), ' ', h('button', { class: 'link', onclick: () => showSection('sec-texts') }, t('insp.toTexts'))));
     return syncs;
   }
 
@@ -234,6 +243,13 @@ export function inspector(store, { getParts, getHit, select, getSelected, showSe
       }
       for (const s of built.syncs) s(design);
       syncList(design, id);
+    },
+    // Puts the cursor in the selected element's first text (double-click, or right-click → Edit text).
+    focusText() {
+      if (!texts) return false;
+      card.scrollIntoView({ block: 'nearest' });
+      texts.focus();
+      return true;
     },
     // After the preview re-renders: the element boxes (and so the position fields) are new.
     refresh() {

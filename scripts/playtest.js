@@ -169,6 +169,26 @@ export async function playtest() {
     assert.deepEqual(await page.evaluate(() => window.wertis.store.get().hidden), {}, 'Show all shows it again');
     step('hover names the element; right-click → Hide, then Show all');
 
+    // Texts are edited on the element: double-click "Produced for", type on its card.
+    const addrAt = await pointOn(page, 'back.address');
+    assert.ok(addrAt, 'the address is on screen');
+    await page.mouse.dblclick(addrAt.x, addrAt.y);
+    await page.waitForFunction(() => document.querySelector('.insp-title')?.textContent === 'Produced for');
+    assert.equal(await page.evaluate(() => document.activeElement.id), 't-content-producedFor', 'the cursor is in its first line');
+    const fields = await page.evaluate(() => [...document.querySelectorAll('.insp-texts input, .insp-texts textarea')].map((i) => i.id));
+    assert.deepEqual(fields, ['t-content-producedFor', 't-content-company', 't-content-address', 't-content-email']);
+    await page.fill('#t-content-company', 'WERTIS Sp. z o.o. (test)');
+    assert.equal(await page.evaluate(() => window.wertis.store.get().content.company), 'WERTIS Sp. z o.o. (test)');
+    // The label offers the product name (main language first), the codes and the link.
+    await page.click('.el-row[data-el-row="back.label"] .el-name');
+    await page.waitForFunction(() => document.querySelector('.insp-title')?.textContent === 'Label');
+    const labelFields = await page.evaluate(() => [...document.querySelectorAll('.insp-texts input, .insp-texts select')].map((i) => i.id));
+    assert.deepEqual(labelFields.slice(0, 2), ['lang', 't-content-productName-pl']);
+    for (const id of ['t-content-sku', 't-content-ean', 't-content-qr', 't-content-url']) assert.ok(labelFields.includes(id), id);
+    await page.screenshot({ path: `${shots}text-on-element.png` });
+    await page.keyboard.press('Control+z');
+    step('double-click a text to edit it on its card; the label offers its name, codes and link');
+
     // Edit a swatch in the Colours panel: everything that uses it follows.
     await page.click('[data-side-tab="colours"]');
     const hex = page.locator('[data-swatch="boxOrange"] .sw-hex');
@@ -405,7 +425,7 @@ async function polish(browser, step, errors) {
   await page.waitForSelector('.preflight-list .pf-item');
   assert.match(await page.locator('.preflight-list').innerText(), /Spad 3 mm na każdej zewnętrznej krawędzi/);
   await page.click('.modal-buttons button');
-  for (const tab of ['project', 'format', 'texts', 'colours', 'print', 'mockup']) {
+  for (const tab of ['project', 'format', 'colours', 'print', 'mockup']) {
     await page.click(`[data-side-tab="${tab}"]`);
     await page.waitForTimeout(80);
   }
