@@ -1,0 +1,83 @@
+# WERTIS Packaging Designer
+
+A browser app for designing WERTIS packaging: window zip pouches like the KEULE 25 × 35 cm
+bag, stand-up pouches and folding boxes, all in WERTIS branding. You pick a format and an
+on-brand template, change sizes, texts and colours in the left panel, and drag the window,
+logos, badge and label on the preview. It exports:
+
+- **Print PDF / Print SVG.** Real size in mm, with bleed. The artwork sits in the group
+  `artwork` and the dieline (cut, zip, holes, notches, window outline) in a separate,
+  non-printing magenta group `dieline`. Windows carry no ink, and all text is converted to
+  outlines, so no fonts are needed at the printer.
+- **Proof PDF / PNG.** A factory-style proof sheet:
+  - a header table (product, code, format and size, version, date, author, number of colours);
+  - a chip for every colour the design uses, with hex, CMYK and spot names, plus
+    "Transparent" for the window;
+  - notes for the printer;
+  - the artwork with its dieline and dimensions in mm;
+  - a legend and a sign-off box.
+- **Mockup PNG.** The finished bag with your product photo behind the window film.
+
+## Run it
+
+```bash
+npm install     # dev tools only (ESLint, Playwright, the libraries' sources)
+npm start       # http://localhost:8000  (PORT=xxxx to change)
+```
+
+The app is plain ES modules with no build step. It also runs from any static host (for
+example GitHub Pages), because the browser libraries are vendored in `vendor/`. Projects save
+themselves in the browser (IndexedDB). **Export file** writes a `.wertis.json` file that you
+can open on another computer.
+
+## Colours
+
+Every colour is a swatch in the **Colours** panel: a name, a hex value, CMYK and a spot name
+(for example a Pantone number).
+
+- **Elements point at swatches.** Change a swatch and every element that uses it follows.
+  Click an element on the preview to give it another swatch, a one-off custom colour or no
+  colour.
+- **Deleting a swatch** that is in use asks which swatch those elements should switch to.
+- **Presets.** Palettes can be saved as named presets, exported and imported as JSON.
+  **WERTIS default** restores the brand colours.
+- **Logo colours.** The logo has four colour roles: gear, arc, WERTIS and the "SKLEP Z
+  CZĘŚCIAMI" line. Presets match the pages of `Logo_WERTIS.pdf` (colour, green, white,
+  black), plus "on orange" and "box lid".
+
+The default spot names are empty on purpose. Ask the printer for the numbers they match and
+type them in, so they appear on the proof.
+
+## Brand sources
+
+- **Logo.** `assets/brand/source/Logo_WERTIS.pdf` is the original Illustrator logo.
+  `npm run import-logo` turns its first page into `src/brand/logoPaths.js` (the steps are in
+  `scripts/import-logo.js`).
+- **Pattern icons.** They come from the foil-mailer artwork `Foliopak.pdf`. Run
+  `pdftocairo -svg Foliopak.pdf foliopak.svg && npm run import-icons -- foliopak.svg`, then
+  choose the icons in `scripts/import-icons.js`. The PDF itself is not committed (13 MB).
+
+## Before a real print run
+
+- **Check the construction numbers with the factory:** seal widths, zip position and hole
+  shape. They are all editable under *Format & size*.
+- **Count the colours.** The proof counts the colours. The default design uses 8, so merge
+  swatches if the printer quotes per colour.
+- **Barcode size.** The EAN-13 is checked and never drawn below 80 % of its nominal size.
+
+## Development
+
+```bash
+npm test          # unit tests (node:test): geometry, codes, colours, rendering, text
+npm run lint      # ESLint; the rendering core must stay DOM-free
+npm run playtest  # headless Chromium uses the app: drag, edit colours, undo, every export
+npm run ci        # all three
+npm run vendor    # copy the browser libraries from node_modules into vendor/
+```
+
+## Licences
+
+- **Fonts:** Barlow and Barlow Semi Condensed, SIL Open Font License (`assets/fonts/OFL.txt`).
+- **Libraries:** jsPDF, svg2pdf.js, opentype.js and qrcode-generator, all MIT. Their licence
+  files are in `vendor/`.
+- **Brand assets:** the WERTIS logo and icons belong to WERTIS Sp. z o.o.
