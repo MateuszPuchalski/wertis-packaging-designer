@@ -51,15 +51,23 @@ export function toast(message, kind = 'info') {
   setTimeout(() => t.remove(), kind === 'error' ? 6600 : 3400);
 }
 
-// A small modal with a body and buttons; resolves with the clicked button's value.
-export function dialog(title, body, buttons) {
+// A small modal with a body and buttons; resolves with the clicked button's value, or null
+// for Esc and a click outside. Enter in a text field presses the last (main) button.
+// `wide` makes room for lists.
+export function dialog(title, body, buttons, { wide = false } = {}) {
   return new Promise((resolve) => {
-    const close = (v) => { back.remove(); resolve(v); };
+    const back0 = document.activeElement;
+    const close = (v) => { back.remove(); back0?.focus?.({ preventScroll: true }); resolve(v); };
+    const btns = buttons.map(([label, value, cls]) => h('button', { class: cls ?? '', onclick: () => close(typeof value === 'function' ? value() : value) }, label));
     const back = h('div', { class: 'modal-back', onclick: (e) => { if (e.target === back) close(null); } },
-      h('div', { class: 'modal', role: 'dialog', 'aria-label': title },
-        h('h3', {}, title), body,
-        h('div', { class: 'modal-buttons' }, buttons.map(([label, value, cls]) => h('button', { class: cls ?? '', onclick: () => close(typeof value === 'function' ? value() : value) }, label)))));
+      h('div', { class: `modal${wide ? ' wide' : ''}`, role: 'dialog', 'aria-modal': 'true', 'aria-label': title,
+        onkeydown: (e) => {
+          if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(null); }
+          else if (e.key === 'Enter' && e.target.tagName === 'INPUT' && e.target.type === 'text') { e.preventDefault(); btns.at(-1)?.click(); }
+        } },
+      h('h3', {}, title), body,
+      h('div', { class: 'modal-buttons' }, btns)));
     document.body.append(back);
-    back.querySelector('input,select,button')?.focus();
+    (back.querySelector('input,select') ?? btns.at(-1))?.focus();
   });
 }

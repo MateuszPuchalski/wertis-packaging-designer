@@ -198,3 +198,10 @@ test('the language never changes what is printed or sent to the factory', async 
   setLang('en');
   en.forEach((s, i) => assert.ok(s === pl[i], `output ${i} differs`));
 });
+
+test('every message is used somewhere', () => {
+  const src = [...files('src'), 'index.html'].filter((p) => !p.includes('i18n')).map((p) => readFileSync(p, 'utf8')).join('\n');
+  const literals = new Set([...src.matchAll(/['"]([a-z0-9]+(?:\.[a-zA-Z0-9]+)+)['"]/g)].map((m) => m[1]));
+  const unused = Object.keys(EN).filter((k) => !literals.has(k));
+  assert.deepEqual(unused, []);
+});

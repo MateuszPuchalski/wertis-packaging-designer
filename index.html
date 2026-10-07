@@ -14,32 +14,18 @@
   <script type="module" src="src/main.js"></script>
 </head>
 <body>
+  <!-- The top bar's buttons come from src/ui/topbar.js; the texts from src/i18n/. -->
   <header class="topbar">
     <div class="brand">
-      <img src="assets/brand/wertis-logo.svg" alt="WERTIS" height="26">
-      <span>Packaging Designer</span>
-    </div>
-    <div class="top-actions">
-      <button id="undo" class="ghost" title="Undo (Ctrl+Z)" disabled>↶ Undo</button>
-      <button id="redo" class="ghost" title="Redo (Ctrl+Shift+Z)" disabled>↷ Redo</button>
-      <span id="saved" class="saved"></span>
-    </div>
-    <div class="exports" role="group" aria-label="Export">
-      <span class="lbl">Export</span>
-      <button data-export="print-pdf" class="primary" title="Real size, with bleed and a separate dieline layer, text as outlines">Print PDF</button>
-      <button data-export="print-svg" class="secondary">Print SVG</button>
-      <button data-export="proof-pdf" class="secondary">Proof PDF</button>
-      <button data-export="proof-png" class="secondary">Proof PNG</button>
-      <button data-export="mockup-png" class="secondary">Mockup PNG</button>
-      <button data-export="dieline-dxf" class="secondary" title="The dieline for the die maker (CUT and CREASE layers, mm)">Dieline DXF</button>
-      <button id="preflight" class="secondary" title="Check the print file the way the printer's prepress does">Preflight <span id="preflight-badge" class="badge"></span></button>
+      <img src="assets/brand/wertis-logo.svg" alt="WERTIS" height="24">
+      <span data-i18n="top.product">Packaging Designer</span>
     </div>
   </header>
   <main class="layout">
-    <aside id="sidebar" class="panel" aria-label="Settings"></aside>
-    <section id="stage" class="stage" aria-label="Preview"></section>
-    <aside id="inspector" class="panel right" aria-label="Selected element"></aside>
+    <aside id="sidebar" class="panel" data-i18n-aria="side.label" aria-label="Settings"></aside>
+    <section id="stage" class="stage" data-i18n-aria="stage.label" aria-label="Preview"></section>
+    <aside id="inspector" class="panel right" data-i18n-aria="insp.label" aria-label="Selected element"></aside>
   </main>
-  <div id="boot-status" class="boot">Loading the fonts and your last design…</div>
+  <div id="boot-status" class="boot" data-i18n="boot.loading">Loading the fonts and your last design…</div>
 </body>
 </html>

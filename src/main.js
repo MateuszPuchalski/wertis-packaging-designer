@@ -1,20 +1,23 @@
-// Wires the editor together: fonts, the store, the panels, the preview, exports, autosave
-// and keyboard shortcuts.
+// Wires the editor together: the language, fonts, the store, the top bar, the panels, the
+// preview, autosave and keyboard shortcuts.
+import './ui/lang.js'; // first: everything below speaks the chosen language
+import { t, msgOf, misses } from './i18n/index.js';
 import { loadTextEngine } from './text/browserFonts.js';
 import { createDesign } from './design.js';
 import { Store } from './store.js';
 import { panelsWithElements } from './render/sheet.js';
 import { printSvg, printDocument, proofSvg } from './export/documents.js';
 import { mockupSvg } from './render/mockup.js';
-import { download, svgBlob, pngBlob, pdfBlob, slug } from './export/files.js';
+import { download, pngBlob, pdfBlob, slug } from './export/files.js';
 import { dielineDxf } from './export/dxf.js';
 import { preflight } from './preflight.js';
-import { currentId, rememberCurrent, loadProject, saveProject, newId } from './storage.js';
+import { currentId, rememberCurrent, loadProject, newId } from './storage.js';
 import { Stage } from './ui/stage.js';
 import { sidebar } from './ui/sidebar.js';
 import { inspector } from './ui/inspector.js';
 import { projectSection } from './ui/project.js';
-import { h, toast, dialog } from './ui/dom.js';
+import { topbar } from './ui/topbar.js';
+import { h } from './ui/dom.js';
 
 const today = () => new Date().toISOString().slice(0, 10);
 
@@ -24,7 +27,7 @@ async function boot() {
   try {
     text = await loadTextEngine();
   } catch (err) {
-    status.textContent = `The fonts did not load: ${err.message}. Start the app with “npm start” and open http://localhost:8000.`;
+    status.textContent = t('boot.fonts', { error: msgOf(err) });
     return;
   }
   const env = { text };
@@ -45,87 +48,30 @@ async function boot() {
     return partsCache.parts;
   };
 
+  const select = (sid) => { stage.select(sid); insp.sync(store.get()); };
   const stage = new Stage(document.getElementById('stage'), {
     store, env,
     onSelect: () => insp.sync(store.get()),
     renderMockup: (d) => mockupSvg(d, env),
+    showSection: (sec) => side.showSection(sec),
   });
   stage.onSnapshot = (blob) => download(blob, `${slug(store.get().name)}-3d.png`);
-  const insp = inspector(store, { getParts, getHit: (hid) => stage.hit(hid), select: (sid) => { stage.select(sid); insp.sync(store.get()); }, getSelected: () => stage.selected });
+  const insp = inspector(store, { getParts, getHit: (hid) => stage.hit(hid), select, getSelected: () => stage.selected, showSection: (sec) => side.showSection(sec) });
+  stage.onRendered = () => insp.refresh();
   const project = projectSection(store, { getId: () => id, setId: (nid) => { id = nid; rememberCurrent(nid); }, today });
   const side = sidebar(store, { getParts, project });
+  // Preflight's Show: the element on the Design tab.
+  const show = (sid) => { if (stage.tab !== 'design') stage.setTab('design'); select(sid); };
+  const top = topbar(document.querySelector('.topbar'), { store, env, getId: () => id, project, today, select: show });
   document.getElementById('sidebar').append(side.el);
   document.getElementById('inspector').append(insp.el);
 
-  // Top bar.
-  const undo = document.getElementById('undo'), redo = document.getElementById('redo');
-  undo.onclick = () => store.undo();
-  redo.onclick = () => store.redo();
-  const busy = async (label, fn) => {
-    document.body.classList.add('busy');
-    try { await fn(); toast(`${label} ready.`); } catch (err) { console.error(err); toast(`${label} failed: ${err.message}`, 'error'); } finally { document.body.classList.remove('busy'); }
-  };
-  const name = () => slug(store.get().name);
-  const exportsMenu = {
-    'print-pdf': async () => {
-      const pf = preflight(store.get(), env);
-      if (pf.errors && !(await showPreflight(pf, true))) return;
-      busy('Print PDF', async () => { const doc = printDocument(store.get(), env, { date: today() }); download(await pdfBlob(doc.pages, doc), `${name()}-print.pdf`); });
-    },
-    'dieline-dxf': () => busy('Dieline DXF', async () => download(new Blob([dielineDxf(store.get(), env)], { type: 'application/dxf' }), `${name()}-dieline.dxf`)),
-    'print-svg': () => busy('Print SVG', async () => download(svgBlob(printSvg(store.get(), env)), `${name()}-print.svg`)),
-    'proof-pdf': () => busy('Proof PDF', async () => download(await pdfBlob(proofSvg(store.get(), env, store.get().proof.page ?? 'a3'), { title: `${store.get().name} proof` }), `${name()}-proof.pdf`)),
-    'proof-png': () => busy('Proof PNG', async () => download(await pngBlob(proofSvg(store.get(), env, store.get().proof.page ?? 'a3'), { dpi: 200 }), `${name()}-proof.png`)),
-    'mockup-png': () => busy('Mockup PNG', async () => download(await pngBlob(mockupSvg(store.get(), env).svg, { dpi: Number(document.getElementById('mockup-dpi').value) || 150 }), `${name()}-mockup.png`)),
-  };
-  for (const [key, fn] of Object.entries(exportsMenu)) document.querySelector(`[data-export="${key}"]`).onclick = fn;
-
-  // Preflight: the badge stays current; the button lists the findings.
-  const badge = document.getElementById('preflight-badge');
-  let pfTimer = null;
-  const refreshPreflight = () => {
-    clearTimeout(pfTimer);
-    pfTimer = setTimeout(() => {
-      const pf = preflight(store.get(), env);
-      badge.textContent = pf.errors ? pf.errors : pf.warnings ? pf.warnings : '✓';
-      badge.className = `badge${pf.errors ? ' error' : pf.warnings ? ' warn' : ''}`;
-    }, 600);
-  };
-  async function showPreflight(pf, beforeExport = false) {
-    const icons = { error: '✕', warn: '!', ok: '✓' };
-    const order = { error: 0, warn: 1, ok: 2 };
-    const list = h('div', { class: 'preflight-list' }, [...pf.items].sort((a, b) => order[a.level] - order[b.level]).map((it) =>
-      h('div', { class: `pf-item ${it.level}` }, h('span', { class: 'pf-level' }, icons[it.level]), h('span', { class: 'pf-topic' }, it.topic), h('span', {}, it.message))));
-    const title = pf.errors ? `Preflight: ${pf.errors} error${pf.errors === 1 ? '' : 's'}` : pf.warnings ? `Preflight: ${pf.warnings} warning${pf.warnings === 1 ? '' : 's'}` : 'Preflight: ready to print';
-    const body = h('div', {}, beforeExport ? h('p', {}, 'These would print wrong. Fix them first, or export anyway.') : null, list);
-    document.querySelector('.modal-back .modal')?.classList.add('wide');
-    const p = dialog(title, body, beforeExport ? [['Cancel', false, 'ghost'], ['Export anyway', true, 'danger']] : [['Close', false, 'primary']]);
-    document.querySelector('.modal-back:last-child .modal')?.classList.add('wide');
-    return p;
-  }
-  document.getElementById('preflight').onclick = () => showPreflight(preflight(store.get(), env));
-
-  // Autosave into this browser's library.
-  let saveTimer = null;
-  const saved = document.getElementById('saved');
-  const autosave = () => {
-    clearTimeout(saveTimer);
-    saved.textContent = 'Saving…';
-    saveTimer = setTimeout(async () => {
-      try { await saveProject(id, store.get()); saved.textContent = 'Saved in this browser'; project.refresh(); } catch (err) { saved.textContent = `Not saved: ${err.message}`; }
-    }, 700);
-  };
-
   const sync = (d, reason) => {
+    if (reason === 'replace') stage.select(null);
     stage.schedule();
     side.sync(d);
     insp.sync(d);
-    undo.disabled = !store.canUndo();
-    redo.disabled = !store.canRedo();
-    document.title = `${d.name} · WERTIS Packaging Designer`;
-    if (reason !== 'init') autosave();
-    refreshPreflight();
-    if (reason === 'replace') stage.select(null);
+    top.sync(d, reason);
   };
   store.subscribe(sync);
   sync(store.get(), 'init');
@@ -133,25 +79,33 @@ async function boot() {
   document.body.classList.add('ready');
 
   window.addEventListener('keydown', (e) => {
-    const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName);
-    const mod = e.ctrlKey || e.metaKey;
+    // AltGr (Polish letters on Windows) arrives as Ctrl+Alt: never a shortcut.
+    if (e.defaultPrevented || e.isComposing || e.getModifierState?.('AltGraph')) return;
+    const a = document.activeElement;
+    const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(a?.tagName) || a?.isContentEditable;
+    const mod = (e.ctrlKey || e.metaKey) && !e.altKey;
     if (mod && e.key.toLowerCase() === 'z' && !typing) { e.preventDefault(); if (e.shiftKey) store.redo(); else store.undo(); return; }
     if (mod && e.key.toLowerCase() === 'y' && !typing) { e.preventDefault(); store.redo(); return; }
-    if (typing) return;
-    if (e.key === 'Escape') { stage.select(null); insp.sync(store.get()); }
+    // Tabs, menus and dialogs use the arrow keys themselves.
+    if (typing || a?.closest?.('[role="tablist"], [role="menu"], .modal-back')) return;
+    if (e.key === 'Escape') { select(null); return; }
+    if (stage.handleKey(e)) { e.preventDefault(); return; }
     const step = e.shiftKey ? 10 : 1;
     const dirs = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step] };
     if (dirs[e.key] && stage.nudge(...dirs[e.key])) e.preventDefault();
   });
-  window.addEventListener('keyup', (e) => { if (e.key.startsWith('Arrow')) store.settle(); });
+  window.addEventListener('keyup', (e) => {
+    stage.keyUp(e);
+    if (e.key.startsWith('Arrow')) store.settle();
+  });
 
   // Test hooks (scripts/playtest.js drives the app through these).
-  window.wertis = { store, env, stage, printSvg: () => printSvg(store.get(), env), printDocument: () => printDocument(store.get(), env), preflight: () => preflight(store.get(), env), dxf: () => dielineDxf(store.get(), env), proofSvg: (page) => proofSvg(store.get(), env, page), mockupSvg: () => mockupSvg(store.get(), env).svg, pdfBlob, pngBlob };
+  window.wertis = { store, env, stage, misses, saveNow: () => top.saveNow(), printSvg: () => printSvg(store.get(), env), printDocument: () => printDocument(store.get(), env), preflight: () => preflight(store.get(), env), dxf: () => dielineDxf(store.get(), env), proofSvg: (page) => proofSvg(store.get(), env, page), mockupSvg: () => mockupSvg(store.get(), env).svg, pdfBlob, pngBlob };
 }
 
 boot().catch((err) => {
   console.error(err);
   const s = document.getElementById('boot-status');
-  if (s) s.textContent = `Something went wrong while starting: ${err.message}`;
+  if (s) s.textContent = t('boot.failed', { error: msgOf(err) });
   document.body.append(h('pre', {}, String(err.stack ?? err)));
 });

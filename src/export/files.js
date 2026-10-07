@@ -1,3 +1,4 @@
+import { t } from '../i18n/index.js';
 import { pdfName, pdfString, addInfoKeys, toBinary, fromBinary } from './pdfx.js';
 
 // Turning SVG strings into downloadable files: SVG as it is, PNG through a canvas, PDF
@@ -66,7 +67,7 @@ export async function pngBlob(svg, { dpi = 150, maxPx = 12000, background = null
 //            condition from the ICC registry, so no profile needs embedding)
 export async function pdfBlob(svgs, { title = 'WERTIS packaging', cmyk = null, colors = cmyk, spots = [], boxes = null, pdfx = null, compress = true } = {}) {
   const { jsPDF, GState } = window.jspdf ?? {};
-  if (!jsPDF || !window.svg2pdf) throw new Error('The PDF library did not load.');
+  if (!jsPDF || !window.svg2pdf) throw new Error(t('export.noPdfLib'));
   const pages = Array.isArray(svgs) ? svgs : [svgs];
   const first = svgSizeMm(pages[0]);
   const doc = new jsPDF({ orientation: first.w >= first.h ? 'landscape' : 'portrait', unit: 'mm', format: [first.w, first.h], compress });
