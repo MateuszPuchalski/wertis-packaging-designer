@@ -3,7 +3,9 @@
 A browser app for designing WERTIS packaging: window zip pouches like the KEULE 25 × 35 cm
 bag, stand-up pouches and folding boxes, all in WERTIS branding. You pick a format and an
 on-brand template, change sizes, texts and colours in the left panel, and drag the window,
-logos, label and recycling marks on the preview. It exports:
+logos, label and recycling marks on the preview. The editor speaks Polish or English
+(see [Language](#language--język)). The **Export** menu in the top bar makes these files
+(**Print PDF** also has its own button next to it):
 
 - **Print PDF (PDF/X-1a:2001).** Real size in mm, with bleed.
   - **Colours:** CMYK only, using each swatch's own CMYK numbers, or a named spot ink when
@@ -87,17 +89,61 @@ logos, label and recycling marks on the preview. It exports:
 
   **Save PNG** takes a snapshot. Drag to orbit the camera; scroll to zoom.
 
-"Quality You Can Trust" has its own size setting under Layout & window (40 to 300 %). It stays right-aligned under the WERTIS word on the pouch back, the box front and the lid.
+"Quality You Can Trust" has its own size setting under **Format → Layout & window** (40 to 300 %). It stays right-aligned under the WERTIS word on the pouch back, the box front and the lid.
 
 The pattern of parts icons comes in two styles: solid silhouettes, or outlines. The recycling
 marks (the triangle with the material code, plus the tidyman) are vector shapes; pick the
-material under *Layout*.
+material under **Format → Layout & window**.
+
+## The editor
+
+- **Top bar:** the design's name and save state, undo and redo, the PL / EN switch,
+  **Preflight** with its badge, the **Export** menu (grouped: for the printer, for approval,
+  presentation) and **Print PDF**.
+- **Left:** six tabs, which remember where you were: **Project** (name, new, duplicate, the
+  `.wertis.json` file, the designs saved in this browser), **Format** (format, template, sizes,
+  layout and window), **Texts**, **Colours** (swatches, presets and the parts pattern),
+  **Print** (printing condition, spot inks, white plate, proof details) and **Mockup**.
+- **Right:** the selected element's card (colours, position in mm, show/hide, reset) above the
+  list of every element, grouped by panel, with a search, a show/hide eye per row and
+  **Show all**.
+
+### Editing on the preview
+
+- **Select, move, resize.** Click an element, drag it, pull a corner to resize. While you drag,
+  a tag shows its position or size in mm.
+- **Snapping.** Edges and centres catch on the panel's edges and centre lines, the safe area,
+  a box's folds and the other elements, and a red guide shows the line. Hold **Alt** to
+  place freely, or switch **Snap** off in the toolbar; away from every line it keeps to a
+  0.5 mm grid.
+- **Rulers** in mm along the top and left, from the trim's top left corner, shading the
+  selected element. **Dieline**, **Guides**, **Rulers** and **Snap** are toggles in the
+  toolbar, and the editor remembers them.
+- **Zoom and pan.** Ctrl + wheel (or a trackpad pinch) zooms at the pointer; Space + drag or
+  the middle button moves the view; **+** / **−** zoom, **0** fits, **1** is the real size
+  (100 %). The status bar shows the selection in mm, the pointer's position and the zoom.
+- **Hover and right-click.** Hovering names the element. Right-click for Hide, Reset position,
+  Reset colours, Show all hidden, Fit and 100 %. **Delete** hides the selected element, **Esc**
+  deselects, the arrow keys nudge it 1 mm (Shift: 10 mm). The keyboard button in the status
+  bar lists every shortcut.
+
+### Language / Język
+
+The editor is in **Polish** or **English**. It starts in the language you chose last time, else
+in Polish when the browser is Polish, else in English. **PL / EN** in the top bar switches; the
+editor saves the design and reloads (the undo history starts over). Numbers in the editor use
+the language's decimal mark (0,5 mm in Polish).
+
+Only the editor changes language. Everything printed or sent to the factory stays as it is
+whatever the editor's language: the print PDF and SVG, the proof, the DXF, the ink names and
+the texts on the pack (those are in the pack's own languages, under **Texts**). The tests check
+that the files are byte-for-byte the same in both languages.
 
 ## Example products
 
-- **Pouches** start with a fuel filter. It has placeholder codes: the SKU W00-0000, and the
-  EAN 2000000000008 from GS1's in-store-only range, so it can never match a real product.
-  Type in the real codes.
+- **Pouches** start with the Stihl MS170 / MS180 clutch drum ("Bęben sprzęgła Stihl"). It
+  has placeholder codes: the SKU W00-0000, and the EAN 2000000000008 from GS1's
+  in-store-only range, so it can never match a real product. Type in the real codes.
 - **Boxes** start with the W09-0414 carburettor from its box artwork.
 
 ## Formats
@@ -133,7 +179,7 @@ can open on another computer.
 
 ## Colours
 
-Every colour is a swatch in the **Colours** panel: a name, a hex value, CMYK and a spot name
+Every colour is a swatch in the **Colours** tab: a name, a hex value, CMYK and a spot name
 (for example a Pantone number).
 
 - **Elements point at swatches.** Change a swatch and every element that uses it follows.
@@ -161,7 +207,7 @@ type them in, so they appear on the proof.
 ## Before a real print run
 
 - **Check the construction numbers with the factory:** seal widths, zip position and hole
-  shape. They are all editable under *Format & size*.
+  shape. They are all editable on the **Format** tab.
 - **Count the colours.** The proof counts the colours. The default design uses 8, so merge
   swatches if the printer quotes per colour.
 - **Barcode size.** The EAN-13 is checked and never drawn below 80 % of its nominal size.
@@ -169,9 +215,11 @@ type them in, so they appear on the proof.
 ## Development
 
 ```bash
-npm test          # unit tests (node:test): geometry, codes, colours, rendering, text
+npm test          # unit tests (node:test): geometry, codes, colours, rendering, text,
+                  # snapping, zoom, both languages (no missing or unused message)
 npm run lint      # ESLint; the rendering core must stay DOM-free
-npm run playtest  # headless Chromium uses the app: drag, edit colours, undo, every export
+npm run playtest  # headless Chromium uses the app in English and in Polish: drag and snap,
+                  # zoom and pan, the right-click menu, colours, undo, every export, 3D
 npm run ci        # all three
 npm run vendor    # copy the browser libraries from node_modules into vendor/
 ```
