@@ -91,4 +91,4 @@ function fmt(v) {
   return String(Math.round(v * 10) / 10);
 }
 
-export const flatPouch = { id: 'flatPouch', label: 'Flat zip pouch', fields: FIELDS, layout, templates: ['pouchWindow'] };
+export const flatPouch = { id: 'flatPouch', label: 'Flat zip pouch', example: 'pouch', fields: FIELDS, layout, templates: ['pouchWindow'] };

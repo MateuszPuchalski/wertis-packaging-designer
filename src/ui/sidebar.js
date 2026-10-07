@@ -7,6 +7,7 @@ import { LANGS } from '../brand/wertis.js';
 import { switchFormat } from '../design.js';
 import { validateEan13 } from '../codes/ean13.js';
 import { PATTERN_ICONS } from '../brand/patternIcons.js';
+import { PATTERN_STYLES } from '../render/pattern.js';
 import { PROOF_PAGES } from '../render/proof.js';
 import { MOCKUP_VIEWS } from '../render/mockup.js';
 
@@ -58,7 +59,7 @@ export function sidebar(store, { getParts, project }) {
   const lay = section('Layout & window', { id: 'sec-layout' });
   const layoutBox = h('div', { class: 'fields' });
   let layoutSyncs = [];
-  lay.body.append(layoutBox, h('p', { class: 'help' }, 'Drag the window, logos, badge and label on the preview; pull a corner to resize. Arrow keys nudge by 1 mm (Shift: 10 mm).'));
+  lay.body.append(layoutBox, h('p', { class: 'help' }, 'Drag the window, logos, label and marks on the preview; pull a corner to resize. Arrow keys nudge by 1 mm (Shift: 10 mm).'));
   el.append(lay.el);
 
   // --- Texts ---
@@ -73,8 +74,6 @@ export function sidebar(store, { getParts, project }) {
     textControl(store, ['content', 'qr'], 'QR code link'),
     textControl(store, ['content', 'url'], 'Website line'),
     textControl(store, ['content', 'tagline'], 'Tagline'),
-    textControl(store, ['content', 'badgeTop'], 'Badge, big line'),
-    textControl(store, ['content', 'badgeBottom'], 'Badge, small line'),
     textControl(store, ['content', 'note1'], 'Front note, line 1'),
     textControl(store, ['content', 'note2'], 'Front note, line 2'),
     textControl(store, ['content', 'producedFor'], '“Produced for” heading'),
@@ -108,7 +107,9 @@ export function sidebar(store, { getParts, project }) {
   pat.body.append(h('p', { class: 'help' }, 'The icons from the WERTIS foil mailer. Each band takes its own pattern colour (pick the band on the preview).'), icons);
   syncs.push((d) => { for (const [id, cb] of iconBoxes) syncValue(cb, !d.pattern.icons || d.pattern.icons.includes(id)); });
   const P = (key, label, def, min, max, step, unit = 'mm') => fieldControl(store, ['pattern'], { key, label, type: 'number', default: def, min, max, step, unit });
-  add(pat, P('size', 'Icon size', 18, 3, 120, 0.5), P('spacing', 'Spacing', 30, 6, 200, 0.5), P('rotation', 'Rotation (±)', 180, 0, 180, 5, '°'),
+  add(pat, fieldControl(store, ['pattern'], { key: 'style', label: 'Icon style', type: 'select', default: 'solid', options: PATTERN_STYLES }),
+    fieldControl(store, ['pattern'], { key: 'outline', label: 'Outline width', type: 'number', default: 3, min: 0.5, max: 10, step: 0.5, unit: '', whenNot: ['style', 'solid'] }),
+    P('size', 'Icon size', 18, 3, 120, 0.5), P('spacing', 'Spacing', 30, 6, 200, 0.5), P('rotation', 'Rotation (±)', 180, 0, 180, 5, '°'),
     P('jitter', 'Irregularity', 0.35, 0, 1, 0.05, ''), P('sizeJitter', 'Size variation', 0.2, 0, 0.6, 0.05, ''), P('seed', 'Seed', 1, 0, 99999, 1, ''));
   pat.body.append(h('button', { class: 'secondary', onclick: () => { store.set(['pattern', 'seed'], Math.floor(Math.random() * 99999)); store.settle(); } }, 'Shuffle the pattern'));
 

@@ -47,12 +47,12 @@ test('an element with its own colour keeps it when the swatch changes', () => {
 test('hidden elements and "no colour" draw nothing', () => {
   const d = design();
   const base = renderSheet(d, env(), { mode: 'print' }).used;
-  d.hidden['front.badge'] = true;
+  d.hidden['back.marks'] = true;
   d.colors['back.gear.fill'] = { none: true };
   const r = renderSheet(d, env(), { mode: 'design' });
-  assert.ok(!r.hits.some((h) => h.id === 'front.badge'));
-  assert.ok(base.has('orange'), 'the badge accent uses WERTIS orange');
-  assert.ok(!r.used.has('orange'), 'with the badge hidden nothing uses it');
+  assert.ok(!r.hits.some((h) => h.id === 'back.marks'));
+  assert.ok(base.has('black'), 'the recycling marks use band black');
+  assert.ok(!r.svg.includes('data-el="back.gear"'), 'a gear with no colour draws nothing');
 });
 
 test('a layout override moves the window', () => {
@@ -81,7 +81,7 @@ test('the proof lists exactly the inks in use plus the window', () => {
 test('every element of the template is reported for the editor', () => {
   const parts = panelsWithElements(design(), env());
   const ids = parts.flatMap((p) => p.elements.map((e) => e.id));
-  for (const id of ['front.window', 'front.logo', 'front.badge', 'back.label', 'back.gear']) assert.ok(ids.includes(id), id);
+  for (const id of ['front.window', 'front.logo', 'back.label', 'back.gear', 'back.marks', 'back.tagline']) assert.ok(ids.includes(id), id);
   assert.equal(new Set(ids).size, ids.length, 'ids are unique');
 });
 

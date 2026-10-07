@@ -115,6 +115,38 @@ export async function playtest() {
       step(`the ${key} button downloads ${dl.suggestedFilename()}`);
     }
 
+    // A product photo (drawn in the page: a shaded filter body) goes in through the Mockup
+    // section's file input and shows through the window.
+    const photo = await page.evaluate(() => {
+      const c = document.createElement('canvas');
+      c.width = 900; c.height = 600;
+      const x = c.getContext('2d');
+      const g = x.createLinearGradient(0, 180, 0, 420);
+      g.addColorStop(0, '#9aa0a6'); g.addColorStop(0.5, '#f2f3f4'); g.addColorStop(1, '#5f6368');
+      x.fillStyle = '#2b2b2b'; x.fillRect(80, 280, 740, 40);
+      x.fillStyle = g; x.beginPath(); x.roundRect(250, 180, 400, 240, 40); x.fill();
+      x.fillStyle = '#f68c1e'; x.fillRect(330, 180, 30, 240); x.fillRect(540, 180, 30, 240);
+      return c.toDataURL('image/png').split(',')[1];
+    });
+    await page.click('#sec-mockup > summary');
+    await page.setInputFiles('#mockup-photo', { name: 'filter.png', mimeType: 'image/png', buffer: Buffer.from(photo, 'base64') });
+    await page.waitForFunction(() => !!window.wertis.store.get().mockup.photo);
+    assert.ok((await page.evaluate(() => window.wertis.mockupSvg())).includes('<image'), 'the photo is in the mockup');
+    await page.selectOption('#mockup-view', 'both');
+    step('a product photo shows through the window in the mockup');
+    for (const dpi of [96, 300]) {
+      const size = await page.evaluate(async (d) => (await window.wertis.pngBlob(window.wertis.mockupSvg(), { dpi: d })).size, dpi);
+      assert.ok(size > 100_000, `mockup PNG at ${dpi} dpi`);
+    }
+    step('the mockup exports at 96 and 300 dpi');
+
+    // The outline pattern style.
+    await page.click('#sec-pattern > summary');
+    await page.selectOption('#f-pattern-style', 'outline');
+    await page.waitForTimeout(150);
+    assert.ok((await page.evaluate(() => window.wertis.printSvg())).includes('stroke-linejoin="round"'), 'outline icons are stroked');
+    step('the pattern switches to outlines');
+
     for (const tab of ['proof', 'mockup']) {
       await page.click(`[data-tab="${tab}"]`);
       await page.waitForTimeout(500);

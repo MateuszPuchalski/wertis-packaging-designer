@@ -1,7 +1,7 @@
 // The design document: everything a project saves. It is plain JSON with a schema version,
 // so old files load (migrate) or are rejected with a reason, never silently dropped.
 import { FORMATS, TEMPLATES } from './registry.js';
-import { WERTIS_PALETTE, EXAMPLE_CONTENT } from './brand/wertis.js';
+import { WERTIS_PALETTE, exampleContent } from './brand/wertis.js';
 import { makeSwatch, refSwatchId, findSwatch, canDeleteSwatch } from './brand/palette.js';
 import { PATTERN_DEFAULTS } from './render/pattern.js';
 import { normalizeDims } from './formats/common.js';
@@ -18,10 +18,11 @@ export function defaultsOf(fields) {
 export function createDesign({ format = 'flatPouch', template, date = '' } = {}) {
   const f = FORMATS[format] ?? FORMATS.flatPouch;
   const t = TEMPLATES[template] ?? TEMPLATES[f.templates[0]];
+  const example = exampleContent(f.example);
   return {
     schema: SCHEMA,
     version: SCHEMA_VERSION,
-    name: 'Starter BS Classic Sprint',
+    name: example.name,
     format: f.id,
     template: t.id,
     dims: defaultsOf(f.fields),
@@ -31,7 +32,7 @@ export function createDesign({ format = 'flatPouch', template, date = '' } = {})
     layout: {}, // elementId → { x, y, w, h } as fractions of its panel
     hidden: {}, // elementId → true
     pattern: { ...PATTERN_DEFAULTS },
-    content: clone(EXAMPLE_CONTENT),
+    content: example.content,
     proof: { version: 'V1', date, author: '', notes: 'Please check all texts, colours, sizes, the window and both codes before approving.' },
     mockup: { photo: null, background: '#e8e4dc', angle: 0 },
   };

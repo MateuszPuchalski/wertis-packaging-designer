@@ -1,6 +1,5 @@
 // "Window pouch": the KEULE-style layout in WERTIS colours. An orange header with the logo,
-// a black band with the parts pattern and a see-through window, a quality badge over the
-// window's corner, and an orange footer. The back carries a big gear, the label with the
+// a black band with the parts pattern and a see-through window, and an orange footer. The back carries a big gear, the label with the
 // product name in six languages, the EAN and the QR code, and the "Produced for" address.
 //
 // A template returns, for one panel, a list of elements in the panel's own millimetres.
@@ -8,6 +7,8 @@
 // user can move read their box through ctx.box(id, default), which applies the override.
 import { clamp } from '../render/svg.js';
 import { LANGS } from '../brand/wertis.js';
+import { MATERIALS } from '../brand/marks.js';
+import { fitLogo, partBox } from '../brand/logo.js';
 import { num, choice, toggle } from '../formats/common.js';
 
 export const OPTIONS = [
@@ -17,9 +18,10 @@ export const OPTIONS = [
   num('windowRadius', 'Window corner radius', 10, 0, 100, 0.5, { whenNot: ['windowShape', 'oval'] }),
   toggle('backWindow', 'Matching window on the back', false),
   toggle('silverEdges', 'Silver edges on the black band', true),
-  toggle('badge', 'Quality badge', true),
   toggle('backGear', 'Big gear on the back', true),
   toggle('otherLangs', 'Other languages on the label', true),
+  choice('recycle', 'Recycling mark', 'ldpe4', Object.entries(MATERIALS).map(([k, m]) => [k, m.label])),
+  toggle('tidyman', 'Tidyman (bin) mark', true),
 ];
 
 function bands(ctx) {
@@ -63,7 +65,7 @@ function windowEl(ctx, id, box) {
 
 export function front(ctx) {
   const B = bands(ctx);
-  const { W, headerH, footerTop } = B;
+  const { headerH, footerTop } = B;
   const S = ctx.panel.info.safe;
   const c = ctx.design.content;
   const els = background(ctx, 'front', B);
@@ -77,15 +79,6 @@ export function front(ctx) {
     box: ctx.box('front.logo', { x: S.x + S.w * 0.08, y: headTop + headH * 0.1, w: S.w * 0.84, h: headH * 0.78 }),
     colors: { gear: 'dark', arc: 'white', word: 'dark', line: 'white' },
   });
-
-  if (ctx.options.badge) {
-    els.push({
-      id: 'front.badge', label: 'Quality badge', type: 'badge', layer: 'fg', movable: true, resizable: true, keepAspect: true,
-      box: ctx.box('front.badge', { x: W * 0.47, y: win.y + win.h - (footerTop - headerH) * 0.12, w: W * 0.46, h: (footerTop - headerH) * 0.19 }),
-      top: c.badgeTop, bottom: c.badgeBottom,
-      colors: { text: 'white', accent: 'orange', outline: 'black' },
-    });
-  }
 
   // Footer: small logo and the code on top, the product name, then the two notes.
   const F = { x: S.x, y: footerTop + 2, w: S.w, h: Math.max(S.y + S.h - footerTop - 2, 6) };
@@ -117,7 +110,7 @@ export function back(ctx) {
     const r2 = Math.min(W * 0.36, bodyH * 0.42);
     const cx = W * 0.8, cy = headerH + bodyH * 0.25;
     els.push({ id: 'back.gear', label: 'Big gear', type: 'gear', layer: 'bg', metallic: true, clip: { x: 0, y: headerH, w: W, h: bodyH },
-      cx, cy, r1: r2 * 0.87, r2, teeth: 16, hole: r2 * 0.5,
+      cx, cy, r1: r2 * 0.86, r2, teeth: 14, hole: r2 * 0.3,
       box: { x: cx - r2, y: Math.max(cy - r2, headerH), w: Math.min(2 * r2, W - cx + r2), h: Math.min(2 * r2, cy + r2 - headerH) }, colors: { fill: 'silver' } });
   }
   if (ctx.options.backWindow) {
@@ -127,11 +120,15 @@ export function back(ctx) {
 
   const headTop = S.y;
   const headH = Math.max(headerH - headTop, 8);
-  const logo = ctx.box('back.logo', { x: S.x + S.w * 0.15, y: headTop + headH * 0.1, w: S.w * 0.7, h: headH * 0.56 });
+  const logo = ctx.box('back.logo', { x: S.x + S.w * 0.15, y: headTop + headH * 0.12, w: S.w * 0.7, h: headH * 0.6 });
   els.push({ id: 'back.logo', label: 'Logo', type: 'logo', layer: 'fg', layout: 'markWord', movable: true, resizable: true, keepAspect: true, box: logo,
     colors: { gear: 'dark', arc: 'white', word: 'dark', line: 'white' } });
-  els.push({ id: 'back.tagline', label: 'Tagline', type: 'text', layer: 'fg', text: c.tagline, font: 'condBold', align: 'center', valign: 'top',
-    box: { x: S.x, y: logo.y + logo.h + headH * 0.06, w: S.w, h: headH * 0.16 }, size: headH * 0.16 / 0.7, minSize: 2, colors: { fill: 'white' } });
+  // The tagline sits under the right end of WERTIS, small, as on the boxes.
+  const fit = fitLogo(logo, 'markWord');
+  const word = partBox(fit, 'word');
+  const tagH = word.h * 0.2;
+  els.push({ id: 'back.tagline', label: 'Tagline', type: 'text', layer: 'fg', text: c.tagline, font: 'condSemibold', align: 'right', valign: 'top', spacing: 0.02,
+    box: { x: word.x, y: word.y + word.h + tagH * 0.55, w: word.w, h: tagH }, size: tagH / 0.7, minSize: 1.4, colors: { fill: 'white' } });
 
   els.push({ id: 'back.label', label: 'Label', type: 'label', layer: 'fg', movable: true, resizable: true,
     box: ctx.box('back.label', { x: S.x + S.w * 0.02, y: headerH + bodyH * 0.38, w: S.w * 0.96, h: bodyH * 0.56 }),
@@ -144,9 +141,20 @@ export function back(ctx) {
   const F = { x: S.x, y: footerTop + 2, w: S.w, h: Math.max(S.y + S.h - footerTop - 2, 6) };
   els.push({ id: 'back.address', label: 'Produced for', type: 'text', layer: 'fg', font: 'regular', align: 'left', valign: 'middle', lineHeight: 1.25,
     text: [c.producedFor, c.company, c.address, c.email].filter(Boolean).join('\n'),
-    box: { x: F.x, y: F.y + F.h * 0.12, w: F.w * 0.52, h: F.h * 0.76 }, size: F.h * 0.1 / 0.7, minSize: 1.4, colors: { fill: 'white' } });
+    box: { x: F.x, y: F.y + F.h * 0.12, w: F.w * 0.46, h: F.h * 0.76 }, size: F.h * 0.1 / 0.7, minSize: 1.4, colors: { fill: 'white' } });
+  const material = MATERIALS[ctx.options.recycle];
+  // Then the disposal marks, then the website at the right.
+  const markSize = Math.min(F.h * 0.55, F.w * 0.075);
+  const marks = [material?.code ? 'recycle' : null, ctx.options.tidyman ? 'tidyman' : null].filter(Boolean);
+  let urlX = F.x + F.w * 0.5;
+  if (marks.length) {
+    const mw = marks.length * markSize + (marks.length - 1) * markSize * 0.25;
+    const mb = ctx.box('back.marks', { x: F.x + F.w * 0.49, y: F.y + (F.h - markSize) / 2, w: mw, h: markSize });
+    els.push({ id: 'back.marks', label: 'Recycling marks', type: 'marks', layer: 'fg', marks, material, movable: true, resizable: true, keepAspect: true, box: mb, colors: { fill: 'black' } });
+    urlX = Math.max(urlX, mb.x + mb.w + F.w * 0.03);
+  }
   els.push({ id: 'back.url', label: 'Website', type: 'text', layer: 'fg', text: c.url, font: 'bold', align: 'right', valign: 'middle',
-    box: { x: F.x + F.w * 0.55, y: F.y + F.h * 0.35, w: F.w * 0.45, h: F.h * 0.3 }, size: F.h * 0.15 / 0.7, minSize: 1.6, colors: { fill: 'white' } });
+    box: { x: urlX, y: F.y + F.h * 0.35, w: F.x + F.w - urlX, h: F.h * 0.3 }, size: F.h * 0.15 / 0.7, minSize: 1.6, colors: { fill: 'white' } });
   return els;
 }
 

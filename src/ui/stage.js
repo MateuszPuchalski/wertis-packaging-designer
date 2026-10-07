@@ -1,6 +1,6 @@
 // The preview in the middle: Design (editable, with dieline and guides), Proof and Mockup
 // tabs, zoom, and on the Design tab click-to-select, drag-to-move and corner handles to
-// resize the window, logos, badge and label.
+// resize the window, logos, label and marks.
 import { h } from './dom.js';
 import { renderSheet } from '../render/sheet.js';
 import { renderProof } from '../render/proof.js';

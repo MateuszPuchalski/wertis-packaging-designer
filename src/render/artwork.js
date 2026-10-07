@@ -2,14 +2,14 @@
 //
 // Background elements (bands, patterns, the big gear) are clipped to the panel and knocked
 // out where a window is: no ink at all there, as the film stays clear. Foreground elements
-// (logo, texts, badge, label) are drawn on top and may cross a window's edge, like the
-// KEULE badge does.
+// (logo, texts, label) are drawn on top and may cross a window's edge.
 import { el, n, rectPath, ellipsePath, gearPath, clamp } from './svg.js';
 import { patternSvg } from './pattern.js';
 import { logoSvg } from '../brand/logo.js';
 import { resolveColor, refSwatchId, findSwatch, mix } from '../brand/palette.js';
 import { ean13Svg } from '../codes/ean13.js';
 import { qrSvg } from '../codes/qr.js';
+import { recycleMark, tidyman } from '../brand/marks.js';
 
 // rc (render context): { design, text, defs: Map, used: Set, mode, uid() }
 export function colorOf(rc, elem, slot) {
@@ -54,29 +54,6 @@ function textSvg(rc, e, color) {
   const laid = rc.text.layout({ ...e.box, text: e.text, font: e.font, size: e.size, minSize: e.minSize, align: e.align, valign: e.valign,
     upper: e.upper, wrap: e.wrap, spacing: e.spacing, lineHeight: e.lineHeight, maxLines: e.maxLines });
   return { svg: laid.svg ? el('g', { fill: color }, laid.svg) : '', box: laid.box };
-}
-
-// "QUALITY / YOU CAN TRUST": heavy italic words with an outline, and slanted stripes that
-// fill the second line out to the first line's width.
-function badgeSvg(rc, e) {
-  const { x, y, w, h } = e.box;
-  const textC = colorOf(rc, e, 'text'), accent = colorOf(rc, e, 'accent'), outline = colorOf(rc, e, 'outline');
-  const t = rc.text;
-  const l1 = t.layout({ text: e.top, x, y, w, h: h * 0.58, font: 'blackItalic', size: (h * 0.58) / 0.7, upper: true, align: 'left' });
-  const gap = h * 0.12;
-  const l2 = t.layout({ text: e.bottom, x: x + l1.size * 0.04, y: y + l1.height + gap, w: l1.width, h: h * 0.3, font: 'extraboldItalic', size: (h * 0.3) / 0.7, upper: true, align: 'left', spacing: 0.02 });
-  const stroke = Math.max(l1.size * 0.09, 0.2);
-  let stripes = '';
-  const room = x + l1.width - (l2.box.x + l2.width) - l2.size * 0.25;
-  if (room > l2.height) {
-    const sh = l2.height, sw = sh * 0.38, step = sw * 1.9;
-    for (let sx = l2.box.x + l2.width + l2.size * 0.3; sx + sw + sh * 0.35 <= x + l1.width; sx += step) {
-      stripes += `M${n(sx + sh * 0.35)} ${n(l2.box.y)}h${n(sw)}l${n(-sh * 0.35)} ${n(sh)}h${n(-sw)}Z`;
-    }
-  }
-  const outlined = (paths, fill) => (outline === 'none' ? '' : el('g', { fill: 'none', stroke: outline, 'stroke-width': stroke * 2, 'stroke-linejoin': 'round' }, paths)) + el('g', { fill }, paths);
-  const svg = outlined(l1.svg, textC) + outlined(l2.svg + (stripes ? el('path', { d: stripes }) : ''), accent);
-  return { svg, box: { x, y, w: Math.max(l1.width, 1), h: l1.height + gap + l2.height } };
 }
 
 // The white label: product name and code, the other languages, then EAN and QR at the
@@ -136,6 +113,21 @@ function labelSvg(rc, e) {
   return { svg: bg + r.out, box: e.box };
 }
 
+// The disposal marks in a row, as tall as the box.
+function marksSvg(rc, e) {
+  const color = colorOf(rc, e, 'fill');
+  if (color === 'none') return { svg: '', box: e.box };
+  const size = Math.min(e.box.h, e.box.w / (e.marks.length + (e.marks.length - 1) * 0.25));
+  let x = e.box.x, svg = '';
+  for (const m of e.marks) {
+    svg += m === 'recycle'
+      ? recycleMark({ x, y: e.box.y, size, code: e.material.code, name: e.material.name, color, text: rc.text }).svg
+      : tidyman({ x, y: e.box.y, size, color }).svg;
+    x += size * 1.25;
+  }
+  return { svg, box: { x: e.box.x, y: e.box.y, w: x - size * 0.25 - e.box.x, h: size } };
+}
+
 function elementSvg(rc, e, panel) {
   switch (e.type) {
     case 'rect': {
@@ -166,8 +158,8 @@ function elementSvg(rc, e, panel) {
       return logoSvg({ box: e.box, layout: e.layout, colors, align: e.align ?? 'center', valign: e.valign ?? 'middle' });
     }
     case 'text': return textSvg(rc, e, colorOf(rc, e, 'fill'));
-    case 'badge': return badgeSvg(rc, e);
     case 'label': return labelSvg(rc, e);
+    case 'marks': return marksSvg(rc, e);
     default: return { svg: '', box: e.box };
   }
 }

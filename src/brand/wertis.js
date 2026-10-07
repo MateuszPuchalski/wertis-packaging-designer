@@ -45,25 +45,46 @@ export const LOGO_ROLES = [['gear', 'Gear'], ['arc', 'Arc'], ['word', 'WERTIS'],
 
 export const LANGS = [['pl', 'PL'], ['cz', 'CZ'], ['sk', 'SK'], ['en', 'EN'], ['hu', 'HU'], ['ro', 'RO']];
 
-// The example product: the starter from the WERTIS box photo. (Its box label has the CZ and
-// SK lines swapped; these are the right way round.)
-export const EXAMPLE_CONTENT = {
-  lang: 'pl',
-  productName: {
-    pl: 'Starter do kosiarki BS Classic Sprint',
-    cz: 'Startér pro sekačku BS Classic Sprint',
-    sk: 'Štartér pre kosačku na trávu BS Classic Sprint',
-    en: 'Starter for the BS Classic Sprint lawnmower',
-    hu: 'Indítómotor a BS Classic Sprint fűnyíróhoz',
-    ro: 'Demaror pentru mașina de tuns iarba BS Classic Sprint',
+// Example content a new design starts with. Window pouches hold small parts; the example
+// is a fuel filter with placeholder codes (SKU W00-0000, and an EAN from GS1's 200 range,
+// which is for in-store use only, so it can never clash with a real product). Boxes start
+// with the real W09-0414 carburettor from its box artwork.
+const EXAMPLES = {
+  pouch: {
+    name: 'Filtr paliwa – torebka z okienkiem',
+    productName: {
+      pl: 'Filtr paliwa do kosy spalinowej i pilarki',
+      cz: 'Palivový filtr pro křovinořez a motorovou pilu',
+      sk: 'Palivový filter pre krovinorez a motorovú pílu',
+      en: 'Fuel filter for brushcutters and chainsaws',
+      hu: 'Üzemanyagszűrő fűkaszához és láncfűrészhez',
+      ro: 'Filtru de combustibil pentru motocoasă și drujbă',
+    },
+    subtitle: 'Do silników dwusuwowych',
+    sku: 'W00-0000',
+    ean: '2000000000008',
+    specs: ['Średnica przewodu: 3 mm', 'Opakowanie: 2 szt.'],
   },
-  subtitle: 'Do kosiarek Briggs & Stratton Classic / Sprint',
-  sku: 'W43-0508',
-  ean: '5905947596676',
+  box: {
+    name: 'W09-0414 gaźnik – pudełko',
+    productName: {
+      pl: 'Gaźnik do kosy spalinowej 15mm',
+      cz: 'Karburátor pro křovinořez 15 mm',
+      sk: 'Karburátor pre krovinorez 15 mm',
+      en: 'Carburettor for brushcutters, 15 mm',
+      hu: 'Karburátor fűkaszához, 15 mm',
+      ro: 'Carburator pentru motocoasă, 15 mm',
+    },
+    subtitle: 'Do pojemności 52 cc',
+    sku: 'W09-0414',
+    ean: '5905947594658',
+    specs: ['Otwór gaźnika: 15 mm', 'Rozstaw śrub: 31 mm', 'Wysokość całkowita: 90 mm', 'Występuje w silnikach o pojemności do 52cc'],
+  },
+};
+
+const COMMON_CONTENT = {
+  lang: 'pl',
   specsTitle: 'Dane techniczne:',
-  specs: ['Mocowanie: 3 śruby', 'Linka w zestawie', 'Pasuje do silników Classic i Sprint'],
-  badgeTop: 'QUALITY',
-  badgeBottom: 'YOU CAN TRUST',
   note1: 'ZAMIENNIK WYSOKIEJ JAKOŚCI',
   note2: 'PRODUKT NIEORYGINALNY',
   category: 'CZĘŚCI ZAMIENNE',
@@ -76,3 +97,9 @@ export const EXAMPLE_CONTENT = {
   qr: WERTIS.qr,
   tagline: WERTIS.tagline,
 };
+
+// The design name and content for a new design of this kind ('pouch' or 'box').
+export function exampleContent(kind = 'pouch') {
+  const { name, ...content } = EXAMPLES[kind] ?? EXAMPLES.pouch;
+  return { name, content: JSON.parse(JSON.stringify({ ...COMMON_CONTENT, ...content })) };
+}

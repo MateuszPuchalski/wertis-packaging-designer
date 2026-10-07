@@ -127,7 +127,7 @@ export function inspector(store, { getParts, getHit, select, getSelected }) {
     el.append(h('div', { class: 'insp-block' }, h('label', { class: 'row check' }, vis, h('span', {}, 'Show this element'))));
     syncs.push((d) => syncValue(vis, !d.hidden[id]));
     if (elem.type === 'window') el.append(h('p', { class: 'help' }, 'The window is printed with no ink at all, so the film stays clear. Its shape and corner radius are under Layout.'));
-    if (elem.type === 'text' || elem.type === 'label' || elem.type === 'badge') el.append(h('p', { class: 'help' }, 'Edit the wording under Texts in the left panel.'));
+    if (elem.type === 'text' || elem.type === 'label') el.append(h('p', { class: 'help' }, 'Edit the wording under Texts in the left panel.'));
     return { id, syncs };
   }
 

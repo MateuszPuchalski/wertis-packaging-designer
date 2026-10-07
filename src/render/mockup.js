@@ -15,8 +15,8 @@ function rc(design, env) {
 }
 
 // The product behind the window: the photo (cover-fitted, then zoomed and moved by the
-// user), or a placeholder starter icon when there is no photo yet.
-function productLayer(ctx, win, photo) {
+// user), or a placeholder fuel-filter icon when there is no photo yet.
+function productLayer(win, photo) {
   const { x, y, w, h } = win.box;
   if (photo?.src) {
     const pw = photo.w || 1000, ph = photo.h || 1000;
@@ -26,10 +26,9 @@ function productLayer(ctx, win, photo) {
     const ix = x + (w - iw) / 2 + (photo.dx ?? 0) * w, iy = y + (h - ih) / 2 + (photo.dy ?? 0) * h;
     return el('image', { href: photo.src, x: ix, y: iy, width: iw, height: ih, preserveAspectRatio: 'none' });
   }
-  const icon = PATTERN_ICONS.find((i) => i.id === 'starter') ?? PATTERN_ICONS[0];
+  const icon = PATTERN_ICONS.find((i) => i.id === 'fuelFilter') ?? PATTERN_ICONS[0];
   const s = (Math.min(w, h) * 0.78) / 100;
-  return el('g', { transform: `translate(${n(x + w / 2)} ${n(y + h / 2)}) rotate(-12) scale(${n(s)})`, fill: '#3a3a3c' }, icon.paths.map((p) => el('path', { 'fill-rule': p.rule, d: p.d })).join(''))
-    + el('g', { fill: '#8d8a86' }, ctx.text.layout({ text: 'Add a product photo under Mockup', x, y: y + Math.min(w, h) * 0.1, w, font: 'semibold', size: Math.min(w, h) * 0.045, align: 'center', valign: 'baseline' }).svg);
+  return el('g', { transform: `translate(${n(x + w / 2)} ${n(y + h / 2)}) rotate(-12) scale(${n(s)})`, fill: '#3a3a3c' }, icon.paths.map((p) => el('path', { 'fill-rule': p.rule, d: p.d })).join(''));
 }
 
 // Fine crimp lines across a seal strip.
@@ -60,7 +59,7 @@ function pouchFace(design, env, part, ctx, defs, ids) {
     defs.push(el('clipPath', { id: wClip }, el('path', { d: w.d })));
     inside += el('g', { 'clip-path': `url(#${wClip})` },
       (seeThrough === 'none' ? '' : el('path', { d: rectPath(w.box.x, w.box.y, w.box.w, w.box.h), fill: seeThrough }))
-      + el('g', { filter: `url(#${ids.shadowSoft})` }, productLayer(ctx, w, photo)));
+      + el('g', { filter: `url(#${ids.shadowSoft})` }, productLayer(w, photo)));
   }
   const gloss = ids('gloss'), shade = ids('shade'), glare = ids('glare');
   defs.push(

@@ -3,7 +3,7 @@
 A browser app for designing WERTIS packaging: window zip pouches like the KEULE 25 × 35 cm
 bag, stand-up pouches and folding boxes, all in WERTIS branding. You pick a format and an
 on-brand template, change sizes, texts and colours in the left panel, and drag the window,
-logos, badge and label on the preview. It exports:
+logos, label and recycling marks on the preview. It exports:
 
 - **Print PDF / Print SVG.** Real size in mm, with bleed. The artwork sits in the group
   `artwork` and the dieline (cut, zip, holes, notches, window outline) in a separate,
@@ -16,7 +16,19 @@ logos, badge and label on the preview. It exports:
   - notes for the printer;
   - the artwork with its dieline and dimensions in mm;
   - a legend and a sign-off box.
-- **Mockup PNG.** The finished bag with your product photo behind the window film.
+- **Mockup PNG.** The finished bag (front, back or both) with your product photo behind the
+  window film, at 96, 150 or 300 dpi.
+
+The pattern of parts icons comes in two styles: solid silhouettes, or outlines. The recycling
+marks (the triangle with the material code, plus the tidyman) are vector shapes; pick the
+material under *Layout*.
+
+## Example products
+
+- **Pouches** start with a fuel filter. It has placeholder codes: the SKU W00-0000, and the
+  EAN 2000000000008 from GS1's in-store-only range, so it can never match a real product.
+  Type in the real codes.
+- **Boxes** start with the W09-0414 carburettor from its box artwork.
 
 ## Run it
 

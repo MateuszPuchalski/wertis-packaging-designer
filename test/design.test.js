@@ -11,7 +11,8 @@ test('a new design has the WERTIS defaults', () => {
   assert.equal(d.format, 'flatPouch');
   assert.equal(d.dims.width, 250);
   assert.equal(d.dims.height, 350);
-  assert.equal(d.content.ean, '5905947596676');
+  assert.equal(d.content.ean, '2000000000008', 'a placeholder EAN that cannot clash with a real product');
+  assert.equal(d.content.sku, 'W00-0000');
   assert.ok(d.palette.some((s) => s.role === 'transparent'));
 });
 
@@ -27,7 +28,7 @@ test('old or partial projects are completed; foreign or newer files are rejected
   assert.equal(d.dims.width, 800, 'clamped to the field maximum');
   assert.equal(d.dims.height, 350, 'bad numbers fall back to the default');
   assert.equal(d.content.sku, 'A1');
-  assert.equal(d.content.productName.pl, 'Starter do kosiarki BS Classic Sprint');
+  assert.equal(d.content.productName.pl, 'Filtr paliwa do kosy spalinowej i pilarki');
   assert.throws(() => migrate({ hello: 1 }), /not a WERTIS packaging project/);
   assert.throws(() => migrate({ schema: 'wertis-packaging', version: 99 }), /newer version/);
   assert.throws(() => migrate('{"schema":"wertis-packaging"}'), /valid version/);
@@ -37,7 +38,7 @@ test('setIn shares untouched branches', () => {
   const d = design();
   const n = setIn(d, ['content', 'sku'], 'X');
   assert.equal(n.content.sku, 'X');
-  assert.equal(d.content.sku, 'W43-0508');
+  assert.equal(d.content.sku, 'W00-0000');
   assert.equal(n.palette, d.palette);
   assert.equal(setIn(n, ['colors', 'a'], undefined).colors.a, undefined);
 });
@@ -86,7 +87,7 @@ test('the store undoes, redoes and coalesces bursts', () => {
   s.undo();
   assert.equal(s.get().content.sku, 'AB');
   s.undo();
-  assert.equal(s.get().content.sku, 'W43-0508');
+  assert.equal(s.get().content.sku, 'W00-0000');
   s.redo();
   assert.equal(s.get().content.sku, 'AB');
   s.set(['name'], 'x');

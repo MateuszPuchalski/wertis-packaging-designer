@@ -9,15 +9,22 @@ import { el, n } from './svg.js';
 
 export const ICON_IDS = PATTERN_ICONS.map((i) => i.id);
 
-export const PATTERN_DEFAULTS = { icons: null, size: 18, spacing: 30, rotation: 180, jitter: 0.35, sizeJitter: 0.2, seed: 1 };
+export const PATTERN_DEFAULTS = { icons: null, style: 'solid', outline: 3, size: 18, spacing: 30, rotation: 180, jitter: 0.35, sizeJitter: 0.2, seed: 1 };
 
-export function iconDefId(icon, color) {
-  return `pi-${icon}-${color.replace('#', '')}`;
+export const PATTERN_STYLES = [['solid', 'Solid silhouettes'], ['outline', 'Outlines']];
+
+export function iconDefId(icon, color, style = 'solid', width = 3) {
+  return `pi-${icon}-${color.replace('#', '')}${style === 'outline' ? `-o${String(width).replace('.', '_')}` : ''}`;
 }
 
-export function iconDef(icon, color) {
+// Solid: the silhouettes filled. Outline: the same shapes stroked, like line icons. Widths
+// are in icon units (an icon is 100 units across).
+export function iconDef(icon, color, style = 'solid', width = 3) {
   const ic = PATTERN_ICONS.find((i) => i.id === icon);
-  return el('g', { id: iconDefId(icon, color), fill: color }, ic.paths.map((p) => el('path', { 'fill-rule': p.rule, d: p.d })).join(''));
+  const paint = style === 'outline'
+    ? { fill: 'none', stroke: color, 'stroke-width': width, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' }
+    : { fill: color };
+  return el('g', { id: iconDefId(icon, color, style, width), ...paint }, ic.paths.map((p) => el('path', { 'fill-rule': p.rule, d: p.d })).join(''));
 }
 
 // Icon placements for a box: [{ icon, x, y, rotate, scale }]. `key` makes each area differ.
@@ -60,10 +67,12 @@ export function placements(box, settings, key = '') {
 // The pattern for a box in one colour. `defs` (a Map) collects the icon definitions.
 export function patternSvg(box, settings, color, defs, key = '') {
   if (color === 'none') return '';
+  const style = settings?.style === 'outline' ? 'outline' : 'solid';
+  const width = Number(settings?.outline) || PATTERN_DEFAULTS.outline;
   let out = '';
   for (const p of placements(box, settings, key)) {
-    const id = iconDefId(p.icon, color);
-    if (!defs.has(id)) defs.set(id, iconDef(p.icon, color));
+    const id = iconDefId(p.icon, color, style, width);
+    if (!defs.has(id)) defs.set(id, iconDef(p.icon, color, style, width));
     out += el('use', { href: `#${id}`, transform: `translate(${n(p.x)} ${n(p.y)}) rotate(${n(p.rotate)}) scale(${n(p.scale)})` });
   }
   return out;
