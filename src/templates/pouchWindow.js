@@ -8,7 +8,7 @@
 import { clamp } from '../render/svg.js';
 import { LANGS } from '../brand/wertis.js';
 import { MATERIALS } from '../brand/marks.js';
-import { fitLogo, partBox } from '../brand/logo.js';
+import { fitLogo, partBox, taglineUnder } from '../brand/logo.js';
 import { num, choice, toggle } from '../formats/common.js';
 
 export const OPTIONS = [
@@ -19,6 +19,7 @@ export const OPTIONS = [
   toggle('backWindow', 'Matching window on the back', false),
   toggle('silverEdges', 'Silver edges on the black band', true),
   toggle('backGear', 'Big gear on the back', true),
+  num('taglineSize', '“Quality You Can Trust” size', 100, 40, 300, 5, { unit: '%' }),
   toggle('otherLangs', 'Other languages on the label', true),
   choice('recycle', 'Recycling mark', 'ldpe4', Object.entries(MATERIALS).map(([k, m]) => [k, m.label])),
   toggle('tidyman', 'Tidyman (bin) mark', true),
@@ -126,10 +127,9 @@ export function back(ctx) {
     colors: { gear: 'dark', arc: 'white', word: 'dark', line: 'white' } });
   // The tagline sits under the right end of WERTIS, small, as on the boxes.
   const fit = fitLogo(logo, 'markWord');
-  const word = partBox(fit, 'word');
-  const tagH = word.h * 0.2;
+  const tag = taglineUnder(partBox(fit, 'word'), { scale: (ctx.options.taglineSize ?? 100) / 100, gap: 0.55 });
   els.push({ id: 'back.tagline', label: 'Tagline', type: 'text', layer: 'fg', text: c.tagline, font: 'condSemibold', align: 'right', valign: 'top', spacing: 0.02,
-    box: { x: word.x, y: word.y + word.h + tagH * 0.55, w: word.w, h: tagH }, size: tagH / 0.7, minSize: 1.4, colors: { fill: 'white' } });
+    box: tag.box, size: tag.size, minSize: 1.4, colors: { fill: 'white' } });
 
   els.push({ id: 'back.label', label: 'Label', type: 'label', layer: 'fg', movable: true, resizable: true,
     box: ctx.box('back.label', { x: S.x + S.w * 0.02, y: headerH + bodyH * 0.38, w: S.w * 0.96, h: bodyH * 0.56 }),

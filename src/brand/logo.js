@@ -67,3 +67,12 @@ export function logoSvg({ box, layout = 'full', colors, align = 'center', valign
     box: { x, y, w, h },
   };
 }
+
+// The tagline under the WERTIS word, right-aligned with its end: `ratio` of the word's
+// height at 100 %, scaled by `scale` (the template's "tagline size"). A bigger tagline
+// grows to the left and down, so it never pushes past the word's end.
+export function taglineUnder(word, { scale = 1, ratio = 0.2, gap = 0.5 } = {}) {
+  const h = word.h * ratio * scale;
+  const w = word.w * Math.max(1, scale);
+  return { box: { x: word.x + word.w - w, y: word.y + word.h + word.h * ratio * gap, w, h }, size: h / 0.7 };
+}

@@ -10,13 +10,14 @@
 //               logo on the band with the gear sitting on its top edge.
 import { clamp } from '../render/svg.js';
 import { MATERIALS } from '../brand/marks.js';
-import { fitLogo, partBox } from '../brand/logo.js';
+import { fitLogo, partBox, taglineUnder } from '../brand/logo.js';
 import { num, choice, toggle } from '../formats/common.js';
 
 export const OPTIONS = [
   num('bandTopPct', 'Band starts at', 35, 5, 80, 1, { unit: '%' }),
   num('bandPct', 'Band height', 38, 15, 80, 1, { unit: '%' }),
   toggle('silverEdges', 'Silver edges on the band', true),
+  num('taglineSize', '“Quality You Can Trust” size', 100, 40, 300, 5, { unit: '%' }),
   choice('recycle', 'Recycling mark', 'pap21', Object.entries(MATERIALS).map(([k, m]) => [k, m.label])),
   toggle('tidyman', 'Tidyman (bin) mark', true),
   toggle('lidPhoto', 'Product photo on the lid (from Mockup)', false),
@@ -161,10 +162,9 @@ export function genericBody(ctx) {
   const markW = fit.w * 0.5;
   els.push({ id: 'front.gear', label: 'Gear', type: 'logo', layer: 'fg', layout: 'mark', align: 'center', valign: 'bottom',
     box: { x: fit.x + (fit.w - markW) / 2, y: B.top - markW * 0.19 + B.edge, w: markW, h: markW * 0.19 }, colors: { gear: 'black', arc: { none: true }, word: 'black', line: 'black' } });
-  const word = partBox(fit, 'word');
-  const tagH = word.h * 0.22;
+  const tag = taglineUnder(partBox(fit, 'word'), { scale: (ctx.options.taglineSize ?? 100) / 100, ratio: 0.22 });
   els.push({ id: 'front.tagline', label: 'Tagline', type: 'text', layer: 'fg', text: c.tagline, font: 'condSemibold', align: 'right', valign: 'top', spacing: 0.02,
-    box: { x: word.x, y: word.y + word.h + tagH * 0.5, w: word.w, h: tagH }, size: tagH / 0.7, minSize: 1.2, colors: WHITE });
+    box: tag.box, size: tag.size, minSize: 1.2, colors: WHITE });
   els.push(produced(ctx, 'side2.address', s2, B));
   return els;
 }
@@ -190,10 +190,9 @@ export function lid(ctx) {
   const fit = fitLogo(logoBox, 'markWord');
   els.push({ id: 'lid.logo', label: 'Lid logo', type: 'logo', layer: 'fg', layout: 'markWord', rotate: 180, pivot, box: logoBox,
     colors: { gear: 'dark', arc: { none: true }, word: 'white', line: 'white' } });
-  const word = partBox(fit, 'word');
-  const tagH = word.h * 0.2;
+  const tag = taglineUnder(partBox(fit, 'word'), { scale: (ctx.options.taglineSize ?? 100) / 100 });
   els.push({ id: 'lid.tagline', label: 'Lid tagline', type: 'text', layer: 'fg', rotate: 180, pivot, text: c.tagline, font: 'condSemibold', align: 'right', valign: 'top', spacing: 0.02,
-    box: { x: word.x, y: word.y + word.h + tagH * 0.5, w: word.w, h: tagH }, size: tagH / 0.7, minSize: 1.2, colors: { fill: 'dark' } });
+    box: tag.box, size: tag.size, minSize: 1.2, colors: { fill: 'dark' } });
   return els;
 }
 

@@ -65,6 +65,8 @@ logos, label and recycling marks on the preview. It exports:
 
   **Save PNG** takes a snapshot. Drag to orbit the camera; scroll to zoom.
 
+"Quality You Can Trust" has its own size setting under Layout & window (40 to 300 %). It stays right-aligned under the WERTIS word on the pouch back, the box front and the lid.
+
 The pattern of parts icons comes in two styles: solid silhouettes, or outlines. The recycling
 marks (the triangle with the material code, plus the tidyman) are vector shapes; pick the
 material under *Layout*.
