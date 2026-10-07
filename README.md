@@ -3,7 +3,7 @@
 A browser app for designing WERTIS packaging: window zip pouches like the KEULE 25 × 35 cm
 bag, stand-up pouches and folding boxes, all in WERTIS branding. You pick a format and an
 on-brand template, change sizes, texts and colours in the left panel, and drag the window,
-logos, badge and label on the preview. It exports:
+logos, label and recycling marks on the preview. It exports:
 
 - **Print PDF / Print SVG.** Real size in mm, with bleed. The artwork sits in the group
   `artwork` and the dieline (cut, zip, holes, notches, window outline) in a separate,
@@ -16,7 +16,46 @@ logos, badge and label on the preview. It exports:
   - notes for the printer;
   - the artwork with its dieline and dimensions in mm;
   - a legend and a sign-off box.
-- **Mockup PNG.** The finished bag with your product photo behind the window film.
+- **Mockup PNG.** The finished bag (front, back or both) with your product photo behind the
+  window film, at 96, 150 or 300 dpi.
+
+- **3D tab.** The packs as real objects under physics (three.js + cannon-es), textured
+  with the design's own faces:
+  - boxes in a neat stack you can **Push** over, or dropped into a pile;
+  - pouches hanging on a peg hook through their hang holes (and swinging when pushed),
+    in a pile, or lying in stacks.
+
+  **Save PNG** takes a snapshot. Drag to orbit the camera; scroll to zoom.
+
+The pattern of parts icons comes in two styles: solid silhouettes, or outlines. The recycling
+marks (the triangle with the material code, plus the tidyman) are vector shapes; pick the
+material under *Layout*.
+
+## Example products
+
+- **Pouches** start with a fuel filter. It has placeholder codes: the SKU W00-0000, and the
+  EAN 2000000000008 from GS1's in-store-only range, so it can never match a real product.
+  Type in the real codes.
+- **Boxes** start with the W09-0414 carburettor from its box artwork.
+
+## Formats
+
+- **Flat zip pouch.** Front and back side by side, as on the factory proof. Seals, zip, hang
+  hole (euro slot, sombrero or round), tear notches and rounded corners are all editable.
+- **Stand-up pouch (doypack, W × H + G).** Front and back, plus the bottom gusset as its own
+  strip with its fold line. K-seal, round or plain bottom. Text stays above the part of the
+  face that folds under.
+- **Folding box (L × W × H).** Laid out like the WERTIS boxes:
+  - Pieces: glue flap, back, side, front, side. The lid with its tuck flap hangs on the back,
+    the dust flaps sit on the sides, and the thumb notch is cut into the front.
+  - Bottom: a snap-lock (1-2-3) bottom as on W09-0414, or a tuck end (reverse tuck end).
+  - Cut lines are cyan and folds red, as in the printer's files. The tuck and bottom flaps
+    stay unprinted.
+  - Two templates: the product box (W09-0414 style) and the generic "CZĘŚCI ZAMIENNE /
+    SPARE PARTS" box.
+  - The flap shapes are scaled from the W09-0414 dieline. Note that this file is named
+    "L95 W65 H50", but its walls measure about 95 × 75 × 49 mm. The generic box proof
+    matches 95 × 65 × 50, which is the default.
 
 ## Run it
 
@@ -78,6 +117,7 @@ npm run vendor    # copy the browser libraries from node_modules into vendor/
 ## Licences
 
 - **Fonts:** Barlow and Barlow Semi Condensed, SIL Open Font License (`assets/fonts/OFL.txt`).
-- **Libraries:** jsPDF, svg2pdf.js, opentype.js and qrcode-generator, all MIT. Their licence
-  files are in `vendor/`.
+- **Libraries:** jsPDF, svg2pdf.js, opentype.js, qrcode-generator, three.js and cannon-es,
+  all MIT. Their licence files are in `vendor/`. three.js loads through the import map in
+  `index.html`, and only when the 3D tab opens.
 - **Brand assets:** the WERTIS logo and icons belong to WERTIS Sp. z o.o.
