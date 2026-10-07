@@ -4,15 +4,17 @@ import { loadTextEngine } from './text/browserFonts.js';
 import { createDesign } from './design.js';
 import { Store } from './store.js';
 import { panelsWithElements } from './render/sheet.js';
-import { printSvg, proofSvg } from './export/documents.js';
+import { printSvg, printDocument, proofSvg } from './export/documents.js';
 import { mockupSvg } from './render/mockup.js';
 import { download, svgBlob, pngBlob, pdfBlob, slug } from './export/files.js';
+import { dielineDxf } from './export/dxf.js';
+import { preflight } from './preflight.js';
 import { currentId, rememberCurrent, loadProject, saveProject, newId } from './storage.js';
 import { Stage } from './ui/stage.js';
 import { sidebar } from './ui/sidebar.js';
 import { inspector } from './ui/inspector.js';
 import { projectSection } from './ui/project.js';
-import { h, toast } from './ui/dom.js';
+import { h, toast, dialog } from './ui/dom.js';
 
 const today = () => new Date().toISOString().slice(0, 10);
 
@@ -65,13 +67,43 @@ async function boot() {
   };
   const name = () => slug(store.get().name);
   const exportsMenu = {
-    'print-pdf': () => busy('Print PDF', async () => download(await pdfBlob(printSvg(store.get(), env), { title: store.get().name }), `${name()}-print.pdf`)),
+    'print-pdf': async () => {
+      const pf = preflight(store.get(), env);
+      if (pf.errors && !(await showPreflight(pf, true))) return;
+      busy('Print PDF', async () => { const doc = printDocument(store.get(), env, { date: today() }); download(await pdfBlob(doc.pages, doc), `${name()}-print.pdf`); });
+    },
+    'dieline-dxf': () => busy('Dieline DXF', async () => download(new Blob([dielineDxf(store.get(), env)], { type: 'application/dxf' }), `${name()}-dieline.dxf`)),
     'print-svg': () => busy('Print SVG', async () => download(svgBlob(printSvg(store.get(), env)), `${name()}-print.svg`)),
     'proof-pdf': () => busy('Proof PDF', async () => download(await pdfBlob(proofSvg(store.get(), env, store.get().proof.page ?? 'a3'), { title: `${store.get().name} proof` }), `${name()}-proof.pdf`)),
     'proof-png': () => busy('Proof PNG', async () => download(await pngBlob(proofSvg(store.get(), env, store.get().proof.page ?? 'a3'), { dpi: 200 }), `${name()}-proof.png`)),
     'mockup-png': () => busy('Mockup PNG', async () => download(await pngBlob(mockupSvg(store.get(), env).svg, { dpi: Number(document.getElementById('mockup-dpi').value) || 150 }), `${name()}-mockup.png`)),
   };
   for (const [key, fn] of Object.entries(exportsMenu)) document.querySelector(`[data-export="${key}"]`).onclick = fn;
+
+  // Preflight: the badge stays current; the button lists the findings.
+  const badge = document.getElementById('preflight-badge');
+  let pfTimer = null;
+  const refreshPreflight = () => {
+    clearTimeout(pfTimer);
+    pfTimer = setTimeout(() => {
+      const pf = preflight(store.get(), env);
+      badge.textContent = pf.errors ? pf.errors : pf.warnings ? pf.warnings : '✓';
+      badge.className = `badge${pf.errors ? ' error' : pf.warnings ? ' warn' : ''}`;
+    }, 600);
+  };
+  async function showPreflight(pf, beforeExport = false) {
+    const icons = { error: '✕', warn: '!', ok: '✓' };
+    const order = { error: 0, warn: 1, ok: 2 };
+    const list = h('div', { class: 'preflight-list' }, [...pf.items].sort((a, b) => order[a.level] - order[b.level]).map((it) =>
+      h('div', { class: `pf-item ${it.level}` }, h('span', { class: 'pf-level' }, icons[it.level]), h('span', { class: 'pf-topic' }, it.topic), h('span', {}, it.message))));
+    const title = pf.errors ? `Preflight: ${pf.errors} error${pf.errors === 1 ? '' : 's'}` : pf.warnings ? `Preflight: ${pf.warnings} warning${pf.warnings === 1 ? '' : 's'}` : 'Preflight: ready to print';
+    const body = h('div', {}, beforeExport ? h('p', {}, 'These would print wrong. Fix them first, or export anyway.') : null, list);
+    document.querySelector('.modal-back .modal')?.classList.add('wide');
+    const p = dialog(title, body, beforeExport ? [['Cancel', false, 'ghost'], ['Export anyway', true, 'danger']] : [['Close', false, 'primary']]);
+    document.querySelector('.modal-back:last-child .modal')?.classList.add('wide');
+    return p;
+  }
+  document.getElementById('preflight').onclick = () => showPreflight(preflight(store.get(), env));
 
   // Autosave into this browser's library.
   let saveTimer = null;
@@ -92,6 +124,7 @@ async function boot() {
     redo.disabled = !store.canRedo();
     document.title = `${d.name} · WERTIS Packaging Designer`;
     if (reason !== 'init') autosave();
+    refreshPreflight();
     if (reason === 'replace') stage.select(null);
   };
   store.subscribe(sync);
@@ -113,7 +146,7 @@ async function boot() {
   window.addEventListener('keyup', (e) => { if (e.key.startsWith('Arrow')) store.settle(); });
 
   // Test hooks (scripts/playtest.js drives the app through these).
-  window.wertis = { store, env, stage, printSvg: () => printSvg(store.get(), env), proofSvg: (page) => proofSvg(store.get(), env, page), mockupSvg: () => mockupSvg(store.get(), env).svg, pdfBlob, pngBlob };
+  window.wertis = { store, env, stage, printSvg: () => printSvg(store.get(), env), printDocument: () => printDocument(store.get(), env), preflight: () => preflight(store.get(), env), dxf: () => dielineDxf(store.get(), env), proofSvg: (page) => proofSvg(store.get(), env, page), mockupSvg: () => mockupSvg(store.get(), env).svg, pdfBlob, pngBlob };
 }
 
 boot().catch((err) => {

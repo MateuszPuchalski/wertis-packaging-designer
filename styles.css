@@ -205,3 +205,19 @@ h4 { margin: 8px 0 2px; font-size: 12px; text-transform: uppercase; letter-spaci
 .view3d { width: 100%; height: 100%; position: relative; }
 .view3d canvas { display: block; cursor: grab; }
 .viewport:has(.view3d:not([hidden])) { overflow: hidden; }
+
+/* print & export */
+.sw-spotflag { display: flex; align-items: center; gap: 3px; font-size: 12px; color: #4a4642; white-space: nowrap; }
+.sw-spotflag[hidden] { display: none; }
+.badge { display: inline-block; min-width: 18px; padding: 0 5px; border-radius: 9px; font-size: 11px; font-weight: 700; line-height: 18px; text-align: center; background: #e7f4ea; color: #1e7b34; }
+.badge.warn { background: #fff1d6; color: #9a5b00; }
+.badge.error { background: #fde2df; color: #b3261e; }
+.preflight-list { display: flex; flex-direction: column; gap: 6px; max-height: 60vh; overflow: auto; }
+.pf-item { display: grid; grid-template-columns: 22px 80px 1fr; gap: 6px; align-items: start; font-size: 13.5px; }
+.pf-item .pf-level { font-weight: 700; text-align: center; }
+.pf-item.error .pf-level { color: #b3261e; }
+.pf-item.warn .pf-level { color: #9a5b00; }
+.pf-item.ok .pf-level { color: #1e7b34; }
+.pf-item .pf-topic { color: var(--muted); }
+.modal.wide { width: min(720px, 94vw); }
+.tools-3d select { max-width: 240px; }

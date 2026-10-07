@@ -22,7 +22,8 @@ export function qrMatrix(text, ecc = 'M') {
 }
 
 // The code at (x, y), `size` mm wide including the quiet zone of `quiet` modules.
-export function qrSvg({ text, x = 0, y = 0, size = 20, color = '#000000', bg = '#ffffff', quiet = 2, ecc = 'M' }) {
+// quiet: the margin in modules; ISO/IEC 18004 asks for 4.
+export function qrSvg({ text, x = 0, y = 0, size = 20, color = '#000000', bg = '#ffffff', quiet = 4, ecc = 'M' }) {
   if (!String(text ?? '').trim()) return { error: 'The QR code needs some text or a link.' };
   const m = qrMatrix(text, ecc);
   const unit = size / (m.size + quiet * 2);

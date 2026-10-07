@@ -54,9 +54,10 @@ export function luminance(hex) {
   return 0.2126 * r + 0.7152 * g + 0.0722 * b;
 }
 
-export function makeSwatch({ id, name, hex, cmyk, spot = '', role = '' }) {
+// asSpot: print this swatch as its own spot ink (a Separation named `spot`) instead of CMYK.
+export function makeSwatch({ id, name, hex, cmyk, spot = '', role = '', asSpot = false }) {
   const h = normalizeHex(hex) ?? '#000000';
-  return { id, name: name || id, hex: h, cmyk: Array.isArray(cmyk) && cmyk.length === 4 ? cmyk.map(Number) : cmykFromHex(h), spot, role };
+  return { id, name: name || id, hex: h, cmyk: Array.isArray(cmyk) && cmyk.length === 4 ? cmyk.map(Number) : cmykFromHex(h), spot, role, asSpot: !!asSpot };
 }
 
 export function findSwatch(palette, id) {
@@ -97,6 +98,7 @@ export function updateSwatch(palette, id, fields) {
     const next = { ...s, ...fields, id: s.id, role: s.role };
     if (fields.hex !== undefined) next.hex = normalizeHex(fields.hex) ?? s.hex;
     if (fields.cmyk !== undefined) next.cmyk = fields.cmyk.map((v) => Math.min(100, Math.max(0, Math.round(Number(v) || 0))));
+    if (fields.asSpot !== undefined) next.asSpot = !!fields.asSpot;
     return next;
   });
 }

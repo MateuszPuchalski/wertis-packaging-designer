@@ -46,24 +46,25 @@ export const LOGO_ROLES = [['gear', 'Gear'], ['arc', 'Arc'], ['word', 'WERTIS'],
 export const LANGS = [['pl', 'PL'], ['cz', 'CZ'], ['sk', 'SK'], ['en', 'EN'], ['hu', 'HU'], ['ro', 'RO']];
 
 // Example content a new design starts with. Window pouches hold small parts; the example
-// is a fuel filter with placeholder codes (SKU W00-0000, and an EAN from GS1's 200 range,
-// which is for in-store use only, so it can never clash with a real product). Boxes start
-// with the real W09-0414 carburettor from its box artwork.
+// is a Stihl clutch drum kit (the parts the 3D view puts in the pouch) with placeholder codes
+// (SKU W00-0000, and an EAN from GS1's 200 range, which is for in-store use only, so it can
+// never clash with a real product). Boxes start with the real W09-0414 carburettor from its
+// box artwork.
 const EXAMPLES = {
   pouch: {
-    name: 'Filtr paliwa – torebka z okienkiem',
+    name: 'Bęben sprzęgła Stihl – torebka z okienkiem',
     productName: {
-      pl: 'Filtr paliwa do kosy spalinowej i pilarki',
-      cz: 'Palivový filtr pro křovinořez a motorovou pilu',
-      sk: 'Palivový filter pre krovinorez a motorovú pílu',
-      en: 'Fuel filter for brushcutters and chainsaws',
-      hu: 'Üzemanyagszűrő fűkaszához és láncfűrészhez',
-      ro: 'Filtru de combustibil pentru motocoasă și drujbă',
+      pl: 'Bęben sprzęgła do pilarki Stihl MS170 MS180 MS230 MS250',
+      cz: 'Buben spojky pro motorovou pilu Stihl MS170 MS180 MS230 MS250',
+      sk: 'Bubon spojky pre motorovú pílu Stihl MS170 MS180 MS230 MS250',
+      en: 'Clutch drum for Stihl MS170 MS180 MS230 MS250 chainsaws',
+      hu: 'Kuplungdob Stihl MS170 MS180 MS230 MS250 láncfűrészhez',
+      ro: 'Tambur ambreiaj pentru drujba Stihl MS170 MS180 MS230 MS250',
     },
-    subtitle: 'Do silników dwusuwowych',
+    subtitle: 'Do pilarek łańcuchowych Stihl',
     sku: 'W00-0000',
     ean: '2000000000008',
-    specs: ['Średnica przewodu: 3 mm', 'Opakowanie: 2 szt.'],
+    specs: ['Średnica bębna: 69 mm', 'Koronka 3/8" P, 7 zębów', 'W zestawie: sprzęgło, łożysko igiełkowe, podkładka, zabezpieczenie', 'Pasuje do: MS170, MS180, MS210, MS230, MS250, MS181, MS190, MS211, MS231'],
   },
   box: {
     name: 'W09-0414 gaźnik – pudełko',

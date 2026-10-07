@@ -6,17 +6,56 @@
 import { el, n, rectPath, ellipsePath, gearPath, clamp } from './svg.js';
 import { patternSvg } from './pattern.js';
 import { logoSvg } from '../brand/logo.js';
-import { resolveColor, refSwatchId, findSwatch, mix } from '../brand/palette.js';
+import { resolveColor, refSwatchId, findSwatch, mix, cmykFromHex } from '../brand/palette.js';
 import { ean13Svg } from '../codes/ean13.js';
 import { qrSvg } from '../codes/qr.js';
 import { recycleMark, tidyman } from '../brand/marks.js';
 
-// rc (render context): { design, text, defs: Map, used: Set, mode, uid() }
+// rc (render context): { design, text, defs: Map, used: Set, cmyk: Map, mode, uid() }
+// Besides the hex colour, every colour drawn is noted with its CMYK (the swatch's own numbers;
+// a custom colour gets the simple conversion), so the print PDF can be written in CMYK.
 export function colorOf(rc, elem, slot) {
   const ref = rc.design.colors?.[`${elem.id}.${slot}`] ?? elem.colors?.[slot];
   const id = refSwatchId(ref);
-  if (id && findSwatch(rc.design.palette, id)) rc.used.add(id);
-  return resolveColor(ref, rc.design.palette);
+  const sw = id ? findSwatch(rc.design.palette, id) : null;
+  if (sw) rc.used.add(id);
+  const hex = resolveColor(ref, rc.design.palette);
+  if (rc.cmyk && hex !== 'none' && !rc.cmyk.has(hex)) rc.cmyk.set(hex, sw && !(ref && typeof ref === 'object' && ref.custom) ? sw.cmyk : cmykFromHex(hex));
+  return hex;
+}
+
+// The metallic look (silver edges, the big gear). Previews use a gradient; print files get
+// the same light and shade as thin strips of tints of the swatch, so every ink stays an
+// exact CMYK mix (and a spot silver stays a tint of that spot).
+const METAL = [[0, 0.45], [0.35, 0], [0.5, 0.7], [0.7, 0], [1, -0.35]];
+function metalAt(t) {
+  for (let i = 1; i < METAL.length; i++) {
+    const [t1, s1] = METAL[i];
+    if (t <= t1) {
+      const [t0, s0] = METAL[i - 1];
+      return s0 + ((s1 - s0) * (t - t0)) / (t1 - t0);
+    }
+  }
+  return METAL[METAL.length - 1][1];
+}
+
+function metalSvg(rc, base, box, shape, rule = 'nonzero') {
+  if (rc.mode !== 'print') return el('path', { d: shape ?? rectPath(box.x, box.y, box.w, box.h), fill: silverGradient(rc, base), 'fill-rule': rule });
+  const v0 = rc.cmyk?.get(base);
+  const cmyk = Array.isArray(v0) ? v0 : cmykFromHex(base);
+  // A swatch printed as a spot ink: the strips become tints of that ink.
+  const spotSwatch = rc.design.palette.find((sw) => sw.hex === base && sw.asSpot);
+  const n = Math.round(clamp(box.h / 0.25, 6, 60));
+  const step = box.h / n;
+  let strips = '';
+  for (let i = 0; i < n; i++) {
+    const s = metalAt((i + 0.5) / n);
+    const hex = s >= 0 ? mix(base, '#ffffff', s) : mix(base, '#000000', -s);
+    const k = s >= 0 ? cmyk.map((v) => Math.round(v * (1 - s) * 10) / 10) : [cmyk[0], cmyk[1], cmyk[2], Math.round((cmyk[3] + (100 - cmyk[3]) * -s) * 10) / 10];
+    if (rc.cmyk && !rc.cmyk.has(hex)) rc.cmyk.set(hex, spotSwatch ? { spotOf: spotSwatch.id, tint: s >= 0 ? Math.round((1 - s) * 1000) / 1000 : 1, cmyk: k } : k);
+    strips += el('path', { d: rectPath(box.x, box.y + i * step, box.w, step + 0.02), fill: hex });
+  }
+  return el('g', { 'clip-path': clipDef(rc, shape ?? rectPath(box.x, box.y, box.w, box.h), rule) }, strips);
 }
 
 export function windowPath(w) {
@@ -89,7 +128,7 @@ function labelSvg(rc, e) {
     const textBottom = cy;
     // Codes along the bottom.
     const m = Math.max(0.264, clamp((iw * 0.5) / 113, 0.264, 0.5) * k);
-    const ean = c.ean ? ean13Svg({ code: c.ean, x: x + pad, y: 0, module: m, color: bars, bg: fill, text: t }) : null;
+    const ean = c.ean ? ean13Svg({ code: c.ean, x: x + pad, y: 0, module: m, color: bars, bg: fill, text: t, bwr: rc.design.export?.bwr ?? 0 }) : null;
     const codesH = ean && !ean.error ? ean.h : clamp(iw * 0.2, 10, 30) * k;
     const by = y + h - pad - codesH;
     if (ean && !ean.error) out += el('g', { transform: `translate(0 ${n(by)})` }, ean.svg);
@@ -97,7 +136,7 @@ function labelSvg(rc, e) {
     const urlCap = smallCap;
     const qrSize = codesH - urlCap * 1.8;
     if (c.qr && qrSize > 4) {
-      const q = qrSvg({ text: c.qr, x: x + w - pad - qrSize, y: by, size: qrSize, color: bars, bg: fill, quiet: 2 });
+      const q = qrSvg({ text: c.qr, x: x + w - pad - qrSize, y: by, size: qrSize, color: bars, bg: fill, quiet: 4 });
       if (!q.error) out += q.svg;
       if (c.url) out += el('g', { fill: ink }, t.layout({ text: c.url, x: x + w - pad - qrSize * 1.6, y: by + qrSize + urlCap * 0.5, w: qrSize * 1.6, font: 'semibold', size: urlCap / 0.7, align: 'right' }).svg);
     }
@@ -120,7 +159,7 @@ function eanSvg(rc, e) {
   const w = 113 * m, h = (69.24 * k + 11) * m;
   const x = e.align === 'right' ? e.box.x + e.box.w - w : e.align === 'left' ? e.box.x : e.box.x + (e.box.w - w) / 2;
   const y = e.valign === 'bottom' ? e.box.y + e.box.h - h : e.valign === 'top' ? e.box.y : e.box.y + (e.box.h - h) / 2;
-  const r = ean13Svg({ code: e.code, x, y: y + m, module: m, barHeight: 69.24 * k * m, color: colorOf(rc, e, 'bars'), bg: colorOf(rc, e, 'bg'), text: rc.text });
+  const r = ean13Svg({ code: e.code, x, y: y + m, module: m, barHeight: 69.24 * k * m, color: colorOf(rc, e, 'bars'), bg: colorOf(rc, e, 'bg'), text: rc.text, bwr: rc.design.export?.bwr ?? 0 });
   if (r.error) return { svg: el('g', { fill: '#d0021b' }, rc.text.layout({ text: r.error, ...e.box, font: 'semibold', size: 2.4, minSize: 1.2, wrap: true }).svg), box: e.box };
   return { svg: r.svg, box: { x, y, w, h } };
 }
@@ -128,7 +167,7 @@ function eanSvg(rc, e) {
 function qrElementSvg(rc, e) {
   const size = Math.min(e.box.w, e.box.h);
   const x = e.box.x + (e.box.w - size) / 2, y = e.box.y + (e.box.h - size) / 2;
-  const r = qrSvg({ text: e.text, x, y, size, color: colorOf(rc, e, 'dots'), bg: colorOf(rc, e, 'bg'), quiet: 2 });
+  const r = qrSvg({ text: e.text, x, y, size, color: colorOf(rc, e, 'dots'), bg: colorOf(rc, e, 'bg'), quiet: 4 });
   return { svg: r.error ? '' : r.svg, box: { x, y, w: size, h: size } };
 }
 
@@ -166,18 +205,20 @@ function elementSvg(rc, e, panel) {
     case 'silver': {
       const box = e.bleed ? bleedBox(e.box, panel, rc.bleed) : e.box;
       const base = colorOf(rc, e, 'fill');
-      return { svg: base === 'none' ? '' : el('path', { d: rectPath(box.x, box.y, box.w, box.h), fill: silverGradient(rc, base) }), box: e.box };
+      return { svg: base === 'none' ? '' : metalSvg(rc, base, box), box: e.box };
     }
     case 'pattern': {
       const box = e.bleed ? bleedBox(e.box, panel, rc.bleed) : e.box;
       const ink = colorOf(rc, e, 'ink');
-      const body = patternSvg(box, rc.design.pattern, ink, rc.defs, `${e.id}`);
+      const body = patternSvg(box, rc.design.pattern, ink, rc.defs, `${e.id}`, { inline: !!rc.inlineUses });
       return { svg: body ? el('g', { 'clip-path': clipDef(rc, rectPath(box.x, box.y, box.w, box.h)) }, body) : '', box: e.box };
     }
     case 'gear': {
       const fill = colorOf(rc, e, 'fill');
       const d = gearPath(e.cx, e.cy, e.r1, e.r2, e.teeth, e.hole);
-      const g = el('path', { d, fill: e.metallic && fill !== 'none' ? silverGradient(rc, fill) : fill, 'fill-rule': 'evenodd' });
+      const g = e.metallic && fill !== 'none'
+        ? metalSvg(rc, fill, { x: e.cx - e.r2, y: e.cy - e.r2, w: 2 * e.r2, h: 2 * e.r2 }, d, 'evenodd')
+        : el('path', { d, fill, 'fill-rule': 'evenodd' });
       return { svg: fill === 'none' ? '' : (e.clip ? el('g', { 'clip-path': clipDef(rc, rectPath(e.clip.x, e.clip.y, e.clip.w, e.clip.h)) }, g) : g), box: e.box };
     }
     case 'logo': {

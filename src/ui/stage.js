@@ -6,6 +6,7 @@ import { renderSheet } from '../render/sheet.js';
 import { renderProof } from '../render/proof.js';
 import { packFaces } from '../render/faces.js';
 import { SCENES, MAX_COUNT, scenesFor } from '../three/scenes.js';
+import { PRODUCTS } from '../three/products.js';
 
 const SVGNS = 'http://www.w3.org/2000/svg';
 
@@ -35,7 +36,11 @@ export class Stage {
     // 3D: scene, how many packs, drop again, push, snapshot.
     this.sceneSel = h('select', { id: 'scene3d', 'aria-label': '3D scene', onchange: () => { this.view3d?.setScene(this.sceneSel.value); this.syncCount(); } });
     this.countIn = h('input', { type: 'number', id: 'count3d', min: 1, max: 40, value: 8, 'aria-label': 'How many', onchange: () => { this.syncCount(); this.view3d?.setCount(Number(this.countIn.value)); } });
-    this.tools3d = h('span', { class: 'tools-3d', hidden: true }, this.sceneSel,
+    // What is in the pouch: stored in the design, so the project remembers it.
+    this.productSel = h('select', { id: 'product3d', 'aria-label': 'Part in the pouch', title: 'The part in the pouch, at its real size',
+      onchange: () => { this.store.set(['mockup', 'product3d'], this.productSel.value); this.store.settle(); } },
+    Object.entries(PRODUCTS).map(([k, p]) => h('option', { value: k }, p.label)));
+    this.tools3d = h('span', { class: 'tools-3d', hidden: true }, this.sceneSel, this.productSel,
       h('label', { class: 'toggle' }, 'Packs', this.countIn),
       h('button', { class: 'secondary tiny', id: 'again3d', onclick: () => this.view3d?.again() }, 'Drop again'),
       h('button', { class: 'secondary tiny', id: 'push3d', onclick: () => this.view3d?.push() }, 'Push'),
@@ -96,6 +101,8 @@ export class Stage {
     clearTimeout(this.timer3d);
     this.timer3d = setTimeout(async () => {
       const pack = packFaces(design, this.env);
+      this.productSel.hidden = pack.kind === 'box';
+      this.productSel.value = design.mockup?.product3d ?? 'none';
       const scenes = scenesFor(pack.kind);
       const sig = scenes.join('|');
       if (this.sceneSel.dataset.sig !== sig) {

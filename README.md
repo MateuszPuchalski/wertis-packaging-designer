@@ -5,10 +5,36 @@ bag, stand-up pouches and folding boxes, all in WERTIS branding. You pick a form
 on-brand template, change sizes, texts and colours in the left panel, and drag the window,
 logos, label and recycling marks on the preview. It exports:
 
-- **Print PDF / Print SVG.** Real size in mm, with bleed. The artwork sits in the group
-  `artwork` and the dieline (cut, zip, holes, notches, window outline) in a separate,
-  non-printing magenta group `dieline`. Windows carry no ink, and all text is converted to
-  outlines, so no fonts are needed at the printer.
+- **Print PDF (PDF/X-1a:2001).** Real size in mm, with bleed.
+  - **Colours:** CMYK only, using each swatch's own CMYK numbers, or a named spot ink when
+    the swatch is ticked "Spot ink".
+  - **Boxes and printing condition:** TrimBox and BleedBox are set, and the file declares
+    a registered printing condition (FOGRA39 by default; also FOGRA51, FOGRA52, FOGRA47 or
+    GRACoL 2013).
+  - **Dieline:** in its own spot inks, "Dieline" (cuts) and "Crease" (folds), set to
+    overprint.
+  - **Marks:** crop marks in registration colour, and a slug line with the file's details.
+  - **Pages:** page 2 is the dieline alone. For clear film, page 3 is the white underprint
+    plate (spot "White"), which covers everything except the windows and holes.
+  - **Text and transparency:** all text is outlines and nothing is transparent. A placed
+    photo (RGB) turns the file into plain PDF, and preflight says so.
+- **Print SVG.** The same artwork and dieline (groups `artwork` and `dieline`), for
+  Illustrator.
+- **Dieline DXF.** For the die maker: AutoCAD R12, in millimetres. Layers: CUT and CREASE,
+  plus ZIP and WINDOW for information.
+- **Preflight.** Runs the checks a printer's prepress would:
+  - the EAN-13 is valid and at least 80 % size;
+  - total ink stays within the printing condition's limit;
+  - spot inks have names;
+  - no text is under 5 pt;
+  - elements stay inside the safe area (clear of seals and folds);
+  - bleed, photos, and windows clear of the seals.
+
+  The badge on the button shows the count. Print PDF asks before exporting a file with
+  errors.
+- **Barcodes (GS1).** EAN-13 with quiet zones, never below 80 %, with an optional bar width
+  reduction for ink spread. QR codes keep the 4-module quiet zone that ISO/IEC 18004 asks
+  for.
 - **Proof PDF / PNG.** A factory-style proof sheet:
   - a header table (product, code, format and size, version, date, author, number of colours);
   - a chip for every colour the design uses, with hex, CMYK and spot names, plus
@@ -24,6 +50,18 @@ logos, label and recycling marks on the preview. It exports:
   - boxes in a neat stack you can **Push** over, or dropped into a pile;
   - pouches hanging on a peg hook through their hang holes (and swinging when pushed),
     in a pile, or lying in stacks.
+
+  **What is in the pouch.** The pouch can hold a product, modelled in 3D at its real size.
+  - **The kit:** the Stihl MS170 / MS180 clutch kit, after the shop's photos. It has the Ø69 mm
+    drum with its 3/8" P 7-tooth rim sprocket, the clutch, a spare rim, the needle bearing,
+    the cup washer and the E-clip.
+  - **Layout:** the parts lie behind the window as on the photo; a smaller window squeezes them
+    together.
+  - **Film and lining:** the film swells over the parts and the window shows them through its
+    sheen. Inside, the pouch is lined with the white of the underprint.
+
+  Pick it, or "Nothing", in the 3D toolbar; the project remembers the choice. Without a product,
+  a photo set for the mockup shows on the inside of the pouch.
 
   **Save PNG** takes a snapshot. Drag to orbit the camera; scroll to zoom.
 
