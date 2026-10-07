@@ -4,7 +4,7 @@ import { loadTextEngine } from './text/browserFonts.js';
 import { createDesign } from './design.js';
 import { Store } from './store.js';
 import { panelsWithElements } from './render/sheet.js';
-import { printSvg, proofSvg } from './export/documents.js';
+import { printSvg, printDocument, proofSvg } from './export/documents.js';
 import { mockupSvg } from './render/mockup.js';
 import { download, svgBlob, pngBlob, pdfBlob, slug } from './export/files.js';
 import { currentId, rememberCurrent, loadProject, saveProject, newId } from './storage.js';
@@ -65,7 +65,7 @@ async function boot() {
   };
   const name = () => slug(store.get().name);
   const exportsMenu = {
-    'print-pdf': () => busy('Print PDF', async () => download(await pdfBlob(printSvg(store.get(), env), { title: store.get().name }), `${name()}-print.pdf`)),
+    'print-pdf': () => busy('Print PDF', async () => { const doc = printDocument(store.get(), env); download(await pdfBlob(doc.pages, { title: doc.title, cmyk: doc.cmyk }), `${name()}-print.pdf`); }),
     'print-svg': () => busy('Print SVG', async () => download(svgBlob(printSvg(store.get(), env)), `${name()}-print.svg`)),
     'proof-pdf': () => busy('Proof PDF', async () => download(await pdfBlob(proofSvg(store.get(), env, store.get().proof.page ?? 'a3'), { title: `${store.get().name} proof` }), `${name()}-proof.pdf`)),
     'proof-png': () => busy('Proof PNG', async () => download(await pngBlob(proofSvg(store.get(), env, store.get().proof.page ?? 'a3'), { dpi: 200 }), `${name()}-proof.png`)),
@@ -113,7 +113,7 @@ async function boot() {
   window.addEventListener('keyup', (e) => { if (e.key.startsWith('Arrow')) store.settle(); });
 
   // Test hooks (scripts/playtest.js drives the app through these).
-  window.wertis = { store, env, stage, printSvg: () => printSvg(store.get(), env), proofSvg: (page) => proofSvg(store.get(), env, page), mockupSvg: () => mockupSvg(store.get(), env).svg, pdfBlob, pngBlob };
+  window.wertis = { store, env, stage, printSvg: () => printSvg(store.get(), env), printDocument: () => printDocument(store.get(), env), proofSvg: (page) => proofSvg(store.get(), env, page), mockupSvg: () => mockupSvg(store.get(), env).svg, pdfBlob, pngBlob };
 }
 
 boot().catch((err) => {

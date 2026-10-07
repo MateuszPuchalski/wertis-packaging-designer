@@ -54,21 +54,51 @@ export async function pngBlob(svg, { dpi = 150, maxPx = 12000, background = null
   }
 }
 
-// A vector PDF whose page is the SVG's size in mm.
-export async function pdfBlob(svg, { title = 'WERTIS packaging' } = {}) {
+// A vector PDF, one page per SVG, each page the SVG's size in mm. With `cmyk` (hex → [c, m,
+// y, k] in %), every fill and stroke is written as that CMYK mix instead of RGB; colours
+// missing from the map get the simple conversion.
+export async function pdfBlob(svgs, { title = 'WERTIS packaging', cmyk = null, compress = true } = {}) {
   const { jsPDF } = window.jspdf ?? {};
   if (!jsPDF || !window.svg2pdf) throw new Error('The PDF library did not load.');
-  const size = svgSizeMm(svg);
-  const doc = new jsPDF({ orientation: size.w >= size.h ? 'landscape' : 'portrait', unit: 'mm', format: [size.w, size.h], compress: true });
+  const pages = Array.isArray(svgs) ? svgs : [svgs];
+  const first = svgSizeMm(pages[0]);
+  const doc = new jsPDF({ orientation: first.w >= first.h ? 'landscape' : 'portrait', unit: 'mm', format: [first.w, first.h], compress });
   doc.setProperties({ title, creator: 'WERTIS Packaging Designer' });
+  if (cmyk) {
+    const toCmyk = (r, g, b) => {
+      const hex = `#${[r, g, b].map((v) => Math.round(v).toString(16).padStart(2, '0')).join('')}`;
+      return cmyk.get(hex) ?? naiveCmyk(r, g, b);
+    };
+    for (const name of ['setFillColor', 'setDrawColor']) {
+      const orig = doc[name].bind(doc);
+      doc[name] = (a, b, c, d) => {
+        if (typeof a === 'number' && typeof b === 'number' && typeof c === 'number' && d === undefined) {
+          const [C, M, Y, K] = toCmyk(a, b, c);
+          return orig(C / 100, M / 100, Y / 100, K / 100);
+        }
+        return orig(a, b, c, d);
+      };
+    }
+  }
   const holder = document.createElement('div');
   holder.style.cssText = 'position:fixed;left:-99999px;top:0;width:10px;height:10px;overflow:hidden';
-  holder.innerHTML = svg;
   document.body.append(holder);
   try {
-    await doc.svg(holder.firstElementChild, { x: 0, y: 0, width: size.w, height: size.h });
+    for (let i = 0; i < pages.length; i++) {
+      const size = svgSizeMm(pages[i]);
+      if (i > 0) doc.addPage([size.w, size.h], size.w >= size.h ? 'landscape' : 'portrait');
+      holder.innerHTML = pages[i];
+      await doc.svg(holder.firstElementChild, { x: 0, y: 0, width: size.w, height: size.h });
+    }
   } finally {
     holder.remove();
   }
   return doc.output('blob');
+}
+
+function naiveCmyk(r, g, b) {
+  const R = r / 255, G = g / 255, B = b / 255;
+  const k = 1 - Math.max(R, G, B);
+  if (k >= 1) return [0, 0, 0, 100];
+  return [(1 - R - k) / (1 - k), (1 - G - k) / (1 - k), (1 - B - k) / (1 - k), k].map((v) => Math.round(v * 100));
 }

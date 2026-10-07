@@ -7,7 +7,8 @@
 import { FORMATS, TEMPLATES } from '../registry.js';
 import { el, n, rectPath } from './svg.js';
 import { panelArt } from './artwork.js';
-import { dielineSvg } from './dieline.js';
+import { dielineSvg, dielineColors } from './dieline.js';
+import { cmykFromHex } from '../brand/palette.js';
 
 export function geometry(design) {
   return FORMATS[design.format].layout(design.dims);
@@ -31,7 +32,7 @@ export function panelsWithElements(design, env, geo = geometry(design)) {
 
 function renderContext(design, env, mode) {
   let i = 0;
-  return { design, text: env.text, defs: new Map(), used: new Set(), mode, bleed: geometryBleed(design), uid: (p) => `${p}${++i}` };
+  return { design, text: env.text, defs: new Map(), used: new Set(), cmyk: new Map(), mode, bleed: geometryBleed(design), uid: (p) => `${p}${++i}` };
 }
 
 function geometryBleed(design) {
@@ -39,15 +40,19 @@ function geometryBleed(design) {
 }
 
 // Returns { svg, inner, defs, hits, used, geo, box } where box is the drawn area in mm.
-export function renderSheet(design, env, { mode = 'design', margin = 0, dieline = true, guides = true, labels = true } = {}) {
+// `art: false` draws only the dieline (the second page of the print PDF).
+export function renderSheet(design, env, { mode = 'design', margin = 0, dieline = true, guides = true, labels = true, art: withArt = true } = {}) {
   const geo = geometry(design);
   const rc = renderContext(design, env, mode);
+  // The construction lines print in pure process colours.
+  const lines = dielineColors(geo);
+  for (const hex of [lines.cut, lines.fold]) rc.cmyk.set(hex, cmykFromHex(hex).map((v) => (v >= 50 ? 100 : 0)));
   const b = geo.bleed;
   const parts = panelsWithElements(design, env, geo);
   let art = '';
   const hits = [];
   const windows = [];
-  for (const { panel, elements } of parts) {
+  for (const { panel, elements } of withArt ? parts : []) {
     const r = panelArt(rc, panel, elements);
     art += el('g', { transform: `translate(${n(panel.x)} ${n(panel.y)})`, 'data-panel': mode === 'print' ? null : panel.id }, r.svg);
     for (const h of r.hits) hits.push({ ...h, panel: panel.id, box: { ...h.box, x: h.box.x + panel.x, y: h.box.y + panel.y } });
@@ -75,7 +80,7 @@ export function renderSheet(design, env, { mode = 'design', margin = 0, dieline 
   const inner = (defs ? el('defs', {}, defs) : '') + el('g', { id: mode === 'print' ? 'artwork' : null }, art)
     + (mode === 'design' ? el('g', { 'pointer-events': 'none' }, over) : over);
   const box = { x: -b - margin, y: -b - margin, w: geo.size.w + 2 * (b + margin), h: geo.size.h + 2 * (b + margin) };
-  return { svg: wrapSvg(inner, box), inner, hits, used: rc.used, geo, box, windows };
+  return { svg: wrapSvg(inner, box), inner, hits, used: rc.used, cmyk: rc.cmyk, geo, box, windows };
 }
 
 export function wrapSvg(inner, box, extra = {}) {

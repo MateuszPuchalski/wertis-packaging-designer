@@ -96,13 +96,17 @@ export async function playtest() {
     assert.ok(!/<filter|<pattern|<mask/.test(svg), 'the print file has no filters, patterns or masks');
     assert.ok(svg.includes('id="dieline"'), 'the print file has a dieline group');
     const pdf = await page.evaluate(async () => {
-      const blob = await window.wertis.pdfBlob(window.wertis.printSvg());
+      const doc = window.wertis.printDocument();
+      const blob = await window.wertis.pdfBlob(doc.pages, { cmyk: doc.cmyk, compress: false });
       const text = await blob.text();
-      return { size: blob.size, box: text.match(/\/MediaBox\s*\[([^\]]+)\]/)?.[1] };
+      return { size: blob.size, box: text.match(/\/MediaBox\s*\[([^\]]+)\]/)?.[1], pages: (text.match(/\/Type \/Page\b/g) || []).length,
+        cmyk: (text.match(/ k\n/g) || []).length, rgb: (text.match(/\d (rg|RG)\n/g) || []).length };
     });
     const [, , pw, ph] = pdf.box.trim().split(/\s+/).map(Number);
     assert.ok(Math.abs(pw - (506 * 72) / 25.4) < 0.5 && Math.abs(ph - (356 * 72) / 25.4) < 0.5, `PDF page is ${pw} × ${ph} pt`);
-    step(`print PDF is 506 × 356 mm (${Math.round(pdf.size / 1024)} KB)`);
+    assert.equal(pdf.pages, 2, 'artwork + dieline, then the dieline alone');
+    assert.ok(pdf.cmyk > 20 && pdf.rgb === 0, `colours are CMYK (${pdf.cmyk} CMYK fills, ${pdf.rgb} RGB)`);
+    step(`print PDF is 506 × 356 mm, 2 pages, all colours CMYK`);
     const proofPng = await page.evaluate(async () => (await window.wertis.pngBlob(window.wertis.proofSvg('a3'), { dpi: 100 })).size);
     assert.ok(proofPng > 50_000, 'proof PNG has content');
     step('proof PNG renders');
