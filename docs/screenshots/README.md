@@ -16,5 +16,5 @@ Written by `npm run playtest`.
 - the mockup exports at 96 and 300 dpi
 - the pattern switches to outlines
 - proof and mockup tabs draw
-- every format draws (flatPouch)
+- every format draws (flatPouch, standUpPouch)
 - no console errors

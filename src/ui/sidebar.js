@@ -135,7 +135,7 @@ export function sidebar(store, { getParts, project }) {
     } catch (err) { toast(err.message, 'error'); }
   } });
   const photoInfo = h('span', { class: 'hint' });
-  const removePhoto = h('button', { class: 'ghost', onclick: () => { store.set(['mockup', 'photo'], null); store.settle(); } }, 'Remove photo');
+  const removePhoto = h('button', { class: 'ghost', id: 'mockup-remove', onclick: () => { store.set(['mockup', 'photo'], null); store.settle(); } }, 'Remove photo');
   const viewSel = h('select', { id: 'mockup-view', onchange: () => { store.set(['mockup', 'view'], viewSel.value); store.settle(); } }, MOCKUP_VIEWS.map(([k, label]) => h('option', { value: k }, label)));
   const bg = h('input', { type: 'color', id: 'mockup-bg', oninput: () => store.set(['mockup', 'background'], bg.value, { coalesce: 'mk-bg' }), onchange: () => store.settle() });
   const dpi = h('select', { id: 'mockup-dpi' }, [[96, 'Screen (96 dpi)'], [150, 'Standard (150 dpi)'], [300, 'High (300 dpi)']].map(([v, label]) => h('option', { value: v, selected: v === 150 }, label)));

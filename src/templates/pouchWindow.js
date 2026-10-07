@@ -24,11 +24,14 @@ export const OPTIONS = [
   toggle('tidyman', 'Tidyman (bin) mark', true),
 ];
 
+// Band heights are shares of the visible face: on a stand-up pouch the lowest part folds
+// under into the gusset, so the footer band starts above it and runs on to the bottom.
 function bands(ctx) {
   const { w: W, h: H } = ctx.panel;
   const o = ctx.options;
-  const headerH = H * clamp(o.headerPct / 100, 0.05, 0.9);
-  const footerTop = H * (1 - clamp(o.footerPct / 100, 0.05, 0.9));
+  const VH = H - (ctx.panel.info.bottomZone ?? 0);
+  const headerH = VH * clamp(o.headerPct / 100, 0.05, 0.9);
+  const footerTop = VH * (1 - clamp(o.footerPct / 100, 0.05, 0.9));
   return { W, H, headerH, footerTop: Math.max(footerTop, headerH + 10) };
 }
 
@@ -158,4 +161,24 @@ export function back(ctx) {
   return els;
 }
 
-export const pouchWindow = { id: 'pouchWindow', label: 'Window pouch (KEULE style)', options: OPTIONS, panels: { front, back } };
+// The bottom gusset of a stand-up pouch: orange with the pattern, and the WERTIS word on
+// each half, the top one turned so both read right from outside once folded.
+export function gusset(ctx) {
+  const { w: W, h: G } = ctx.panel;
+  const half = ctx.panel.info.fold;
+  const els = [
+    { id: 'gusset.fill', label: 'Gusset fill', type: 'rect', layer: 'bg', bleed: true, box: { x: 0, y: 0, w: W, h: G }, colors: { fill: 'boxOrange' } },
+    { id: 'gusset.pattern', label: 'Gusset pattern', type: 'pattern', layer: 'bg', bleed: true, box: { x: 0, y: 0, w: W, h: G }, colors: { ink: 'orangeTone' } },
+  ];
+  const lw = Math.min(W * 0.4, half * 0.5 * 4.4);
+  const lh = lw / 4.4;
+  els.push(
+    { id: 'gusset.logoTop', label: 'Gusset logo (top half)', type: 'logo', layer: 'fg', layout: 'word', rotate: 180,
+      box: { x: (W - lw) / 2, y: (half - lh) / 2, w: lw, h: lh }, colors: { gear: 'dark', arc: 'white', word: 'dark', line: 'dark' } },
+    { id: 'gusset.logoBottom', label: 'Gusset logo (bottom half)', type: 'logo', layer: 'fg', layout: 'word',
+      box: { x: (W - lw) / 2, y: half + (half - lh) / 2, w: lw, h: lh }, colors: { gear: 'dark', arc: 'white', word: 'dark', line: 'dark' } },
+  );
+  return els;
+}
+
+export const pouchWindow = { id: 'pouchWindow', label: 'Window pouch (KEULE style)', options: OPTIONS, panels: { front, back, gusset } };

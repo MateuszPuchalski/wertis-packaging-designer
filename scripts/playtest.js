@@ -139,6 +139,8 @@ export async function playtest() {
       assert.ok(size > 100_000, `mockup PNG at ${dpi} dpi`);
     }
     step('the mockup exports at 96 and 300 dpi');
+    await page.click('#mockup-remove'); // the screenshots show the empty window
+    await page.waitForFunction(() => !window.wertis.store.get().mockup.photo);
 
     // The outline pattern style.
     await page.click('#sec-pattern > summary');

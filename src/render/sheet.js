@@ -64,7 +64,7 @@ export function renderSheet(design, env, { mode = 'design', margin = 0, dieline 
   if (dieline) over += el('g', { id: mode === 'print' ? 'dieline' : null, 'data-layer': 'dieline' }, dielineSvg(geo, { style: mode === 'print' ? 'print' : guides ? 'design' : 'proof', windows }));
   if (mode === 'design' && labels) {
     for (const p of geo.panels) {
-      const t = env.text.layout({ text: p.label.toUpperCase(), x: p.x + p.w / 2, y: -b - 2.2, font: 'bold', size: 3.4, align: 'center', valign: 'baseline', spacing: 0.08 });
+      const t = env.text.layout({ text: p.label.toUpperCase(), x: p.x + p.w / 2, y: p.y - b - 2.2, font: 'bold', size: 3.4, align: 'center', valign: 'baseline', spacing: 0.08 });
       over += el('g', { fill: '#7a7570' }, t.svg);
     }
   }

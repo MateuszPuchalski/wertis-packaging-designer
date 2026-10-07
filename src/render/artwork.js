@@ -155,7 +155,10 @@ function elementSvg(rc, e, panel) {
     case 'logo': {
       const colors = {};
       for (const role of ['gear', 'arc', 'word', 'line']) colors[role] = colorOf(rc, e, role);
-      return logoSvg({ box: e.box, layout: e.layout, colors, align: e.align ?? 'center', valign: e.valign ?? 'middle' });
+      const r = logoSvg({ box: e.box, layout: e.layout, colors, align: e.align ?? 'center', valign: e.valign ?? 'middle' });
+      if (!e.rotate) return r;
+      const cx = r.box.x + r.box.w / 2, cy = r.box.y + r.box.h / 2;
+      return { svg: el('g', { transform: `rotate(${e.rotate} ${n(cx)} ${n(cy)})` }, r.svg), box: r.box };
     }
     case 'text': return textSvg(rc, e, colorOf(rc, e, 'fill'));
     case 'label': return labelSvg(rc, e);

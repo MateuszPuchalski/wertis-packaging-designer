@@ -5,7 +5,6 @@
 import { el, n, rectPath } from './svg.js';
 import { geometry, panelsWithElements, wrapSvg } from './sheet.js';
 import { panelArt } from './artwork.js';
-import { PATTERN_ICONS } from '../brand/patternIcons.js';
 
 export const MOCKUP_VIEWS = [['front', 'Front'], ['back', 'Back'], ['both', 'Front and back']];
 
@@ -14,21 +13,22 @@ function rc(design, env) {
   return { design, text: env.text, defs: new Map(), used: new Set(), mode: 'mockup', bleed: 0, uid: (p) => `m${p}${++i}` };
 }
 
-// The product behind the window: the photo (cover-fitted, then zoomed and moved by the
-// user), or a placeholder fuel-filter icon when there is no photo yet.
+// The product behind the window: the photo, cover-fitted, then zoomed and moved by the
+// user. Without a photo the window stays empty: just the clear film.
 function productLayer(win, photo) {
+  if (!photo?.src) return '';
   const { x, y, w, h } = win.box;
-  if (photo?.src) {
-    const pw = photo.w || 1000, ph = photo.h || 1000;
-    const zoom = photo.zoom ?? 1;
-    const s = Math.max(w / pw, h / ph) * zoom;
-    const iw = pw * s, ih = ph * s;
-    const ix = x + (w - iw) / 2 + (photo.dx ?? 0) * w, iy = y + (h - ih) / 2 + (photo.dy ?? 0) * h;
-    return el('image', { href: photo.src, x: ix, y: iy, width: iw, height: ih, preserveAspectRatio: 'none' });
-  }
-  const icon = PATTERN_ICONS.find((i) => i.id === 'fuelFilter') ?? PATTERN_ICONS[0];
-  const s = (Math.min(w, h) * 0.78) / 100;
-  return el('g', { transform: `translate(${n(x + w / 2)} ${n(y + h / 2)}) rotate(-12) scale(${n(s)})`, fill: '#3a3a3c' }, icon.paths.map((p) => el('path', { 'fill-rule': p.rule, d: p.d })).join(''));
+  const pw = photo.w || 1000, ph = photo.h || 1000;
+  const zoom = photo.zoom ?? 1;
+  const s = Math.max(w / pw, h / ph) * zoom;
+  const iw = pw * s, ih = ph * s;
+  const ix = x + (w - iw) / 2 + (photo.dx ?? 0) * w, iy = y + (h - ih) / 2 + (photo.dy ?? 0) * h;
+  return el('image', { href: photo.src, x: ix, y: iy, width: iw, height: ih, preserveAspectRatio: 'none' });
+}
+
+function standUpOutline(W, H, zone, r) {
+  const y = H - zone * 0.55;
+  return `M0 ${n(r)}A${n(r)} ${n(r)} 0 0 1 ${n(r)} 0H${n(W - r)}A${n(r)} ${n(r)} 0 0 1 ${n(W)} ${n(r)}V${n(y)}Q${n(W / 2)} ${n(y + zone * 0.5)} 0 ${n(y)}Z`;
 }
 
 // Fine crimp lines across a seal strip.
@@ -45,7 +45,10 @@ function pouchFace(design, env, part, ctx, defs, ids) {
   const W = panel.w, H = panel.h;
   const dims = design.dims;
   const art = panelArt(ctx, { ...panel, bleedSides: { l: false, t: false, r: false, b: false } }, elements);
-  const outline = panel.lines.cut[0];
+  const zone = panel.info?.bottomZone ?? 0;
+  // A stand-up pouch's bottom curves under: the face ends in a shallow bulge part-way into
+  // the gusset zone.
+  const outline = zone ? standUpOutline(W, H, zone, dims.corner ?? 0) : panel.lines.cut[0];
   const holes = panel.lines.holes.join('');
   const clipId = ids('face');
   defs.push(el('clipPath', { id: clipId }, el('path', { d: outline + holes, 'clip-rule': 'evenodd' })));
@@ -59,7 +62,7 @@ function pouchFace(design, env, part, ctx, defs, ids) {
     defs.push(el('clipPath', { id: wClip }, el('path', { d: w.d })));
     inside += el('g', { 'clip-path': `url(#${wClip})` },
       (seeThrough === 'none' ? '' : el('path', { d: rectPath(w.box.x, w.box.y, w.box.w, w.box.h), fill: seeThrough }))
-      + el('g', { filter: `url(#${ids.shadowSoft})` }, productLayer(w, photo)));
+      + (photo?.src ? el('g', { filter: `url(#${ids.shadowSoft})` }, productLayer(w, photo)) : ''));
   }
   const gloss = ids('gloss'), shade = ids('shade'), glare = ids('glare');
   defs.push(
@@ -73,6 +76,13 @@ function pouchFace(design, env, part, ctx, defs, ids) {
         .map(([o, c, a]) => el('stop', { offset: o, 'stop-color': c, 'stop-opacity': a })).join('')),
   );
   let film = el('path', { d: rectPath(0, 0, W, H), fill: `url(#${shade})` }) + el('path', { d: rectPath(0, 0, W, H), fill: `url(#${gloss})` });
+  if (zone) {
+    const curve = ids('curve');
+    const top = (H - zone * 1.6) / H;
+    defs.push(el('linearGradient', { id: curve, x1: 0, y1: 0, x2: 0, y2: 1 },
+      [[0, 0], [top, 0], [1, 0.38]].map(([o, a]) => el('stop', { offset: o, 'stop-color': '#000000', 'stop-opacity': a })).join('')));
+    film += el('path', { d: rectPath(0, 0, W, H), fill: `url(#${curve})` });
+  }
   for (const w of art.windows) film += el('path', { d: w.d, fill: `url(#${glare})` }) + el('path', { d: w.d, fill: 'none', stroke: '#ffffff', 'stroke-opacity': 0.35, 'stroke-width': 0.6 });
   // Seals and zip.
   const seal = dims.sideSeal ?? 0, bottom = dims.bottomSeal ?? 0, top = dims.topSeal ?? 0;
@@ -95,8 +105,9 @@ export function mockupSvg(design, env) {
   const parts = panelsWithElements(design, env, geo);
   const ctx = rc(design, env);
   const view = design.mockup?.view ?? 'front';
-  const shown = parts.filter((p) => (view === 'both' ? true : p.panel.role === view));
-  const faces = shown.length ? shown : parts.slice(0, 1);
+  const faces0 = parts.filter((p) => p.panel.role === 'front' || p.panel.role === 'back');
+  const shown = faces0.filter((p) => (view === 'both' ? true : p.panel.role === view));
+  const faces = shown.length ? shown : faces0.slice(0, 1);
   const defs = [];
   let k = 0;
   const ids = (p) => `${p}${++k}`;
@@ -119,7 +130,10 @@ export function mockupSvg(design, env) {
     const holes = part.panel.lines.holes.join('');
     const shadowClip = ids('sh');
     defs.push(el('clipPath', { id: shadowClip }, el('path', { d: rectPath(-m, -m, W + 2 * m, H + 2 * m) + holes, 'clip-rule': 'evenodd' })));
-    const shadow = el('path', { d: part.panel.lines.cut[0], fill: '#000000', 'fill-opacity': 0.32, filter: `url(#${ids.shadow})`, transform: `translate(${n(W * 0.012)} ${n(H * 0.022)})` });
+    const zone = part.panel.info?.bottomZone ?? 0;
+    const shadow = zone
+      ? el('ellipse', { cx: n(W / 2), cy: n(H - zone * 0.4), rx: n(W * 0.56), ry: n(zone * 0.3), fill: '#000000', 'fill-opacity': 0.4, filter: `url(#${ids.shadow})` })
+      : el('path', { d: part.panel.lines.cut[0], fill: '#000000', 'fill-opacity': 0.32, filter: `url(#${ids.shadow})`, transform: `translate(${n(W * 0.012)} ${n(H * 0.022)})` });
     const tilt = angle ? ` rotate(${n(i % 2 ? -angle : angle)} ${n(W / 2)} ${n(H / 2)})` : '';
     body += el('g', { transform: `translate(${n(x)} 0)${tilt}` }, el('g', { 'clip-path': `url(#${shadowClip})` }, shadow) + face);
   });
