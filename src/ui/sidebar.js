@@ -1,5 +1,6 @@
-// The left panel, in six tabs: Project, Format (size and layout), Texts, Colours (with the
-// parts pattern), Print (prepress and proof) and Mockup. The tab is remembered.
+// The left panel, in five tabs: Project, Format (size and layout), Colours (with the parts
+// pattern), Print (prepress and proof) and Mockup. The tab is remembered. The pack's texts
+// are edited on the element that shows them (the inspector's card, ui/textFields.js).
 import { h, clear, syncValue, toast } from './dom.js';
 import { fieldControl, textControl, section } from './controls.js';
 import { paletteEditor } from './paletteEditor.js';
@@ -7,9 +8,7 @@ import { icon } from './icons.js';
 import { getPref, setPref } from './prefs.js';
 import { t, label, msgOf } from '../i18n/index.js';
 import { FORMATS, TEMPLATES } from '../registry.js';
-import { LANGS } from '../brand/wertis.js';
 import { switchFormat } from '../design.js';
-import { validateEan13 } from '../codes/ean13.js';
 import { PATTERN_ICONS } from '../brand/patternIcons.js';
 import { PATTERN_STYLES } from '../render/pattern.js';
 import { PROOF_PAGES } from '../render/proof.js';
@@ -61,32 +60,6 @@ export function sidebar(store, { getParts, project }) {
     for (const s of dimSyncs) s(d);
     for (const s of layoutSyncs) s(d);
   });
-
-  // --- Texts ---
-  const tx = section(t('side.textsSection'), { id: 'sec-texts' });
-  const langSel = h('select', { id: 'lang', onchange: () => { store.set(['content', 'lang'], langSel.value); store.settle(); } }, LANGS.map(([k, code]) => h('option', { value: k }, code)));
-  tx.body.append(h('label', { class: 'row' }, h('span', { class: 'lbl' }, t('texts.mainLang')), h('span', { class: 'ctl' }, langSel)),
-    h('p', { class: 'help' }, t('texts.help')));
-  syncs.push((d) => syncValue(langSel, d.content.lang));
-  const ean = (v) => {
-    if (!v) return { ok: true, text: t('texts.eanNone') };
-    const r = validateEan13(v);
-    return r.ok ? { ok: true, text: `✓ ${r.code}${r.added ? t('texts.eanAdded') : ''}` } : { ok: false, text: msgOf({ message: r.error, i18n: r.i18n }) };
-  };
-  add(tx,
-    ...LANGS.map(([k, code]) => textControl(store, ['content', 'productName', k], t('texts.productName', { code }))),
-    textControl(store, ['content', 'sku'], t('texts.sku')),
-    textControl(store, ['content', 'ean'], t('texts.ean'), { validate: ean }),
-    textControl(store, ['content', 'qr'], t('texts.qr')),
-    textControl(store, ['content', 'url'], t('texts.url')),
-    textControl(store, ['content', 'tagline'], t('texts.tagline')),
-    textControl(store, ['content', 'note1'], t('texts.note')),
-    textControl(store, ['content', 'producedFor'], t('texts.producedFor')),
-    textControl(store, ['content', 'company'], t('texts.company')),
-    textControl(store, ['content', 'address'], t('texts.address')),
-    textControl(store, ['content', 'email'], t('texts.email')),
-    textControl(store, ['content', 'specs'], t('texts.specs'), { multiline: true, parse: (v) => v.split('\n'), format: (v) => (Array.isArray(v) ? v.join('\n') : v ?? '') }),
-  );
 
   // --- Colours ---
   const col = section(t('side.coloursSection'), { id: 'sec-colours' });
@@ -180,7 +153,6 @@ export function sidebar(store, { getParts, project }) {
   const TABS = [
     { id: 'project', text: t('side.project'), icon: 'folder', sections: [proj] },
     { id: 'format', text: t('side.format'), icon: 'ruler', sections: [fmt, lay] },
-    { id: 'texts', text: t('side.texts'), icon: 'text', sections: [tx] },
     { id: 'colours', text: t('side.colours'), icon: 'palette', sections: [col, pat] },
     { id: 'print', text: t('side.print'), icon: 'printer', sections: [px, pr] },
     { id: 'mockup', text: t('side.mockup'), icon: 'image', sections: [mk] },
@@ -217,7 +189,7 @@ export function sidebar(store, { getParts, project }) {
   }
   show(getPref('sideTab'));
 
-  // Opens the tab that holds a section (e.g. 'sec-texts') and scrolls to it.
+  // Opens the tab that holds a section (e.g. 'sec-layout') and scrolls to it.
   function showSection(secId) {
     const tab = TABS.find((x) => x.sections.some((s) => s.el.id === secId));
     if (!tab) return;

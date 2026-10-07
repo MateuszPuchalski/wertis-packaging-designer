@@ -10,6 +10,7 @@
 //               logo on the band with the gear sitting on its top edge.
 import { clamp } from '../render/svg.js';
 import { MATERIALS } from '../brand/marks.js';
+import { ADDRESS } from '../brand/wertis.js';
 import { fitLogo, partBox, taglineUnder } from '../brand/logo.js';
 import { num, choice, toggle } from '../formats/common.js';
 
@@ -53,7 +54,7 @@ function walls(ctx) {
 function produced(ctx, id, f, B) {
   const c = ctx.design.content;
   const top = B.bottom + 1;
-  return { id, label: 'Produced for', type: 'text', layer: 'fg', font: 'regular', align: 'left', valign: 'middle', lineHeight: 1.22,
+  return { id, label: 'Produced for', edits: ADDRESS, type: 'text', layer: 'fg', font: 'regular', align: 'left', valign: 'middle', lineHeight: 1.22,
     text: [c.producedFor, c.company, c.address, c.email].filter(Boolean).join('\n'),
     box: { x: f.safe.x, y: top, w: f.safe.w * 0.5, h: f.safe.y + f.safe.h - top }, size: (ctx.panel.h * 0.045) / 0.7, minSize: 1.1, colors: WHITE };
 }
@@ -71,24 +72,24 @@ function ean(ctx, id, f, B) {
   const c = ctx.design.content;
   if (!c.ean) return [];
   const h = Math.min(ctx.panel.h * 0.36, f.safe.y + f.safe.h - B.top - B.h * 0.6);
-  return [{ id, label: 'EAN barcode', type: 'ean', layer: 'fg', code: c.ean, bars: 0.72, movable: true, resizable: true, keepAspect: true,
+  return [{ id, label: 'EAN barcode', edits: ['ean'], type: 'ean', layer: 'fg', code: c.ean, bars: 0.72, movable: true, resizable: true, keepAspect: true,
     box: ctx.box(id, { x: f.safe.x + f.safe.w * 0.48, y: f.safe.y + f.safe.h - h, w: f.safe.w * 0.52, h }), align: 'right', valign: 'bottom',
     colors: { bars: 'black', bg: 'white' } }];
 }
 
 function qr(ctx, id, f, B) {
   const size = Math.min(B.h * 0.84, f.safe.w * 0.8);
-  return { id, label: 'QR code', type: 'qr', layer: 'fg', text: ctx.design.content.qr, movable: true, resizable: true, keepAspect: true,
+  return { id, label: 'QR code', edits: ['qr'], type: 'qr', layer: 'fg', text: ctx.design.content.qr, movable: true, resizable: true, keepAspect: true,
     box: ctx.box(id, { x: f.x + (f.w - size) / 2, y: B.top + (B.h - size) / 2, w: size, h: size }), colors: { dots: 'black', bg: 'white' } };
 }
 
 function url(ctx, id, box) {
-  return { id, label: 'Website', type: 'text', layer: 'fg', text: ctx.design.content.url, font: 'regular', align: 'center', valign: 'middle', box, size: box.h / 0.7, minSize: 1.2, colors: WHITE };
+  return { id, label: 'Website', edits: ['url'], type: 'text', layer: 'fg', text: ctx.design.content.url, font: 'regular', align: 'center', valign: 'middle', box, size: box.h / 0.7, minSize: 1.2, colors: WHITE };
 }
 
 function sku(ctx, id, f, B) {
   const top = f.safe.y;
-  return { id, label: 'Product code', type: 'text', layer: 'fg', text: ctx.design.content.sku, font: 'regular', align: 'right', valign: 'middle', spacing: 0.02,
+  return { id, label: 'Product code', edits: ['sku', 'ean'], type: 'text', layer: 'fg', text: ctx.design.content.sku, font: 'regular', align: 'right', valign: 'middle', spacing: 0.02,
     box: { x: f.safe.x, y: top, w: f.safe.w, h: Math.max(B.top - top - 1, 2) }, size: Math.min(Math.max(B.top - top - 1, 2) * 0.42, ctx.panel.h * 0.08) / 0.7, minSize: 1.4, colors: WHITE };
 }
 
@@ -107,11 +108,11 @@ export function productBody(ctx) {
   els.push(sku(ctx, 'back.sku', back, B));
   const specs = (Array.isArray(c.specs) ? c.specs : String(c.specs ?? '').split('\n')).filter((x) => String(x).trim());
   const titleH = B.h * 0.17;
-  els.push({ id: 'back.specsTitle', label: 'Technical data heading', type: 'text', layer: 'fg', text: c.specsTitle, font: 'semibold', align: 'left', valign: 'top',
+  els.push({ id: 'back.specsTitle', label: 'Technical data heading', edits: ['specsTitle', 'specs'], type: 'text', layer: 'fg', text: c.specsTitle, font: 'semibold', align: 'left', valign: 'top',
     box: { x: back.safe.x, y: B.top + pad, w: back.safe.w, h: titleH }, size: titleH / 0.7, minSize: 1.3, colors: WHITE });
   if (specs.length) {
     const top = B.top + pad + titleH * 1.5;
-    els.push({ id: 'back.specs', label: 'Technical data', type: 'text', layer: 'fg', text: specs.map((x) => `•  ${x}`).join('\n'), font: 'regular', align: 'left', valign: 'top', lineHeight: 1.3,
+    els.push({ id: 'back.specs', label: 'Technical data', edits: ['specs', 'specsTitle'], type: 'text', layer: 'fg', text: specs.map((x) => `•  ${x}`).join('\n'), font: 'regular', align: 'left', valign: 'top', lineHeight: 1.3,
       box: { x: back.safe.x + back.safe.w * 0.04, y: top, w: back.safe.w * 0.94, h: B.bottom - pad - top }, size: (B.h * 0.12) / 0.7, minSize: 1.1, colors: WHITE });
   }
   els.push(produced(ctx, 'back.address', back, B));
@@ -129,9 +130,9 @@ export function productBody(ctx) {
 
   // Front: product name and subtitle on the band, code above, EAN below.
   els.push(sku(ctx, 'front.sku', front, B));
-  els.push({ id: 'front.name', label: 'Product name', type: 'text', layer: 'fg', text: c.productName?.[c.lang] ?? '', font: 'bold', align: 'left', valign: 'top', wrap: true, maxLines: 2, lineHeight: 1.1,
+  els.push({ id: 'front.name', label: 'Product name', edits: ['productName'], type: 'text', layer: 'fg', text: c.productName?.[c.lang] ?? '', font: 'bold', align: 'left', valign: 'top', wrap: true, maxLines: 2, lineHeight: 1.1,
     box: { x: front.safe.x, y: B.top + B.h * 0.18, w: front.safe.w, h: B.h * 0.4 }, size: (B.h * 0.24) / 0.7, minSize: 1.8, colors: WHITE });
-  els.push({ id: 'front.subtitle', label: 'Subtitle', type: 'text', layer: 'fg', text: c.subtitle, font: 'regular', align: 'left', valign: 'top',
+  els.push({ id: 'front.subtitle', label: 'Subtitle', edits: ['subtitle'], type: 'text', layer: 'fg', text: c.subtitle, font: 'regular', align: 'left', valign: 'top',
     box: { x: front.safe.x, y: B.top + B.h * 0.62, w: front.safe.w, h: B.h * 0.18 }, size: (B.h * 0.18) / 0.7, minSize: 1.4, colors: WHITE });
   els.push(produced(ctx, 'front.address', front, B));
   els.push(...ean(ctx, 'front.ean', front, B).map((e) => ({ ...e, box: ctx.box('front.ean', { ...e.box, x: front.safe.x + front.safe.w * 0.72, w: front.safe.w * 0.28 }) })));
@@ -144,9 +145,9 @@ export function genericBody(ctx) {
   const back = faceOf(ctx, 'back'), s1 = faceOf(ctx, 'side1'), front = faceOf(ctx, 'front'), s2 = faceOf(ctx, 'side2');
   const below = { y: B.bottom + 1, h: back.safe.y + back.safe.h - B.bottom - 1 };
 
-  els.push({ id: 'back.category', label: 'Category', type: 'text', layer: 'fg', text: c.category, font: 'bold', align: 'center', valign: 'middle',
+  els.push({ id: 'back.category', label: 'Category', edits: ['category'], type: 'text', layer: 'fg', text: c.category, font: 'bold', align: 'center', valign: 'middle',
     box: { x: back.safe.x, y: B.top + B.h * 0.16, w: back.safe.w, h: B.h * 0.3 }, size: (B.h * 0.3) / 0.7, minSize: 1.6, colors: WHITE });
-  els.push({ id: 'back.categoryEn', label: 'Category (English)', type: 'text', layer: 'fg', text: c.categoryEn, font: 'bold', align: 'center', valign: 'middle',
+  els.push({ id: 'back.categoryEn', label: 'Category (English)', edits: ['categoryEn'], type: 'text', layer: 'fg', text: c.categoryEn, font: 'bold', align: 'center', valign: 'middle',
     box: { x: back.safe.x, y: B.top + B.h * 0.56, w: back.safe.w, h: B.h * 0.24 }, size: (B.h * 0.24) / 0.7, minSize: 1.4, colors: WHITE });
   els.push(produced(ctx, 'back.address', back, B));
 
@@ -163,7 +164,7 @@ export function genericBody(ctx) {
   els.push({ id: 'front.gear', label: 'Gear', type: 'logo', layer: 'fg', layout: 'mark', align: 'center', valign: 'bottom',
     box: { x: fit.x + (fit.w - markW) / 2, y: B.top - markW * 0.19 + B.edge, w: markW, h: markW * 0.19 }, colors: { gear: 'black', arc: { none: true }, word: 'black', line: 'black' } });
   const tag = taglineUnder(partBox(fit, 'word'), { scale: (ctx.options.taglineSize ?? 100) / 100, ratio: 0.22 });
-  els.push({ id: 'front.tagline', label: 'Tagline', type: 'text', layer: 'fg', text: c.tagline, font: 'condSemibold', align: 'right', valign: 'top', spacing: 0.02,
+  els.push({ id: 'front.tagline', label: 'Tagline', edits: ['tagline'], type: 'text', layer: 'fg', text: c.tagline, font: 'condSemibold', align: 'right', valign: 'top', spacing: 0.02,
     box: tag.box, size: tag.size, minSize: 1.2, colors: WHITE });
   els.push(produced(ctx, 'side2.address', s2, B));
   return els;
@@ -191,7 +192,7 @@ export function lid(ctx) {
   els.push({ id: 'lid.logo', label: 'Lid logo', type: 'logo', layer: 'fg', layout: 'markWord', rotate: 180, pivot, box: logoBox,
     colors: { gear: 'dark', arc: { none: true }, word: 'white', line: 'white' } });
   const tag = taglineUnder(partBox(fit, 'word'), { scale: (ctx.options.taglineSize ?? 100) / 100 });
-  els.push({ id: 'lid.tagline', label: 'Lid tagline', type: 'text', layer: 'fg', rotate: 180, pivot, text: c.tagline, font: 'condSemibold', align: 'right', valign: 'top', spacing: 0.02,
+  els.push({ id: 'lid.tagline', label: 'Lid tagline', edits: ['tagline'], type: 'text', layer: 'fg', rotate: 180, pivot, text: c.tagline, font: 'condSemibold', align: 'right', valign: 'top', spacing: 0.02,
     box: tag.box, size: tag.size, minSize: 1.2, colors: { fill: 'dark' } });
   return els;
 }

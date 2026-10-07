@@ -36,6 +36,7 @@ export function showShortcuts() {
     [t('keys.altDrag'), t('keys.noSnap')],
     [t('keys.delete'), t('keys.hide')],
     ['Esc', t('keys.deselect')],
+    [t('keys.dblClick'), t('keys.editText')],
     [t('keys.rightClick'), t('keys.more')],
     [t('keys.wheel'), t('keys.zoomAt')],
     ['+ / −', t('keys.zoom')],

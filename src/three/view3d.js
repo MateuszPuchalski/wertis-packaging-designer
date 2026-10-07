@@ -3,11 +3,14 @@
 // - Pouches are soft film (softPouch.js): two printed films sealed round the edge with a
 //   little air inside and the product's parts loose in it. They hang on a peg hook by
 //   their hang holes, lie in stacks or fall in a pile, and the parts sag to the bottom.
+// - In the shop (the first scene): a store gondola like a parts shop's walls, under its
+//   ceiling LEDs: pouches on a grid of scan hooks, boxes on the shelves.
 // Drag a pack to pull it about; drag the background to orbit. three.js and cannon-es load
 // only when the tab opens.
-import { placements, scenesFor, UNIT } from './scenes.js';
+import { placements, scenesFor, shopLayout, SHOP, UNIT } from './scenes.js';
+import { logoSvg } from '../brand/logo.js';
 import { productOf, PARTS, MATERIALS } from './products.js';
-import { createBag, createSoftWorld, stepSoft, shove, renderLayout, writeRender, quatFromEuler } from './softPouch.js';
+import { createBag, createSoftWorld, stepSoft, shove, renderLayout, writeRender, quatFromEuler, followPart } from './softPouch.js';
 import { mulberry32 } from '../util/rng.js';
 
 let libs = null;
@@ -48,19 +51,19 @@ async function svgTexture(THREE, svg, max, anisotropy) {
 }
 
 // A shop pegboard: light board with holes on a 25 mm grid.
-function pegboardTexture(THREE, w, h) {
+function pegboardTexture(THREE, w, h, { base = '#efebe4', hole = '#5b5750' } = {}) {
   const px = 8; // px per mm... of the 25 mm cell
   const cell = 25;
   const c = document.createElement('canvas');
   c.width = Math.round((w / cell) * px * 4);
   c.height = Math.round((h / cell) * px * 4);
   const g = c.getContext('2d');
-  g.fillStyle = '#efebe4';
+  g.fillStyle = base;
   g.fillRect(0, 0, c.width, c.height);
   const step = px * 4;
   for (let y = step / 2; y < c.height; y += step) {
     for (let x = step / 2; x < c.width; x += step) {
-      g.fillStyle = '#5b5750';
+      g.fillStyle = hole;
       g.beginPath();
       g.arc(x, y, step * 0.11, 0, Math.PI * 2);
       g.fill();
@@ -73,6 +76,94 @@ function pegboardTexture(THREE, w, h) {
   const t = new THREE.CanvasTexture(c);
   t.colorSpace = THREE.SRGBColorSpace;
   return t;
+}
+
+// A shop floor: pale grey 600 mm tiles with thin joints, repeated.
+function tileTexture(THREE) {
+  const c = document.createElement('canvas');
+  c.width = c.height = 256;
+  const g = c.getContext('2d');
+  g.fillStyle = '#d8d6d1';
+  g.fillRect(0, 0, 256, 256);
+  // A faint speckle, as terrazzo-like tiles have.
+  const rnd = mulberry32(7);
+  for (let i = 0; i < 900; i++) {
+    g.fillStyle = rnd() < 0.5 ? 'rgba(255,255,255,0.18)' : 'rgba(60,55,50,0.10)';
+    g.fillRect(rnd() * 256, rnd() * 256, 1.5, 1.5);
+  }
+  g.fillStyle = '#b9b6b0';
+  g.fillRect(0, 0, 256, 3);
+  g.fillRect(0, 0, 3, 256);
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  return t;
+}
+
+// The gondola's header: a lit orange sign with the WERTIS logo, drawn once it has loaded.
+function signTexture(THREE, w, h) {
+  const px = 1024, ph = Math.round((px * h) / w);
+  const c = document.createElement('canvas');
+  c.width = px;
+  c.height = ph;
+  const g = c.getContext('2d');
+  g.fillStyle = '#f68c1e';
+  g.fillRect(0, 0, px, ph);
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  const logo = logoSvg({ box: { x: px * 0.3, y: ph * 0.14, w: px * 0.4, h: ph * 0.72 }, layout: 'full', colors: { gear: '#303030', arc: '#ffffff', word: '#303030', line: '#ffffff' } });
+  const img = new Image();
+  img.onload = () => { g.drawImage(img, 0, 0); t.needsUpdate = true; };
+  img.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="${px}" height="${ph}" viewBox="0 0 ${px} ${ph}">${logo.svg}</svg>`)}`;
+  return t;
+}
+
+// The label on a scan hook's tip: white, a barcode and a code line, as shops print them.
+function hookLabelTexture(THREE) {
+  const c = document.createElement('canvas');
+  c.width = 256;
+  c.height = 128;
+  const g = c.getContext('2d');
+  g.fillStyle = '#ffffff';
+  g.fillRect(0, 0, 256, 128);
+  g.fillStyle = '#f68c1e';
+  g.fillRect(0, 0, 256, 20);
+  g.fillStyle = '#222222';
+  const rnd = mulberry32(3);
+  for (let x = 24; x < 150;) { const w = 1 + Math.floor(rnd() * 3); g.fillRect(x, 36, w, 56); x += w + 1 + Math.floor(rnd() * 3); }
+  g.fillRect(170, 40, 66, 10);
+  g.fillRect(170, 60, 50, 8);
+  g.fillRect(170, 78, 60, 8);
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+
+// What the glossy film reflects in the shop: a pale room with rows of ceiling LED strips.
+function shopEnvironment(THREE) {
+  const scene = new THREE.Scene();
+  const room = new THREE.Mesh(new THREE.BoxGeometry(40, 9, 40), new THREE.MeshBasicMaterial({ color: 0x8f8c87, side: THREE.BackSide }));
+  room.position.y = 4.5;
+  scene.add(room);
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(40, 40), new THREE.MeshBasicMaterial({ color: 0x6f6c68 }));
+  floor.rotation.x = -Math.PI / 2;
+  floor.position.y = 0.01;
+  scene.add(floor);
+  const led = new THREE.MeshBasicMaterial();
+  led.color.setScalar(9);
+  for (let i = -3; i <= 3; i++) {
+    const strip = new THREE.Mesh(new THREE.BoxGeometry(34, 0.08, 0.5), led);
+    strip.position.set(0, 8.9, i * 5);
+    scene.add(strip);
+  }
+  // The bright shop front far behind the shopper.
+  const glow = new THREE.MeshBasicMaterial();
+  glow.color.setScalar(2.2);
+  const front = new THREE.Mesh(new THREE.PlaneGeometry(30, 6), glow);
+  front.position.set(0, 4, 19.9);
+  front.rotation.y = Math.PI;
+  scene.add(front);
+  return scene;
 }
 
 export class View3D {
@@ -113,7 +204,8 @@ export class View3D {
     this.controls = new OrbitControls(this.camera, r.domElement);
     this.controls.enableDamping = true;
     this.controls.maxPolarAngle = Math.PI * 0.49;
-    this.scene.add(new THREE.HemisphereLight(0xffffff, 0x8a857c, 0.7));
+    this.hemi = new THREE.HemisphereLight(0xffffff, 0x8a857c, 0.7);
+    this.scene.add(this.hemi);
     const sun = new THREE.DirectionalLight(0xfff6ea, 2.2);
     sun.position.set(4, 9, 6);
     sun.castShadow = true;
@@ -126,7 +218,16 @@ export class View3D {
     const fill = new THREE.DirectionalLight(0xe8f0ff, 0.6); // a cool fill from the left
     fill.position.set(-6, 4, 3);
     this.scene.add(fill);
+    // A rim from behind and above: it draws the edges of the packs off the backdrop.
+    const rim = new THREE.DirectionalLight(0xffffff, 0.9);
+    rim.position.set(-3, 7, -8);
+    this.scene.add(rim, sun.target);
     this.sun = sun;
+    this.fill = fill;
+    this.rim = rim;
+    const shopPmrem = new THREE.PMREMGenerator(r);
+    this.shopEnv = shopPmrem.fromScene(shopEnvironment(THREE), 0.03).texture;
+    shopPmrem.dispose();
 
     // A photo studio sweep: the floor curves up into the wall behind, so there is no horizon.
     const sweep = new THREE.PlaneGeometry(60, 40, 1, 48);
@@ -142,6 +243,14 @@ export class View3D {
     this.floor = new THREE.Mesh(sweep, new THREE.MeshStandardMaterial({ color: 0xe8e4dc, roughness: 0.92 }));
     this.floor.receiveShadow = true;
     this.scene.add(this.floor);
+    const tiles = tileTexture(THREE);
+    tiles.repeat.set(20, 20);
+    tiles.anisotropy = r.capabilities.getMaxAnisotropy();
+    this.shopFloor = new THREE.Mesh(new THREE.PlaneGeometry(120, 120), new THREE.MeshStandardMaterial({ map: tiles, roughness: 0.38, metalness: 0 }));
+    this.shopFloor.rotation.x = -Math.PI / 2;
+    this.shopFloor.receiveShadow = true;
+    this.shopFloor.visible = false;
+    this.scene.add(this.shopFloor);
 
     const world = new CANNON.World({ gravity: new CANNON.Vec3(0, -98.2, 0) }); // 1 unit = 1 dm
     world.allowSleep = true;
@@ -188,10 +297,7 @@ export class View3D {
     for (const list of Object.values(this.productParts ?? {})) for (const m of list) { m.geometry.dispose(); m.material.dispose(); }
     this.product = pack.kind === 'box' ? null : productOf(pack.product?.id);
     this.productParts = this.product ? this.productMeshes(this.product) : null;
-    const bg = new THREE.Color(background ?? '#e8e4dc');
-    this.scene.background = bg.clone().lerp(new THREE.Color('#ffffff'), 0.2);
-    this.floor.material.color = bg;
-    this.scene.fog = new THREE.Fog(this.scene.background, 18, 40);
+    this.studioBg = new THREE.Color(background ?? '#e8e4dc');
     if (!this.sceneName || !scenesFor(pack.kind).includes(this.sceneName)) this.sceneName = scenesFor(pack.kind)[0];
     this.build();
   }
@@ -237,8 +343,110 @@ export class View3D {
     }
     this.items = [];
     this.soft = null;
-    for (const m of this.props ?? []) this.scene.remove(m);
+    for (const m of this.props ?? []) {
+      this.scene.remove(m);
+      m.traverse?.((o) => { if (o.isMesh && o.userData.own) { o.geometry.dispose(); } });
+    }
     this.props = [];
+    for (const b of this.fixed ?? []) this.world.removeBody(b);
+    this.fixed = [];
+  }
+
+  // The shop gondola: a perforated steel back panel between two uprights, a base deck with a
+  // kick plate, a lit header sign; then either the scan hooks (pouches) or the shelves with
+  // their price strips (boxes, which also get the shelves as solid bodies).
+  shopFittings(L) {
+    // The aisle goes on either side: two more sections with their hooks or shelves empty.
+    const side = L.kind === 'box' ? { ...L, width: 6 } : { ...L, width: 7.2, hooks: L.hooks.filter((hk) => hk.x <= 0.01).map((hk) => ({ ...hk, x: 0 })) };
+    if (side.hooks) side.hooks = [-1.6, 1.6].flatMap((x) => [...new Set(L.hooks.map((hk) => hk.y))].map((y) => ({ x, y, len: SHOP.hookLength })));
+    const gap = 0.5; // one upright between two sections
+    for (const sgn of [-1, 1]) this.shopSection(side, sgn * (L.width / 2 + gap + side.width / 2), false);
+    return this.shopSection(L, 0, true);
+  }
+
+  shopSection(L, ox, main) {
+    const { THREE, CANNON } = this;
+    const add = (...ms) => { for (const m of ms) { m.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; o.userData.own = true; } }); this.props.push(m); this.scene.add(m); } };
+    const steel = new THREE.MeshStandardMaterial({ color: 0x4a4d52, metalness: 0.6, roughness: 0.45 });
+    const white = new THREE.MeshStandardMaterial({ color: 0xf2f2f0, metalness: 0.1, roughness: 0.5 });
+    const chrome = new THREE.MeshStandardMaterial({ color: 0xdfe2e6, metalness: 1, roughness: 0.15 });
+    const W = L.width, H = SHOP.height;
+    const panel = new THREE.Mesh(new THREE.BoxGeometry(W, H - SHOP.deckY, 0.06),
+      new THREE.MeshStandardMaterial({ map: pegboardTexture(THREE, W * UNIT, (H - SHOP.deckY) * UNIT, { base: '#d6d9db', hole: '#2c2e31' }), metalness: 0.35, roughness: 0.55 }));
+    panel.position.set(0, SHOP.deckY + (H - SHOP.deckY) / 2, -0.03);
+    const postW = 0.5;
+    const post = (x) => { const m = new THREE.Mesh(new THREE.BoxGeometry(postW, H + SHOP.header, 0.5), steel); m.position.set(x, (H + SHOP.header) / 2, -0.25); return m; };
+    const deck = new THREE.Mesh(new THREE.BoxGeometry(W, 0.12, SHOP.deckDepth), white);
+    deck.position.set(0, SHOP.deckY - 0.06, SHOP.deckDepth / 2);
+    const kick = new THREE.Mesh(new THREE.BoxGeometry(W, SHOP.deckY - 0.12, 0.06), steel);
+    kick.position.set(0, (SHOP.deckY - 0.12) / 2, SHOP.deckDepth - 0.4);
+    const sign = new THREE.Mesh(new THREE.BoxGeometry(W + postW * 2, SHOP.header, 0.2),
+      [steel, steel, steel, steel, new THREE.MeshStandardMaterial({ map: signTexture(THREE, W + postW * 2, SHOP.header), emissive: 0xffffff, emissiveIntensity: 0.32, roughness: 0.5 }), steel]);
+    sign.material[4].emissiveMap = sign.material[4].map;
+    sign.position.set(0, H + SHOP.header / 2, 0.15);
+    const group = new THREE.Group();
+    group.position.x = ox;
+    group.add(panel, post(-W / 2 - postW / 2), post(W / 2 + postW / 2), deck, kick, sign);
+    add(group);
+    const at = (m) => { m.position.x += ox; return m; };
+    if (main) {
+      // The back wall of the shop behind the gondola.
+      const wall = new THREE.Mesh(new THREE.PlaneGeometry(120, 40), new THREE.MeshStandardMaterial({ color: 0xeeece8, roughness: 0.9 }));
+      wall.position.set(0, 20, -0.6);
+      wall.receiveShadow = true;
+      wall.userData.own = true;
+      this.props.push(wall);
+      this.scene.add(wall);
+    }
+    // The panel and the deck stop what is pulled about, as the walls of the shelf do (only
+    // the section with the packs: the neighbours are scenery).
+    const solid = (hx, hy, hz, x, y, z) => { if (!main) return; const b = new CANNON.Body({ mass: 0, shape: new CANNON.Box(new CANNON.Vec3(hx, hy, hz)) }); b.position.set(x, y, z); this.world.addBody(b); this.fixed.push(b); };
+    solid(W / 2, H / 2, 0.05, 0, H / 2, -0.05);
+    solid(W / 2, 0.06, SHOP.deckDepth / 2, 0, SHOP.deckY - 0.06, SHOP.deckDepth / 2);
+    if (L.kind === 'box') {
+      const strip = new THREE.MeshStandardMaterial({ map: hookLabelTexture(THREE), roughness: 0.6 });
+      for (const y of L.shelves) {
+        if (y > SHOP.deckY + 0.01) {
+          const board = new THREE.Mesh(new THREE.BoxGeometry(W, 0.2, SHOP.shelfDepth), white);
+          board.position.set(0, y - 0.1, SHOP.shelfDepth / 2);
+          add(at(board));
+          solid(W / 2, 0.1, SHOP.shelfDepth / 2, 0, y - 0.1, SHOP.shelfDepth / 2);
+        }
+        // The price strip along the shelf's front edge, with a label every so often.
+        const edge = new THREE.Mesh(new THREE.BoxGeometry(W, 0.38, 0.04), white);
+        edge.position.set(0, y - 0.19, (y > SHOP.deckY + 0.01 ? SHOP.shelfDepth : SHOP.deckDepth) + 0.02);
+        add(at(edge));
+        for (let x = -W / 2 + 1; x < W / 2 - 0.5; x += 2.4) {
+          const label = new THREE.Mesh(new THREE.PlaneGeometry(0.62, 0.31), strip);
+          label.position.set(x + ox, y - 0.19, edge.position.z + 0.022);
+          add(label);
+        }
+      }
+      return { boardZ: 0 };
+    }
+    // Scan hooks: a wire from the panel with a label holder on the tip.
+    const label = new THREE.MeshStandardMaterial({ map: hookLabelTexture(THREE), roughness: 0.55 });
+    for (const hk of L.hooks) {
+      const g = new THREE.Group();
+      const wire = new THREE.Mesh(new THREE.CylinderGeometry(0.024, 0.024, hk.len, 16), chrome);
+      wire.rotation.x = Math.PI / 2;
+      wire.position.set(0, 0, hk.len / 2);
+      const top = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, hk.len * 0.92, 12), chrome);
+      top.rotation.x = Math.PI / 2;
+      top.position.set(0, 0.32, hk.len * 0.46);
+      const bend = new THREE.Mesh(new THREE.CylinderGeometry(0.024, 0.024, 0.34, 12), chrome);
+      bend.position.set(0, 0.16, hk.len);
+      const holder = new THREE.Mesh(new THREE.BoxGeometry(0.66, 0.36, 0.03), new THREE.MeshStandardMaterial({ color: 0xdfe3e6, metalness: 0.2, roughness: 0.3, transparent: true, opacity: 0.6 }));
+      holder.position.set(0, 0.42, hk.len * 0.92);
+      const card = new THREE.Mesh(new THREE.PlaneGeometry(0.6, 0.3), label);
+      card.position.set(0, 0.42, hk.len * 0.92 + 0.017);
+      const foot = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.5, 0.05), steel);
+      foot.position.set(0, 0.16, 0.025);
+      g.add(wire, top, bend, holder, card, foot);
+      g.position.set(hk.x + ox, hk.y, 0);
+      add(g);
+    }
+    return { boardZ: 0.03 };
   }
 
   // The shop fittings for the peg scene: a pegboard and a wire hook with an upturned tip.
@@ -268,9 +476,60 @@ export class View3D {
     return { boardZ: z1 };
   }
 
+  // Studio light for the stack, the pile and the peg; the shop's own for the shop.
+  lighting() {
+    const { THREE } = this;
+    const shop = this.sceneName === 'shop';
+    this.floor.visible = !shop;
+    this.shopFloor.visible = shop;
+    if (shop) {
+      this.scene.background = new THREE.Color('#e6e3de');
+      this.scene.fog = new THREE.Fog(this.scene.background, 45, 110);
+      this.scene.environment = this.shopEnv;
+      this.scene.environmentIntensity = 0.85;
+      this.hemi.color.set(0xffffff);
+      this.hemi.groundColor.set(0x9b968e);
+      this.hemi.intensity = 0.55;
+      // The ceiling LEDs over the aisle: from above and in front, so the pegboard shows each
+      // pack's soft shadow under it.
+      this.sun.color.set(0xfffaf2);
+      this.sun.intensity = 2.4;
+      this.sun.position.set(4, 34, 26);
+      this.sun.target.position.set(0, 8, 0);
+      Object.assign(this.sun.shadow.camera, { left: -12, right: 12, top: 12, bottom: -12, near: 10, far: 70 });
+      this.sun.shadow.radius = 9;
+      // The light from the aisle and the shop front falls on the packs' faces.
+      this.fill.intensity = 0.95;
+      this.fill.position.set(-8, 10, 30);
+      this.rim.intensity = 0;
+    } else {
+      const bg = this.studioBg ?? new THREE.Color('#e8e4dc');
+      this.scene.background = bg.clone().lerp(new THREE.Color('#ffffff'), 0.2);
+      this.floor.material.color = bg;
+      this.scene.fog = new THREE.Fog(this.scene.background, 18, 40);
+      this.scene.environment = this.envMap;
+      this.scene.environmentIntensity = 0.5;
+      this.hemi.color.set(0xffffff);
+      this.hemi.groundColor.set(0x8a857c);
+      this.hemi.intensity = 0.65;
+      this.sun.color.set(0xfff6ea);
+      this.sun.intensity = 2.2;
+      this.sun.position.set(4, 9, 6);
+      this.sun.target.position.set(0, 0, 0);
+      Object.assign(this.sun.shadow.camera, { left: -6, right: 6, top: 6, bottom: -6, near: 1, far: 30 });
+      this.sun.shadow.radius = 7;
+      this.fill.intensity = 0.6;
+      this.fill.position.set(-6, 4, 3);
+      this.rim.intensity = 0.9;
+    }
+    this.sun.shadow.camera.updateProjectionMatrix();
+    this.sun.target.updateMatrixWorld();
+  }
+
   build() {
     if (!this.pack) return;
     this.clear();
+    this.lighting();
     const spots = placements(this.sceneName, this.pack, this.count, this.seed);
     if (this.pack.kind === 'box') this.buildBoxes(spots);
     else this.buildPouches(spots);
@@ -284,6 +543,7 @@ export class View3D {
     const geo = new this.RoundedBoxGeometry(x * MM, y * MM, z * MM, 3, 0.8 * MM);
     const mats = this.materials();
     const half = new CANNON.Vec3((x * MM) / 2, (y * MM) / 2, (z * MM) / 2);
+    if (this.sceneName === 'shop') this.shopFittings(shopLayout(this.pack, this.count));
     for (const s of spots) {
       const mesh = new THREE.Mesh(geo, mats.outer);
       mesh.castShadow = true;
@@ -303,9 +563,11 @@ export class View3D {
     const W = pack.size.x, H = pack.size.y;
     const mats = this.materials();
     let board = null;
+    const hung = this.sceneName === 'peg' || this.sceneName === 'shop';
     if (this.sceneName === 'peg') board = this.pegFittings(spots).boardZ * UNIT;
+    if (this.sceneName === 'shop') board = this.shopFittings(shopLayout(pack, this.count)).boardZ * UNIT;
     const bags = spots.map((s) => createBag({
-      W, H, dims: pack.dims, hole: pack.hole, pinned: this.sceneName === 'peg', film: pack.film,
+      W, H, dims: pack.dims, hole: pack.hole, pinned: hung, film: pack.film,
       pose: { p: s.p.map((v) => v * UNIT), q: quatFromEuler(...s.r) },
       parts: this.product ? pack.product.parts : [],
     }));
@@ -357,16 +619,37 @@ export class View3D {
     writeRender(it.bag, it.layout, g.attributes.position.array, g.attributes.normal.array, MM);
     g.attributes.position.needsUpdate = true;
     g.attributes.normal.needsUpdate = true;
+    it.easing = 12; // frames to finish easing the parts in once the bag stops
+    this.drawParts(it);
+  }
+
+  drawParts(it) {
+    it.shown ??= [];
     it.bag.parts.forEach((part, i) => {
       const m = it.partMeshes[i];
-      m.position.set(part.c[0] * MM, part.c[1] * MM, part.c[2] * MM);
-      m.quaternion.set(...part.quat);
+      const s = (it.shown[i] = followPart(it.shown[i], part));
+      m.position.set(s.c[0] * MM, s.c[1] * MM, s.c[2] * MM);
+      m.quaternion.set(s.quat[0], s.quat[1], s.quat[2], s.quat[3]);
     });
   }
 
-  // Points the camera at the whole scene.
+  // Points the camera at the whole scene; in the shop, from the aisle at eye height.
   frame() {
     const { THREE } = this;
+    if (this.sceneName === 'shop') {
+      const L = shopLayout(this.pack, this.count);
+      // Pouches: the whole gondola, sign to the lowest pack. Boxes: close on the shelves in use.
+      const ys = L.kind === 'box' ? L.filled : L.hooks.map((hk) => hk.y);
+      const top = L.kind === 'box' ? Math.max(...ys) + this.pack.size.y * MM + 1.4 : SHOP.height + SHOP.header + 0.3;
+      const low = Math.min(...ys) - (L.kind === 'box' ? 0.8 : this.pack.size.y * MM + 0.8);
+      const c = new THREE.Vector3(0, (top + low) / 2, L.kind === 'box' ? 2 : 1.2);
+      const half = Math.max((top - low) / 2, (L.width / 2 + 0.8) / this.camera.aspect);
+      const dist = half / Math.tan((this.camera.fov * Math.PI) / 360) * 1.1 + 2;
+      this.camera.position.set(c.x + dist * 0.25, c.y + dist * (L.kind === 'box' ? 0.18 : 0.06), c.z + dist);
+      this.controls.target.copy(c);
+      this.controls.update();
+      return;
+    }
     const b = new THREE.Box3();
     for (const it of this.items) {
       if (it.body) b.expandByPoint(new THREE.Vector3(it.body.position.x, it.body.position.y, it.body.position.z));
@@ -400,7 +683,7 @@ export class View3D {
   push() {
     const rng = mulberry32(this.seed * 7919 + (this.pushes = (this.pushes ?? 0) + 1));
     if (this.soft) {
-      const peg = this.sceneName === 'peg', stack = this.sceneName === 'stack';
+      const peg = this.sceneName === 'peg' || this.sceneName === 'shop', stack = this.sceneName === 'stack';
       const kick = new Map(this.soft.bags.map((b) => [b, [(rng() - 0.5) * 400, peg ? 0 : stack ? 150 : 700, peg ? -500 : (rng() - 0.5) * 300]]));
       shove(this.soft, (x, y, z, bag) => {
         const [vx, vy, vz] = kick.get(bag);
@@ -412,7 +695,7 @@ export class View3D {
     for (const it of this.items) {
       it.body.wakeUp();
       const p = it.body.position;
-      const imp = this.sceneName === 'stack' ? new CANNON.Vec3(0.3 + rng() * 0.2, 0.05, -0.35 - p.y * 0.4) : new CANNON.Vec3((rng() - 0.5) * 0.6, 0.8, (rng() - 0.5) * 0.6);
+      const imp = this.sceneName === 'stack' || this.sceneName === 'shop' ? new CANNON.Vec3(0.3 + rng() * 0.2, 0.05, -0.35 - p.y * 0.4) : new CANNON.Vec3((rng() - 0.5) * 0.6, 0.8, (rng() - 0.5) * 0.6);
       it.body.applyImpulse(imp, new CANNON.Vec3(p.x, p.y + 0.05, p.z));
     }
   }
@@ -487,7 +770,10 @@ export class View3D {
       this.last = now;
       if (this.soft) {
         const moved = new Set(stepSoft(this.soft, dt));
-        for (const it of this.items) if (moved.has(it.bag)) this.drawBag(it);
+        for (const it of this.items) {
+          if (moved.has(it.bag)) this.drawBag(it);
+          else if (it.easing > 0) { it.easing--; this.drawParts(it); }
+        }
       } else {
         this.world.step(1 / 120, dt, 8);
         this.sync();

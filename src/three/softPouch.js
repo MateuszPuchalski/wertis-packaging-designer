@@ -78,11 +78,20 @@ export const SOFT = {
   damping: 0.012,
   friction: 0.4, // film on the shelf or the floor
   filmFriction: 0.25, // film on film
+  // Static friction (Coulomb): a contact holds while its sideways slip in a substep is under
+  // μs × how hard it presses. The pouch's outside is PET: PET on PET μs ≈ 0.4–0.5, film on a
+  // shelf or board about 0.5. With sliding friction alone a stack crept on for ever, a
+  // little more each substep, down the bumps the parts make in the bags under it.
+  staticFilm: 0.45,
+  staticFloor: 0.5,
   partShare: 0.08, // how much of a part-film contact the part gives way: steel parts are
   //   far heavier than film (the kit is ~200 g, a bag's film ~25 g), so the film moves
   gap: 0.6, // mm the two films of a bag keep apart
   maxStep: 7, // mm a part or a node may move in one substep (no tunnelling through a seal)
   slide: 0.04, // the drag of the film on a part sliding inside the bag, per substep
+  partRest: 0.3, // mm a substep (36 mm/s): a part slower than this is resting…
+  restDamp: 0.5, // …and loses this share of its speed each substep
+  follow: 2, // mm a frame: smaller moves of a part are eased on screen (followPart)
   gravity: [0, -9820, 0], // mm/s²
   settle: 6, // s after the last shove or pull, everything rests
 };
@@ -819,10 +828,14 @@ function keepOut(sim, bag) {
     if (p[3 * k + 1] < f) p[3 * k + 1] = f;
     if (sim.board !== null && p[3 * k + 2] < sim.board + SOFT.film) p[3 * k + 2] = sim.board + SOFT.film;
   }
+  // A part always has its own film between it and the floor (or the board), and keeps the
+  // film's margin off that film, as contain() wants. Holding it any lower made the two rules
+  // fight every substep: the light parts (the E-clip) buzzed and hopped.
+  const rest = SOFT.film / 2 + SOFT.margin;
   for (const part of bag.parts) {
     const low = partLow(part);
-    if (low < sim.floor + SOFT.film) part.c[1] += sim.floor + SOFT.film - low;
-    if (sim.board !== null && part.c[2] - part.spec.radius < sim.board + SOFT.film) part.c[2] = sim.board + SOFT.film + part.spec.radius;
+    if (low < sim.floor + rest) part.c[1] += sim.floor + rest - low;
+    if (sim.board !== null && part.c[2] - part.spec.radius < sim.board + rest) part.c[2] = sim.board + rest + part.spec.radius;
   }
 }
 
@@ -893,7 +906,10 @@ function bagsApart(sim) {
       // Friction: the films' sideways motion this substep evens out by μ.
       const vx = (a.p[3 * k] - a.q[3 * k]) - (b.p[o] - b.q[o]), vy = (a.p[3 * k + 1] - a.q[3 * k + 1]) - (b.p[o + 1] - b.q[o + 1]), vz = (a.p[3 * k + 2] - a.q[3 * k + 2]) - (b.p[o + 2] - b.q[o + 2]);
       const vn = vx * nX + vy * nY + vz * nZ;
-      const tx = (vx - vn * nX) * mu, ty = (vy - vn * nY) * mu, tz = (vz - vn * nZ) * mu;
+      let tx = vx - vn * nX, ty = vy - vn * nY, tz = vz - vn * nZ;
+      const hold = SOFT.staticFilm * Math.abs(corr);
+      const k2 = tx * tx + ty * ty + tz * tz < hold * hold ? 1 : mu;
+      tx *= k2; ty *= k2; tz *= k2;
       a.p[3 * k] -= (tx * wa) / ws; a.p[3 * k + 1] -= (ty * wa) / ws; a.p[3 * k + 2] -= (tz * wa) / ws;
       b.p[o] += (tx * wb) / ws; b.p[o + 1] += (ty * wb) / ws; b.p[o + 2] += (tz * wb) / ws;
       if (!b.awake) { b.awake = true; b.still = 0; }
@@ -901,18 +917,23 @@ function bagsApart(sim) {
   });
 }
 
-function friction(sim, bag) {
+// gh2: how far gravity moves a thing in one substep, which is how hard it presses on the floor.
+function friction(sim, bag, gh2) {
   const { p, q } = bag;
-  const f = sim.floor + SOFT.film / 2 + 0.05;
+  const f = sim.floor + SOFT.film / 2 + 0.05, st2 = (SOFT.staticFloor * gh2) ** 2;
+  // Sliding is slowed by μ; slipping less than μs × the press it holds still.
+  const slip = (dx, dz) => (dx * dx + dz * dz < st2 ? 0 : 1 - SOFT.friction);
   for (let k = 0; k < bag.n; k++) {
     if (p[3 * k + 1] > f) continue;
-    p[3 * k] = q[3 * k] + (p[3 * k] - q[3 * k]) * (1 - SOFT.friction);
-    p[3 * k + 2] = q[3 * k + 2] + (p[3 * k + 2] - q[3 * k + 2]) * (1 - SOFT.friction);
+    const dx = p[3 * k] - q[3 * k], dz = p[3 * k + 2] - q[3 * k + 2], kf = slip(dx, dz);
+    p[3 * k] = q[3 * k] + dx * kf;
+    p[3 * k + 2] = q[3 * k + 2] + dz * kf;
   }
   for (const part of bag.parts) {
-    if (partLow(part) > sim.floor + SOFT.film + 0.05) continue;
-    part.c[0] = part.cp[0] + (part.c[0] - part.cp[0]) * (1 - SOFT.friction);
-    part.c[2] = part.cp[2] + (part.c[2] - part.cp[2]) * (1 - SOFT.friction);
+    if (partLow(part) > sim.floor + SOFT.film / 2 + SOFT.margin + 0.05) continue;
+    const dx = part.c[0] - part.cp[0], dz = part.c[2] - part.cp[2], kf = slip(dx, dz);
+    part.c[0] = part.cp[0] + dx * kf;
+    part.c[2] = part.cp[2] + dz * kf;
   }
 }
 
@@ -942,7 +963,11 @@ export function stepSoft(sim, dt) {
         // The film drags on a part sliding inside the bag.
         const d = damp * (1 - SOFT.slide);
         let vx = (part.c[0] - part.cp[0]) * d, vy = (part.c[1] - part.cp[1]) * d, vz = (part.c[2] - part.cp[2]) * d;
-        const sp = Math.sqrt(vx * vx + vy * vy + vz * vz);
+        let sp = Math.sqrt(vx * vx + vy * vy + vz * vz);
+        // A part that is all but still (resting on film, pressed by its neighbours) keeps
+        // little of its speed: what the contacts push it by must not carry on into the next
+        // substep and back, or it rattles.
+        if (sp < SOFT.partRest) { const r = 1 - SOFT.restDamp; vx *= r; vy *= r; vz *= r; sp *= r; }
         if (sp > cap) { vx *= cap / sp; vy *= cap / sp; vz *= cap / sp; }
         part.cp.set(part.c);
         part.c[0] += vx + g[0]; part.c[1] += vy + g[1]; part.c[2] += vz + g[2];
@@ -979,7 +1004,7 @@ export function stepSoft(sim, dt) {
     bagsApart(sim);
     for (const bag of live) {
       keepOut(sim, bag);
-      friction(sim, bag);
+      friction(sim, bag, Math.hypot(...g));
       orientParts(bag);
     }
     // Last, the film is lifted clear of every part outright (the parts stay put), so it is
@@ -1006,6 +1031,23 @@ export function stepSoft(sim, dt) {
     if (bag.still > 0.5 && sim.drag?.bag !== bag) bag.awake = false;
   }
   return live;
+}
+
+// Where to draw a part: it follows the simulation, but moves of under SOFT.follow mm a frame
+// are eased (a third of the way each frame), so what is left of the contacts' sub-millimetre
+// shiver does not show; anything bigger (a drop, a swing, a drag) is drawn as it happens.
+// `shown` is { c, quat } kept per part by the view; returns it.
+export function followPart(shown, part) {
+  if (!shown) return { c: Float64Array.from(part.c), quat: Float64Array.from(part.quat) };
+  const d = Math.hypot(part.c[0] - shown.c[0], part.c[1] - shown.c[1], part.c[2] - shown.c[2]);
+  const t = d > SOFT.follow ? 1 : 0.35;
+  for (let a = 0; a < 3; a++) shown.c[a] += (part.c[a] - shown.c[a]) * t;
+  const q = part.quat, sq = shown.quat;
+  const sgn = q[0] * sq[0] + q[1] * sq[1] + q[2] * sq[2] + q[3] * sq[3] < 0 ? -1 : 1;
+  for (let a = 0; a < 4; a++) sq[a] += (sgn * q[a] - sq[a]) * t;
+  const l = Math.hypot(sq[0], sq[1], sq[2], sq[3]);
+  for (let a = 0; a < 4; a++) sq[a] /= l;
+  return shown;
 }
 
 // A shove: every particle and part of every bag gets the velocity v(position) (mm/s).

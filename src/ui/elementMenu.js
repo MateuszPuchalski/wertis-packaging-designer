@@ -3,7 +3,7 @@
 import { t, label } from '../i18n/index.js';
 import { hide, resetLayout, resetColors, hasOwnColors, showAll, hiddenCount } from '../edit/actions.js';
 
-export function elementMenuEntries({ store, hit, design, view, showSection }) {
+export function elementMenuEntries({ store, hit, design, view, editText }) {
   const commit = (fn) => { store.commit(fn(store.get())); store.settle(); };
   const n = hiddenCount(design);
   const out = [];
@@ -12,7 +12,7 @@ export function elementMenuEntries({ store, hit, design, view, showSection }) {
     out.push({ id: 'hide', label: t('menu.hide'), hint: t('keys.delete'), action: () => commit((d) => hide(d, hit.id)) });
     if (hit.movable) out.push({ id: 'reset-position', label: t('menu.resetPos'), disabled: !design.layout?.[hit.id], action: () => commit((d) => resetLayout(d, hit.id)) });
     if (hit.slots?.length) out.push({ id: 'reset-colours', label: t('menu.resetColours'), disabled: !hasOwnColors(design, hit.id), action: () => commit((d) => resetColors(d, hit.id)) });
-    if (hit.type === 'text' || hit.type === 'label') out.push({ id: 'edit-texts', label: t('menu.editTexts'), action: () => showSection('sec-texts') });
+    if (hit.edits?.length) out.push({ id: 'edit-text', label: t('menu.editText'), hint: t('keys.dblClick'), action: () => editText(hit.id) });
     out.push('sep');
   }
   out.push({ id: 'show-all', label: t('menu.showAll', { n }), disabled: !n, action: () => commit(showAll) });

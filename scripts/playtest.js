@@ -169,6 +169,26 @@ export async function playtest() {
     assert.deepEqual(await page.evaluate(() => window.wertis.store.get().hidden), {}, 'Show all shows it again');
     step('hover names the element; right-click → Hide, then Show all');
 
+    // Texts are edited on the element: double-click "Produced for", type on its card.
+    const addrAt = await pointOn(page, 'back.address');
+    assert.ok(addrAt, 'the address is on screen');
+    await page.mouse.dblclick(addrAt.x, addrAt.y);
+    await page.waitForFunction(() => document.querySelector('.insp-title')?.textContent === 'Produced for');
+    assert.equal(await page.evaluate(() => document.activeElement.id), 't-content-producedFor', 'the cursor is in its first line');
+    const fields = await page.evaluate(() => [...document.querySelectorAll('.insp-texts input, .insp-texts textarea')].map((i) => i.id));
+    assert.deepEqual(fields, ['t-content-producedFor', 't-content-company', 't-content-address', 't-content-email']);
+    await page.fill('#t-content-company', 'WERTIS Sp. z o.o. (test)');
+    assert.equal(await page.evaluate(() => window.wertis.store.get().content.company), 'WERTIS Sp. z o.o. (test)');
+    // The label offers the product name (main language first), the codes and the link.
+    await page.click('.el-row[data-el-row="back.label"] .el-name');
+    await page.waitForFunction(() => document.querySelector('.insp-title')?.textContent === 'Label');
+    const labelFields = await page.evaluate(() => [...document.querySelectorAll('.insp-texts input, .insp-texts select')].map((i) => i.id));
+    assert.deepEqual(labelFields.slice(0, 2), ['lang', 't-content-productName-pl']);
+    for (const id of ['t-content-sku', 't-content-ean', 't-content-qr', 't-content-url']) assert.ok(labelFields.includes(id), id);
+    await page.screenshot({ path: `${shots}text-on-element.png` });
+    await page.keyboard.press('Control+z');
+    step('double-click a text to edit it on its card; the label offers its name, codes and link');
+
     // Edit a swatch in the Colours panel: everything that uses it follows.
     await page.click('[data-side-tab="colours"]');
     const hex = page.locator('[data-swatch="boxOrange"] .sw-hex');
@@ -316,6 +336,7 @@ export async function playtest() {
     await page.selectOption('#format', 'flatPouch');
     await page.click('[data-tab="3d"]');
     await page.waitForSelector('.view3d[data-ready="1"]', { timeout: 90000 });
+    assert.equal(await page.evaluate(() => window.wertis.stage.view3d.sceneName), 'shop', 'pouches start on the shop hooks');
     // The clutch kit lies in every pouch and sags to the bottom of the hanging bags;
     // "Nothing" empties them, and back; the film can be changed.
     const kit = await page.evaluate(async () => {
@@ -354,8 +375,15 @@ export async function playtest() {
     await page.selectOption('#format', 'tuckBox');
     await page.click('[data-tab="3d"]');
     await page.waitForFunction(() => window.wertis.stage.view3d?.pack?.kind === 'box', null, { timeout: 90000 });
-    await page.waitForTimeout(2000);
-    await page.screenshot({ path: `${shots}3d-box-stack.png` });
+    const boxScenes = await page.evaluate(() => [...document.querySelectorAll('#scene3d option')].map((o) => o.value));
+    assert.equal(boxScenes[0], 'shop', 'boxes start on the shop shelves');
+    for (const scene of boxScenes) {
+      await page.selectOption('#scene3d', scene);
+      await page.waitForTimeout(2000);
+      await page.screenshot({ path: `${shots}3d-box-${scene}.png` });
+    }
+    await page.selectOption('#scene3d', 'stack');
+    await page.waitForTimeout(1500);
     const moved = await page.evaluate(async () => {
       const v = window.wertis.stage.view3d;
       const before = v.items.map((i) => i.body.position.x + i.body.position.z);
@@ -364,7 +392,7 @@ export async function playtest() {
       return v.items.some((i, k) => Math.abs(i.body.position.x + i.body.position.z - before[k]) > 0.01);
     });
     assert.ok(moved, 'a push moves the stack');
-    step('the 3D tab hangs, piles and stacks the packs, and pushing moves them');
+    step('the 3D tab shows the packs in the shop (pouches on hooks, boxes on shelves), hangs, piles and stacks them, and pushing moves them');
     await page.click('[data-tab="design"]');
 
     assert.deepEqual(await page.evaluate(() => window.wertis.misses()), [], 'no untranslated text');
@@ -405,7 +433,7 @@ async function polish(browser, step, errors) {
   await page.waitForSelector('.preflight-list .pf-item');
   assert.match(await page.locator('.preflight-list').innerText(), /Spad 3 mm na każdej zewnętrznej krawędzi/);
   await page.click('.modal-buttons button');
-  for (const tab of ['project', 'format', 'texts', 'colours', 'print', 'mockup']) {
+  for (const tab of ['project', 'format', 'colours', 'print', 'mockup']) {
     await page.click(`[data-side-tab="${tab}"]`);
     await page.waitForTimeout(80);
   }

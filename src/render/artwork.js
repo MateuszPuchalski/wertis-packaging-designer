@@ -285,5 +285,5 @@ export function panelArt(rc, panel, elements) {
 }
 
 function hitOf(e, box) {
-  return { id: e.id, label: e.label, type: e.type, layer: e.layer, box: box ?? e.box, movable: !!e.movable, resizable: !!e.resizable, keepAspect: !!e.keepAspect, slots: Object.keys(e.colors ?? {}) };
+  return { id: e.id, label: e.label, type: e.type, layer: e.layer, box: box ?? e.box, movable: !!e.movable, resizable: !!e.resizable, keepAspect: !!e.keepAspect, slots: Object.keys(e.colors ?? {}), edits: e.edits ?? [] };
 }

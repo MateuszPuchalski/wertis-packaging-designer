@@ -9,6 +9,7 @@ Written by `npm run playtest`.
 - Ctrl + wheel zooms around the pointer; the rulers follow
 - 1 shows the real size, Space + drag pans, 0 fits
 - hover names the element; right-click → Hide, then Show all
+- double-click a text to edit it on its card; the label offers its name, codes and link
 - editing a swatch recolours the preview and the print file
 - undo restores the swatch
 - print PDF: PDF/X-1a, FOGRA39, trim/bleed boxes, CMYK only, spot inks Dieline, Crease, All, White
@@ -24,7 +25,7 @@ Written by `npm run playtest`.
 - proof and mockup tabs draw
 - every format and template draws and exports (flatPouch/pouchWindow, standUpPouch/pouchWindow, tuckBox/boxProduct, tuckBox/boxGeneric)
 - the 3D pouches are soft film with the Stihl clutch kit inside, which sags to the bottom; the film and the part can be changed
-- the 3D tab hangs, piles and stacks the packs, and pushing moves them
+- the 3D tab shows the packs in the shop (pouches on hooks, boxes on shelves), hangs, piles and stacks them, and pushing moves them
 - in a Polish browser the editor is in Polish, with decimal commas
 - preflight, every tab, the menus and the shortcuts read in Polish
 - switching to English reloads the editor in English with the design kept

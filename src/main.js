@@ -53,7 +53,7 @@ async function boot() {
     store, env,
     onSelect: () => insp.sync(store.get()),
     renderMockup: (d) => mockupSvg(d, env),
-    showSection: (sec) => side.showSection(sec),
+    editText: (sid) => { select(sid); insp.focusText(); },
   });
   stage.onSnapshot = (blob) => download(blob, `${slug(store.get().name)}-3d.png`);
   const insp = inspector(store, { getParts, getHit: (hid) => stage.hit(hid), select, getSelected: () => stage.selected, showSection: (sec) => side.showSection(sec) });

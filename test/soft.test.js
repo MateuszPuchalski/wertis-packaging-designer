@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   SOFT, FILMS, MATERIAL, laminate, plateFor, createBag, createSoftWorld, stepSoft, shove, quatFromEuler,
-  filmInside, maxStretch, volumeOf, renderLayout, writeRender,
+  filmInside, maxStretch, volumeOf, renderLayout, writeRender, followPart,
 } from '../src/three/softPouch.js';
 import { PRODUCTS, arrange } from '../src/three/products.js';
 import { placements } from '../src/three/scenes.js';
@@ -134,4 +134,60 @@ test('the surface to draw: both films, smooth, closed at the seals, normals outw
   // At the seal round the edge the two films meet.
   const corner = 3 * (layout.rx - 1);
   assert.deepEqual([...pos.slice(corner, corner + 3)], [...pos.slice(3 * layout.per + corner, 3 * layout.per + corner + 3)]);
+});
+
+// How the parts move in the second after `settle` frames: the worst part's biggest jump in a
+// frame, the E-clip's, and how far any part slid sideways.
+function restless(bags, settle = 150) {
+  const sim = createSoftWorld(bags, { floor: 0 });
+  run(sim, settle);
+  const parts = bags.flatMap((b) => b.parts);
+  const last = parts.map((p) => [...p.c]), start = parts.map((p) => [...p.c]);
+  let hop = 0, clip = 0;
+  for (let f = 0; f < 60; f++) {
+    stepSoft(sim, 1 / 60);
+    parts.forEach((p, k) => {
+      const m = Math.hypot(p.c[0] - last[k][0], p.c[1] - last[k][1], p.c[2] - last[k][2]);
+      hop = Math.max(hop, m);
+      if (p.id === 'eclip') clip = Math.max(clip, m);
+      last[k] = [...p.c];
+    });
+  }
+  const slid = Math.max(...parts.map((p, k) => Math.hypot(p.c[0] - start[k][0], p.c[2] - start[k][2])));
+  return { hop, clip, slid };
+}
+
+test('parts lying in a bag keep still: the light E-clip does not hop, nothing creeps', () => {
+  // The floor once held a part lower than its film allows, and the two rules fought every
+  // substep: the 0.5 g E-clip hopped up to 4 mm a frame and the bag crept 6 mm a second.
+  const pack = { kind: 'pouch', size: { x: W, y: H, z: 7.5 }, thick: 38.6, hole: { x: W / 2, y: 10 } };
+  const lying = (n) => placements('stack', pack, n, 1).map((s) => createBag({ W, H, dims: d.dims, pose: { p: s.p.map((v) => v * 100), q: quatFromEuler(...s.r) }, parts: kit() }));
+  const one = restless(lying(1));
+  assert.ok(one.clip < 0.5, `the E-clip jumps ${one.clip.toFixed(2)} mm a frame`);
+  assert.ok(one.hop < 1.5, `a part jumps ${one.hop.toFixed(2)} mm a frame`);
+  assert.ok(one.slid < 1, `a part slid ${one.slid.toFixed(2)} mm in a second`);
+  // A stack settles (static friction, PET on PET), where it used to creep on at 15 mm a
+  // second until the timer stopped it. In the first seconds it may still topple off the bumps.
+  const three = restless(lying(3), 240);
+  assert.ok(three.slid < 6, `the stack slid ${three.slid.toFixed(2)} mm in its fifth second`);
+  assert.ok(three.hop < 2, `a part in the stack jumps ${three.hop.toFixed(2)} mm a frame`);
+});
+
+test('on screen a part follows the simulation, easing only sub-millimetre shiver', () => {
+  const part = { c: new Float64Array([0, 0, 0]), quat: new Float64Array([0, 0, 0, 1]) };
+  let shown = followPart(null, part);
+  // A 0.4 mm back-and-forth every frame shows as much less.
+  let spread = 0;
+  for (let f = 0; f < 20; f++) {
+    part.c[1] = f % 2 ? 0.4 : 0;
+    shown = followPart(shown, part);
+    if (f > 10) spread = Math.max(spread, Math.abs(shown.c[1] - 0.2));
+  }
+  assert.ok(spread < 0.1, `shown shiver ${spread.toFixed(3)} mm`);
+  // A real move (a drop, a drag) is drawn as it happens.
+  part.c[1] = 50;
+  part.quat.set([0, Math.sin(0.5), 0, Math.cos(0.5)]);
+  shown = followPart(shown, part);
+  assert.deepEqual([...shown.c], [...part.c]);
+  assert.ok(Math.abs(Math.hypot(...shown.quat) - 1) < 1e-9 && Math.abs(shown.quat[1] - part.quat[1]) < 1e-9);
 });
