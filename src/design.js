@@ -35,7 +35,7 @@ export function createDesign({ format = 'flatPouch', template, date = '' } = {})
     content: example.content,
     proof: { version: 'V1', date, author: '', notes: 'Please check all texts, colours, sizes, the window and both codes before approving.' },
     // product3d: the part the 3D view puts in a pouch (three/products.js).
-    mockup: { photo: null, background: '#e8e4dc', angle: 0, product3d: f.example === 'box' ? 'none' : 'clutchDrum' },
+    mockup: { photo: null, background: '#e8e4dc', angle: 0, product3d: f.example === 'box' ? 'none' : 'clutchDrum', film3d: 'heavy' },
     export: exportDefaults(f.id),
   };
 }

@@ -16,6 +16,11 @@ export function scenesFor(kind) {
 }
 
 export const MAX_COUNT = { stack: 36, pile: 40, peg: 12 };
+// Soft pouches cost more to simulate than rigid boxes: ten at most.
+export const MAX_POUCHES = 10;
+export function maxCount(scene, kind) {
+  return kind === 'box' ? MAX_COUNT[scene] ?? 40 : Math.min(MAX_POUCHES, MAX_COUNT[scene] ?? 40);
+}
 
 // pack: { kind, size: { x, y, z } in mm, thick?: mm where a part swells it, hole: { x, y }
 // in mm from the face's top left }
@@ -24,7 +29,7 @@ export function placements(scene, pack, count, seed = 1) {
   const rng = mulberry32(seed);
   const sx = pack.size.x / UNIT, sy = pack.size.y / UNIT, sz = pack.size.z / UNIT;
   const tz = Math.max(sz, (pack.thick ?? 0) / UNIT); // the full thickness, part included
-  const n = Math.max(1, Math.min(count, MAX_COUNT[scene] ?? 40));
+  const n = Math.max(1, Math.min(count, maxCount(scene, pack.kind)));
   const out = [];
   if (scene === 'peg' && pack.kind !== 'box') {
     // A shop peg hook pointing at you: the packs hang one behind another.
@@ -58,9 +63,18 @@ export function placements(scene, pack, count, seed = 1) {
     }
     return out;
   }
-  // A pile: dropped one after another over a small area, any way up.
-  const spread = Math.max(sx, sy, sz) * (0.4 + Math.sqrt(n) * 0.25);
+  // A pile: dropped one after another over a small area. Boxes land any way up; pouches,
+  // being flat and light, fall more or less flat, face or back up, turned any way.
   const big = Math.max(sx, sy, sz);
+  if (pack.kind !== 'box') {
+    const spread = Math.max(sx, sy) * (0.3 + Math.sqrt(n) * 0.18);
+    for (let i = 0; i < n; i++) {
+      const up = rng() < 0.65 ? -1 : 1;
+      out.push({ p: [(rng() - 0.5) * spread, tz + 0.15 + i * (tz + 0.12), (rng() - 0.5) * spread], r: [up * Math.PI / 2 + (rng() - 0.5) * 0.5, (rng() - 0.5) * 0.3, rng() * Math.PI * 2] }); // XYZ: tilt, then a turn about the bag's own face
+    }
+    return out;
+  }
+  const spread = big * (0.4 + Math.sqrt(n) * 0.25);
   for (let i = 0; i < n; i++) {
     out.push({ p: [(rng() - 0.5) * spread, big + 0.3 + i * big * 0.6, (rng() - 0.5) * spread], r: [rng() * Math.PI * 2, rng() * Math.PI * 2, rng() * Math.PI * 2] });
   }

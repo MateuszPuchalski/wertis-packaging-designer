@@ -14,7 +14,7 @@ const LIBS = [
   { pkg: 'svg2pdf.js', dir: 'svg2pdf', files: [['dist/svg2pdf.umd.min.js', 'svg2pdf.umd.min.js'], ['LICENSE', 'LICENSE']] },
   { pkg: 'opentype.js', dir: 'opentype', files: [['dist/opentype.min.mjs', 'opentype.min.mjs'], ['LICENSE', 'LICENSE']] },
   // The 3D tab: three.js (loaded through the import map in index.html) and cannon-es physics.
-  { pkg: 'three', dir: 'three', files: [['build/three.module.js', 'three.module.js'], ['build/three.core.js', 'three.core.js'], ['examples/jsm/controls/OrbitControls.js', 'OrbitControls.js'], ['examples/jsm/environments/RoomEnvironment.js', 'RoomEnvironment.js'], ['LICENSE', 'LICENSE']] },
+  { pkg: 'three', dir: 'three', files: [['build/three.module.js', 'three.module.js'], ['build/three.core.js', 'three.core.js'], ['examples/jsm/controls/OrbitControls.js', 'OrbitControls.js'], ['examples/jsm/environments/RoomEnvironment.js', 'RoomEnvironment.js'], ['examples/jsm/geometries/RoundedBoxGeometry.js', 'RoundedBoxGeometry.js'], ['LICENSE', 'LICENSE']] },
   { pkg: 'cannon-es', dir: 'cannon-es', files: [['dist/cannon-es.js', 'cannon-es.js'], ['LICENSE', 'LICENSE']] },
 ];
 

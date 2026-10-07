@@ -18,6 +18,6 @@ Written by `npm run playtest`.
 - the pattern switches to outlines
 - proof and mockup tabs draw
 - every format and template draws and exports (flatPouch/pouchWindow, standUpPouch/pouchWindow, tuckBox/boxProduct, tuckBox/boxGeneric)
-- the 3D pouches hold the Stihl clutch kit at its real size, and can be emptied
+- the 3D pouches are soft film with the Stihl clutch kit inside, which sags to the bottom; the film and the part can be changed
 - the 3D tab hangs, piles and stacks the packs, and pushing moves them
 - no console errors

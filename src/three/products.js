@@ -270,22 +270,28 @@ function sides(span, front, back) {
 }
 
 const R_OUT = RIM.outer + RIM.bevel;
+// `hull`: the part as a few cylinders for the soft pouch's film to rest on (mm, centred like
+// the model; axis z unless `axis: 'x'`).
+const centred = (span, ...cyl) => cyl.map(([r, y0, y1, axis]) => ({ r, z0: y0 - (span[0] + span[1]) / 2, z1: y1 - (span[0] + span[1]) / 2, axis: axis ?? 'z' }));
 export const PARTS = {
   drum: {
     label: 'Clutch drum with rim sprocket', radius: 34.5, depth: DRUM_SPAN[1] - DRUM_SPAN[0], mass: 0.13, build: buildDrum,
     sides: sides(DRUM_SPAN, [[34.5, 23.5], [R_OUT, 24.4 + RIM.width], [RIM.bore + RIM.spline + 0.2, 35.6], [9, 36.2]], [[34.5, 0]]),
+    hull: centred(DRUM_SPAN, [34.5, 0, 23.5], [R_OUT, 23.5, 24.4 + RIM.width], [RIM.bore + RIM.spline + 0.2, 24.4 + RIM.width, 36.2]),
   },
   clutch: {
     label: 'Clutch', radius: CLUTCH.outer + 0.4, depth: CLUTCH_SPAN[1], mass: 0.12, build: buildClutch,
     sides: sides(CLUTCH_SPAN, [[CLUTCH.outer + 0.4, CLUTCH.hexThick], [28, CLUTCH_SPAN[1]]], [[CLUTCH.outer + 0.4, 0]]),
+    hull: centred(CLUTCH_SPAN, [CLUTCH.outer + 0.4, CLUTCH_SPAN[0], CLUTCH_SPAN[1]]),
   },
-  rim: { label: 'Spare rim sprocket 3/8" P, 7 teeth', radius: R_OUT, depth: RIM.width, mass: 0.02, build: buildRim, sides: sides([0, RIM.width], [[R_OUT, RIM.width]], [[R_OUT, 0]]) },
+  rim: { label: 'Spare rim sprocket 3/8" P, 7 teeth', radius: R_OUT, depth: RIM.width, mass: 0.02, build: buildRim, sides: sides([0, RIM.width], [[R_OUT, RIM.width]], [[R_OUT, 0]]), hull: centred([0, RIM.width], [R_OUT, 0, RIM.width]) },
   bearing: {
     label: 'Needle bearing', radius: Math.hypot(BEARING.length / 2, BEARING.at + BEARING.needleR), depth: 2 * (BEARING.at + BEARING.needleR), mass: 0.005, build: buildBearing,
     sides: { front: [{ r: Math.hypot(BEARING.length / 2, BEARING.at + BEARING.needleR), h: BEARING.at + BEARING.needleR }], back: [{ r: Math.hypot(BEARING.length / 2, BEARING.at + BEARING.needleR), h: BEARING.at + BEARING.needleR }] },
+    hull: [{ r: BEARING.at + BEARING.needleR, z0: -BEARING.length / 2, z1: BEARING.length / 2, axis: 'x' }],
   },
-  washer: { label: 'Cup washer', radius: 11, depth: 3, mass: 0.003, build: buildWasher, sides: sides(WASHER_SPAN, [[11, 3]], [[11, 0]]) },
-  eclip: { label: 'E-clip', radius: 7.4, depth: 0.9, mass: 0.0005, build: buildEclip, sides: sides(ECLIP_SPAN, [[7.4, 0.9]], [[7.4, 0]]) },
+  washer: { label: 'Cup washer', radius: 11, depth: 3, mass: 0.003, build: buildWasher, sides: sides(WASHER_SPAN, [[11, 3]], [[11, 0]]), hull: centred(WASHER_SPAN, [11, 0, 3]) },
+  eclip: { label: 'E-clip', radius: 7.4, depth: 0.9, mass: 0.0005, build: buildEclip, sides: sides(ECLIP_SPAN, [[7.4, 0.9]], [[7.4, 0]]), hull: centred(ECLIP_SPAN, [7.4, 0, 0.9]) },
 };
 
 // Colours picked from the shop's photos; `env` is how much of the room the metal reflects.
