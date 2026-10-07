@@ -209,19 +209,29 @@ export async function playtest() {
     await page.selectOption('#format', 'flatPouch');
     await page.click('[data-tab="3d"]');
     await page.waitForSelector('.view3d[data-ready="1"]', { timeout: 90000 });
-    // The clutch kit lies in every pouch; "Nothing" empties them, and back.
-    const kit = await page.evaluate(() => {
+    // The clutch kit lies in every pouch and sags to the bottom of the hanging bags;
+    // "Nothing" empties them, and back; the film can be changed.
+    const kit = await page.evaluate(async () => {
       const v = window.wertis.stage.view3d;
-      return { parts: v.pack.product?.parts.map((p) => p.part).sort(), meshes: v.items.map((i) => i.mesh.children.length) };
+      const start = v.items.map((i) => i.bag.parts.map((p) => p.c[1]));
+      const S = await import('/src/three/softPouch.js');
+      for (let f = 0; f < 120; f++) S.stepSoft(v.soft, 1 / 60); // two seconds of hanging
+      const fell = v.items.map((i, k) => i.bag.parts.map((p, j) => start[k][j] - p.c[1]));
+      return { parts: v.pack.product?.parts.map((p) => p.part).sort(), meshes: v.items.map((i) => i.partMeshes.length), fell: fell.flat(), soft: !!v.soft };
     });
     assert.deepEqual(kit.parts, ['bearing', 'clutch', 'drum', 'eclip', 'rim', 'washer'], 'the clutch kit is in the pouch');
-    assert.ok(kit.meshes.every((m) => m > 8), 'every pouch holds the parts (lining, film and the part meshes)');
+    assert.ok(kit.soft && kit.meshes.every((m) => m === 6), 'every pouch is soft film and holds the six parts');
+    assert.ok(kit.fell.every((d) => d > 0) && Math.max(...kit.fell) > 80, 'the parts sag to the bottom of the hanging bags');
     await page.selectOption('#product3d', 'none');
-    await page.waitForFunction(() => window.wertis.stage.view3d.pack.product === null && window.wertis.stage.view3d.items.every((i) => i.mesh.children.length === 2), null, { timeout: 90000 });
+    await page.waitForFunction(() => window.wertis.stage.view3d.pack.product === null && window.wertis.stage.view3d.items.every((i) => i.partMeshes.length === 0), null, { timeout: 90000 });
     await page.screenshot({ path: `${shots}3d-pouch-empty.png` });
     await page.selectOption('#product3d', 'clutchDrum');
-    await page.waitForFunction(() => window.wertis.stage.view3d.pack.product?.parts.length === 6 && window.wertis.stage.view3d.items.every((i) => i.mesh.children.length > 8), null, { timeout: 90000 });
-    step('the 3D pouches hold the Stihl clutch kit at its real size, and can be emptied');
+    await page.waitForFunction(() => window.wertis.stage.view3d.pack.product?.parts.length === 6 && window.wertis.stage.view3d.items.every((i) => i.partMeshes.length === 6), null, { timeout: 90000 });
+    await page.selectOption('#film3d', 'light');
+    await page.waitForFunction(() => window.wertis.stage.view3d.pack.film === 'light', null, { timeout: 90000 });
+    await page.selectOption('#film3d', 'heavy');
+    await page.waitForFunction(() => window.wertis.stage.view3d.pack.film === 'heavy', null, { timeout: 90000 });
+    step('the 3D pouches are soft film with the Stihl clutch kit inside, which sags to the bottom; the film and the part can be changed');
     for (const scene of await page.evaluate(() => [...document.querySelectorAll('#scene3d option')].map((o) => o.value))) {
       await page.selectOption('#scene3d', scene);
       await page.waitForTimeout(1500);

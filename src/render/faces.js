@@ -113,6 +113,8 @@ function pouchFaces(design, env, geo, parts) {
     edge: '#f0ede8',
     hole,
     holeShape: d.hole ?? 'none',
+    dims: d,
+    film: design.mockup?.film3d ?? 'heavy',
     product,
   };
 }

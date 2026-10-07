@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { placements, scenesFor, MAX_COUNT, UNIT } from '../src/three/scenes.js';
+import { placements, scenesFor, MAX_COUNT, MAX_POUCHES, UNIT } from '../src/three/scenes.js';
 import { packFaces } from '../src/render/faces.js';
 import { design, env } from './helpers.js';
 
@@ -37,7 +37,7 @@ test('hanging pouches have their hole on the rod', () => {
     assert.ok(Math.abs(ly - (3.5 / 2 - 10 / UNIT)) < 1e-9, 'the hole is 10 mm under the top edge');
   }
   assert.ok(ps[0].p[1] - 3.5 / 2 > 0, 'they hang clear of the floor');
-  assert.equal(placements('peg', pouch, 99).length, MAX_COUNT.peg);
+  assert.equal(placements('peg', pouch, 99).length, Math.min(MAX_COUNT.peg, MAX_POUCHES));
 });
 
 test('a pile is the same for a seed, and drops one pack after another', () => {

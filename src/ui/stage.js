@@ -5,8 +5,9 @@ import { h } from './dom.js';
 import { renderSheet } from '../render/sheet.js';
 import { renderProof } from '../render/proof.js';
 import { packFaces } from '../render/faces.js';
-import { SCENES, MAX_COUNT, scenesFor } from '../three/scenes.js';
+import { SCENES, maxCount, scenesFor } from '../three/scenes.js';
 import { PRODUCTS } from '../three/products.js';
+import { FILMS } from '../three/softPouch.js';
 
 const SVGNS = 'http://www.w3.org/2000/svg';
 
@@ -35,12 +36,16 @@ export class Stage {
     this.toolsDesign = h('span', { class: 'tools-design' }, toggle('dieline', 'Dieline'), toggle('guides', 'Guides'));
     // 3D: scene, how many packs, drop again, push, snapshot.
     this.sceneSel = h('select', { id: 'scene3d', 'aria-label': '3D scene', onchange: () => { this.view3d?.setScene(this.sceneSel.value); this.syncCount(); } });
-    this.countIn = h('input', { type: 'number', id: 'count3d', min: 1, max: 40, value: 8, 'aria-label': 'How many', onchange: () => { this.syncCount(); this.view3d?.setCount(Number(this.countIn.value)); } });
+    this.countIn = h('input', { type: 'number', id: 'count3d', min: 1, max: 40, value: 6, 'aria-label': 'How many', onchange: () => { this.syncCount(); this.view3d?.setCount(Number(this.countIn.value)); } });
     // What is in the pouch: stored in the design, so the project remembers it.
     this.productSel = h('select', { id: 'product3d', 'aria-label': 'Part in the pouch', title: 'The part in the pouch, at its real size',
       onchange: () => { this.store.set(['mockup', 'product3d'], this.productSel.value); this.store.settle(); } },
     Object.entries(PRODUCTS).map(([k, p]) => h('option', { value: k }, p.label)));
-    this.tools3d = h('span', { class: 'tools-3d', hidden: true }, this.sceneSel, this.productSel,
+    // The pouch's film, from the laminates zip pouches are made of (stiffer with more PE).
+    this.filmSel = h('select', { id: 'film3d', 'aria-label': 'Pouch film', title: 'The laminate the pouch is made of: how stiff it is',
+      onchange: () => { this.store.set(['mockup', 'film3d'], this.filmSel.value); this.store.settle(); } },
+    Object.entries(FILMS).map(([k, f]) => h('option', { value: k }, `${f.label} (${f.thickness} µm)`)));
+    this.tools3d = h('span', { class: 'tools-3d', hidden: true }, this.sceneSel, this.productSel, this.filmSel,
       h('label', { class: 'toggle' }, 'Packs', this.countIn),
       h('button', { class: 'secondary tiny', id: 'again3d', onclick: () => this.view3d?.again() }, 'Drop again'),
       h('button', { class: 'secondary tiny', id: 'push3d', onclick: () => this.view3d?.push() }, 'Push'),
@@ -83,7 +88,7 @@ export class Stage {
   }
 
   syncCount() {
-    const max = MAX_COUNT[this.sceneSel.value] ?? 40;
+    const max = maxCount(this.sceneSel.value, this.view3d?.pack?.kind ?? this.kind3d);
     this.countIn.max = max;
     if (Number(this.countIn.value) > max) this.countIn.value = max;
   }
@@ -101,8 +106,10 @@ export class Stage {
     clearTimeout(this.timer3d);
     this.timer3d = setTimeout(async () => {
       const pack = packFaces(design, this.env);
-      this.productSel.hidden = pack.kind === 'box';
+      this.productSel.hidden = this.filmSel.hidden = pack.kind === 'box';
+      this.kind3d = pack.kind;
       this.productSel.value = design.mockup?.product3d ?? 'none';
+      this.filmSel.value = design.mockup?.film3d ?? 'heavy';
       const scenes = scenesFor(pack.kind);
       const sig = scenes.join('|');
       if (this.sceneSel.dataset.sig !== sig) {
