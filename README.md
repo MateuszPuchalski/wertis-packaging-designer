@@ -51,6 +51,18 @@ logos, label and recycling marks on the preview. It exports:
   - pouches hanging on a peg hook through their hang holes (and swinging when pushed),
     in a pile, or lying in stacks.
 
+  **What is in the pouch.** The pouch can hold a product, modelled in 3D at its real size.
+  - **The kit:** the Stihl MS170 / MS180 clutch kit, after the shop's photos. It has the Ø69 mm
+    drum with its 3/8" P 7-tooth rim sprocket, the clutch, a spare rim, the needle bearing,
+    the cup washer and the E-clip.
+  - **Layout:** the parts lie behind the window as on the photo; a smaller window squeezes them
+    together.
+  - **Film and lining:** the film swells over the parts and the window shows them through its
+    sheen. Inside, the pouch is lined with the white of the underprint.
+
+  Pick it, or "Nothing", in the 3D toolbar; the project remembers the choice. Without a product,
+  a photo set for the mockup shows on the inside of the pouch.
+
   **Save PNG** takes a snapshot. Drag to orbit the camera; scroll to zoom.
 
 The pattern of parts icons comes in two styles: solid silhouettes, or outlines. The recycling

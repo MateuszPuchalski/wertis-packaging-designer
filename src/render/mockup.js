@@ -15,7 +15,7 @@ export function rc(design, env) {
 
 // The product behind the window: the photo, cover-fitted, then zoomed and moved by the
 // user. Without a photo the window stays empty: just the clear film.
-function productLayer(win, photo) {
+export function productLayer(win, photo) {
   if (!photo?.src) return '';
   const { x, y, w, h } = win.box;
   const pw = photo.w || 1000, ph = photo.h || 1000;
@@ -26,7 +26,7 @@ function productLayer(win, photo) {
   return el('image', { href: photo.src, x: ix, y: iy, width: iw, height: ih, preserveAspectRatio: 'none' });
 }
 
-function standUpOutline(W, H, zone, r) {
+export function standUpOutline(W, H, zone, r) {
   const y = H - zone * 0.55;
   return `M0 ${n(r)}A${n(r)} ${n(r)} 0 0 1 ${n(r)} 0H${n(W - r)}A${n(r)} ${n(r)} 0 0 1 ${n(W)} ${n(r)}V${n(y)}Q${n(W / 2)} ${n(y + zone * 0.5)} 0 ${n(y)}Z`;
 }
@@ -40,7 +40,9 @@ function crimp(x, y, w, h, vertical) {
   return d;
 }
 
-export function pouchFace(design, env, part, ctx, defs, ids) {
+// The finished face of a pouch. `open`: for the 3D view, the windows are left clear (the
+// view puts the film, the inside and the part behind them itself).
+export function pouchFace(design, env, part, ctx, defs, ids, { open = false } = {}) {
   const { panel, elements } = part;
   const W = panel.w, H = panel.h;
   const dims = design.dims;
@@ -54,7 +56,7 @@ export function pouchFace(design, env, part, ctx, defs, ids) {
   defs.push(el('clipPath', { id: clipId }, el('path', { d: outline + holes, 'clip-rule': 'evenodd' })));
   const photo = design.mockup?.photo;
   let inside = '';
-  for (const w of art.windows) {
+  for (const w of open ? [] : art.windows) {
     // What shows through: the inside of the back panel (white film) or, with a matching
     // back window, the background; then the product; then the film's sheen.
     const seeThrough = elements.some((e) => e.type === 'window' && e.id !== w.id) ? 'none' : '#f4f3f1';
@@ -83,7 +85,7 @@ export function pouchFace(design, env, part, ctx, defs, ids) {
       [[0, 0], [top, 0], [1, 0.38]].map(([o, a]) => el('stop', { offset: o, 'stop-color': '#000000', 'stop-opacity': a })).join('')));
     film += el('path', { d: rectPath(0, 0, W, H), fill: `url(#${curve})` });
   }
-  for (const w of art.windows) film += el('path', { d: w.d, fill: `url(#${glare})` }) + el('path', { d: w.d, fill: 'none', stroke: '#ffffff', 'stroke-opacity': 0.35, 'stroke-width': 0.6 });
+  for (const w of open ? [] : art.windows) film += el('path', { d: w.d, fill: `url(#${glare})` }) + el('path', { d: w.d, fill: 'none', stroke: '#ffffff', 'stroke-opacity': 0.35, 'stroke-width': 0.6 });
   // Seals and zip.
   const seal = dims.sideSeal ?? 0, bottom = dims.bottomSeal ?? 0, top = dims.topSeal ?? 0;
   let marks = '';

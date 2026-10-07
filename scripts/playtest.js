@@ -43,6 +43,7 @@ export async function playtest() {
     await waitForServer(`http://localhost:${port}/`);
     const ctx = await browser.newContext({ viewport: { width: 1600, height: 950 }, acceptDownloads: true });
     const page = await ctx.newPage();
+    page.setDefaultTimeout(120000); // the 3D tab renders in software (SwiftShader) here
     page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
     page.on('pageerror', (e) => errors.push(e.message));
     await page.goto(`http://localhost:${port}/`);
@@ -208,6 +209,19 @@ export async function playtest() {
     await page.selectOption('#format', 'flatPouch');
     await page.click('[data-tab="3d"]');
     await page.waitForSelector('.view3d[data-ready="1"]', { timeout: 90000 });
+    // The clutch kit lies in every pouch; "Nothing" empties them, and back.
+    const kit = await page.evaluate(() => {
+      const v = window.wertis.stage.view3d;
+      return { parts: v.pack.product?.parts.map((p) => p.part).sort(), meshes: v.items.map((i) => i.mesh.children.length) };
+    });
+    assert.deepEqual(kit.parts, ['bearing', 'clutch', 'drum', 'eclip', 'rim', 'washer'], 'the clutch kit is in the pouch');
+    assert.ok(kit.meshes.every((m) => m > 8), 'every pouch holds the parts (lining, film and the part meshes)');
+    await page.selectOption('#product3d', 'none');
+    await page.waitForFunction(() => window.wertis.stage.view3d.pack.product === null && window.wertis.stage.view3d.items.every((i) => i.mesh.children.length === 2), null, { timeout: 90000 });
+    await page.screenshot({ path: `${shots}3d-pouch-empty.png` });
+    await page.selectOption('#product3d', 'clutchDrum');
+    await page.waitForFunction(() => window.wertis.stage.view3d.pack.product?.parts.length === 6 && window.wertis.stage.view3d.items.every((i) => i.mesh.children.length > 8), null, { timeout: 90000 });
+    step('the 3D pouches hold the Stihl clutch kit at its real size, and can be emptied');
     for (const scene of await page.evaluate(() => [...document.querySelectorAll('#scene3d option')].map((o) => o.value))) {
       await page.selectOption('#scene3d', scene);
       await page.waitForTimeout(1500);

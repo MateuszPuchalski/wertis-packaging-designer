@@ -220,3 +220,4 @@ h4 { margin: 8px 0 2px; font-size: 12px; text-transform: uppercase; letter-spaci
 .pf-item.ok .pf-level { color: #1e7b34; }
 .pf-item .pf-topic { color: var(--muted); }
 .modal.wide { width: min(720px, 94vw); }
+.tools-3d select { max-width: 240px; }

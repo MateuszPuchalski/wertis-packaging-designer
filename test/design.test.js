@@ -28,7 +28,7 @@ test('old or partial projects are completed; foreign or newer files are rejected
   assert.equal(d.dims.width, 800, 'clamped to the field maximum');
   assert.equal(d.dims.height, 350, 'bad numbers fall back to the default');
   assert.equal(d.content.sku, 'A1');
-  assert.equal(d.content.productName.pl, 'Filtr paliwa do kosy spalinowej i pilarki');
+  assert.equal(d.content.productName.pl, 'Bęben sprzęgła do pilarki Stihl MS170 MS180 MS230 MS250');
   assert.throws(() => migrate({ hello: 1 }), /not a WERTIS packaging project/);
   assert.throws(() => migrate({ schema: 'wertis-packaging', version: 99 }), /newer version/);
   assert.throws(() => migrate('{"schema":"wertis-packaging"}'), /valid version/);
