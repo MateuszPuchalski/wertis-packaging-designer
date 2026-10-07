@@ -6,3 +6,5 @@ Copied from node_modules by `npm run vendor`. Do not edit.
 - `jspdf/`: jspdf 4.2.1 (MIT)
 - `svg2pdf/`: svg2pdf.js 2.8.1 (MIT)
 - `opentype/`: opentype.js 2.0.0 (MIT)
+- `three/`: three 0.186.1 (MIT)
+- `cannon-es/`: cannon-es 0.20.0 (MIT)

@@ -13,6 +13,9 @@ const LIBS = [
   { pkg: 'jspdf', dir: 'jspdf', files: [['dist/jspdf.umd.min.js', 'jspdf.umd.min.js'], ['LICENSE', 'LICENSE']] },
   { pkg: 'svg2pdf.js', dir: 'svg2pdf', files: [['dist/svg2pdf.umd.min.js', 'svg2pdf.umd.min.js'], ['LICENSE', 'LICENSE']] },
   { pkg: 'opentype.js', dir: 'opentype', files: [['dist/opentype.min.mjs', 'opentype.min.mjs'], ['LICENSE', 'LICENSE']] },
+  // The 3D tab: three.js (loaded through the import map in index.html) and cannon-es physics.
+  { pkg: 'three', dir: 'three', files: [['build/three.module.js', 'three.module.js'], ['build/three.core.js', 'three.core.js'], ['examples/jsm/controls/OrbitControls.js', 'OrbitControls.js'], ['LICENSE', 'LICENSE']] },
+  { pkg: 'cannon-es', dir: 'cannon-es', files: [['dist/cannon-es.js', 'cannon-es.js'], ['LICENSE', 'LICENSE']] },
 ];
 
 // qrcode-generator ships its MIT licence only in the source header.

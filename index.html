@@ -9,6 +9,8 @@
   <!-- PDF export: jsPDF and svg2pdf (vendored, MIT). -->
   <script src="vendor/jspdf/jspdf.umd.min.js" defer></script>
   <script src="vendor/svg2pdf/svg2pdf.umd.min.js" defer></script>
+  <!-- The 3D tab: three.js is imported as "three" (OrbitControls does the same). -->
+  <script type="importmap">{ "imports": { "three": "./vendor/three/three.module.js" } }</script>
   <script type="module" src="src/main.js"></script>
 </head>
 <body>

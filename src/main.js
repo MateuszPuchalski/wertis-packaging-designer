@@ -48,6 +48,7 @@ async function boot() {
     onSelect: () => insp.sync(store.get()),
     renderMockup: (d) => mockupSvg(d, env),
   });
+  stage.onSnapshot = (blob) => download(blob, `${slug(store.get().name)}-3d.png`);
   const insp = inspector(store, { getParts, getHit: (hid) => stage.hit(hid), select: (sid) => { stage.select(sid); insp.sync(store.get()); }, getSelected: () => stage.selected });
   const project = projectSection(store, { getId: () => id, setId: (nid) => { id = nid; rememberCurrent(nid); }, today });
   const side = sidebar(store, { getParts, project });

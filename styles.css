@@ -197,3 +197,11 @@ h4 { margin: 8px 0 2px; font-size: 12px; text-transform: uppercase; letter-spaci
 .toast.error { background: var(--danger); }
 .toast.out { opacity: 0; }
 .boot { position: fixed; inset: 54px 0 0 0; display: flex; align-items: center; justify-content: center; background: var(--bg); color: var(--muted); font-size: 16px; z-index: 40; padding: 20px; text-align: center; }
+
+/* 3D */
+.tools-3d { display: flex; align-items: center; gap: 8px; }
+.tools-3d[hidden], .zoom[hidden], .canvas[hidden], .view3d[hidden] { display: none; }
+.tools-3d input[type='number'] { width: 56px; }
+.view3d { width: 100%; height: 100%; position: relative; }
+.view3d canvas { display: block; cursor: grab; }
+.viewport:has(.view3d:not([hidden])) { overflow: hidden; }

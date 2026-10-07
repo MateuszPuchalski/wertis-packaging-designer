@@ -19,6 +19,14 @@ logos, label and recycling marks on the preview. It exports:
 - **Mockup PNG.** The finished bag (front, back or both) with your product photo behind the
   window film, at 96, 150 or 300 dpi.
 
+- **3D tab.** The packs as real objects under physics (three.js + cannon-es), textured
+  with the design's own faces:
+  - boxes in a neat stack you can **Push** over, or dropped into a pile;
+  - pouches hanging on a peg hook through their hang holes (and swinging when pushed),
+    in a pile, or lying in stacks.
+
+  **Save PNG** takes a snapshot. Drag to orbit the camera; scroll to zoom.
+
 The pattern of parts icons comes in two styles: solid silhouettes, or outlines. The recycling
 marks (the triangle with the material code, plus the tidyman) are vector shapes; pick the
 material under *Layout*.
@@ -109,6 +117,7 @@ npm run vendor    # copy the browser libraries from node_modules into vendor/
 ## Licences
 
 - **Fonts:** Barlow and Barlow Semi Condensed, SIL Open Font License (`assets/fonts/OFL.txt`).
-- **Libraries:** jsPDF, svg2pdf.js, opentype.js and qrcode-generator, all MIT. Their licence
-  files are in `vendor/`.
+- **Libraries:** jsPDF, svg2pdf.js, opentype.js, qrcode-generator, three.js and cannon-es,
+  all MIT. Their licence files are in `vendor/`. three.js loads through the import map in
+  `index.html`, and only when the 3D tab opens.
 - **Brand assets:** the WERTIS logo and icons belong to WERTIS Sp. z o.o.

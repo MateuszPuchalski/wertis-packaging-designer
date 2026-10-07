@@ -15,10 +15,11 @@ const shots = `${root}docs/screenshots/`;
 
 async function launch() {
   try {
-    return await chromium.launch();
+    // SwiftShader gives headless Chromium WebGL for the 3D tab.
+    return await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
   } catch (err) {
     // The agent sandbox keeps its browser here; elsewhere Playwright finds its own.
-    return chromium.launch({ executablePath: '/opt/pw-browsers/chromium' }).catch(() => { throw err; });
+    return chromium.launch({ executablePath: '/opt/pw-browsers/chromium', args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] }).catch(() => { throw err; });
   }
 }
 
@@ -75,9 +76,8 @@ export async function playtest() {
     await page.click('#sec-colours > summary');
     const hex = page.locator('[data-swatch="boxOrange"] .sw-hex');
     await hex.fill('#00AA55');
-    await page.waitForTimeout(200);
-    const previewHas = await page.evaluate(() => document.querySelector('.canvas svg').innerHTML.includes('#00aa55'));
-    assert.ok(previewHas, 'the preview uses the edited swatch');
+    await page.waitForFunction(() => document.querySelector('.canvas svg')?.innerHTML.includes('#00aa55'), null, { timeout: 10000 })
+      .catch(() => { throw new Error('the preview does not use the edited swatch'); });
     assert.ok((await page.evaluate(() => window.wertis.printSvg())).includes('#00aa55'), 'the print file uses the edited swatch');
     step('editing a swatch recolours the preview and the print file');
     await page.screenshot({ path: `${shots}colours.png` });
@@ -182,6 +182,35 @@ export async function playtest() {
       }
     }
     step(`every format and template draws and exports (${seen.join(', ')})`);
+
+    // The 3D tab: packs under physics, every scene, a push and a snapshot.
+    await page.selectOption('#format', 'flatPouch');
+    await page.click('[data-tab="3d"]');
+    await page.waitForSelector('.view3d[data-ready="1"]', { timeout: 90000 });
+    for (const scene of await page.evaluate(() => [...document.querySelectorAll('#scene3d option')].map((o) => o.value))) {
+      await page.selectOption('#scene3d', scene);
+      await page.waitForTimeout(1500);
+      await page.screenshot({ path: `${shots}3d-pouch-${scene}.png` });
+    }
+    await page.click('#push3d');
+    const [dl3d] = await Promise.all([page.waitForEvent('download'), page.click('#png3d')]);
+    assert.ok(await dl3d.path(), '3D snapshot downloaded');
+    await page.click('[data-tab="design"]');
+    await page.selectOption('#format', 'tuckBox');
+    await page.click('[data-tab="3d"]');
+    await page.waitForFunction(() => window.wertis.stage.view3d?.pack?.kind === 'box', null, { timeout: 90000 });
+    await page.waitForTimeout(2000);
+    await page.screenshot({ path: `${shots}3d-box-stack.png` });
+    const moved = await page.evaluate(async () => {
+      const v = window.wertis.stage.view3d;
+      const before = v.items.map((i) => i.body.position.x + i.body.position.z);
+      v.push();
+      await new Promise((r) => setTimeout(r, 1500));
+      return v.items.some((i, k) => Math.abs(i.body.position.x + i.body.position.z - before[k]) > 0.01);
+    });
+    assert.ok(moved, 'a push moves the stack');
+    step('the 3D tab hangs, piles and stacks the packs, and pushing moves them');
+    await page.click('[data-tab="design"]');
 
     assert.deepEqual(errors, [], `console errors:\n${errors.join('\n')}`);
     step('no console errors');

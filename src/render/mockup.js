@@ -8,7 +8,7 @@ import { panelArt } from './artwork.js';
 
 export const MOCKUP_VIEWS = [['front', 'Front'], ['back', 'Back'], ['both', 'Front and back']];
 
-function rc(design, env) {
+export function rc(design, env) {
   let i = 0;
   return { design, text: env.text, defs: new Map(), used: new Set(), mode: 'mockup', bleed: 0, uid: (p) => `m${p}${++i}` };
 }
@@ -40,7 +40,7 @@ function crimp(x, y, w, h, vertical) {
   return d;
 }
 
-function pouchFace(design, env, part, ctx, defs, ids) {
+export function pouchFace(design, env, part, ctx, defs, ids) {
   const { panel, elements } = part;
   const W = panel.w, H = panel.h;
   const dims = design.dims;

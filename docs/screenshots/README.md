@@ -17,4 +17,5 @@ Written by `npm run playtest`.
 - the pattern switches to outlines
 - proof and mockup tabs draw
 - every format and template draws and exports (flatPouch/pouchWindow, standUpPouch/pouchWindow, tuckBox/boxProduct, tuckBox/boxGeneric)
+- the 3D tab hangs, piles and stacks the packs, and pushing moves them
 - no console errors

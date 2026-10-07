@@ -4,7 +4,7 @@ import js from '@eslint/js';
 import globals from 'globals';
 
 // Everything that turns a design into SVG: no DOM, no browser APIs.
-const CORE = ['src/{design,registry,store}.js', 'src/{brand,codes,formats,templates,render,util}/**/*.js', 'src/text/textEngine.js', 'src/export/documents.js'];
+const CORE = ['src/{design,registry,store}.js', 'src/{brand,codes,formats,templates,render,util}/**/*.js', 'src/three/scenes.js', 'src/text/textEngine.js', 'src/export/documents.js'];
 
 const DOM = ['document', 'window', 'navigator', 'localStorage', 'indexedDB', 'Image', 'fetch', 'DOMParser', 'Blob', 'URL', 'HTMLElement', 'requestAnimationFrame']
   .map((name) => ({ name, message: 'The rendering core is DOM-free: pass what it needs in.' }));

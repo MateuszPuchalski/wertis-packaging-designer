@@ -4,6 +4,8 @@
 import { h } from './dom.js';
 import { renderSheet } from '../render/sheet.js';
 import { renderProof } from '../render/proof.js';
+import { packFaces } from '../render/faces.js';
+import { SCENES, MAX_COUNT, scenesFor } from '../three/scenes.js';
 
 const SVGNS = 'http://www.w3.org/2000/svg';
 
@@ -23,23 +25,32 @@ export class Stage {
     this.pending = false;
 
     const tab = (id, label) => h('button', { class: 'tab', role: 'tab', dataset: { tab: id }, onclick: () => this.setTab(id) }, label);
-    this.tabs = [tab('design', 'Design'), tab('proof', 'Proof'), tab('mockup', 'Mockup')];
+    this.tabs = [tab('design', 'Design'), tab('proof', 'Proof'), tab('mockup', 'Mockup'), tab('3d', '3D')];
     this.zoomLabel = h('span', { class: 'zoom-lbl', title: 'Size on screen compared with the real size' }, '');
     const toggle = (key, label) => {
       const cb = h('input', { type: 'checkbox', checked: true, onchange: () => { this.show[key] = cb.checked; this.schedule(); } });
       return h('label', { class: 'toggle' }, cb, label);
     };
     this.toolsDesign = h('span', { class: 'tools-design' }, toggle('dieline', 'Dieline'), toggle('guides', 'Guides'));
+    // 3D: scene, how many packs, drop again, push, snapshot.
+    this.sceneSel = h('select', { id: 'scene3d', 'aria-label': '3D scene', onchange: () => { this.view3d?.setScene(this.sceneSel.value); this.syncCount(); } });
+    this.countIn = h('input', { type: 'number', id: 'count3d', min: 1, max: 40, value: 8, 'aria-label': 'How many', onchange: () => { this.syncCount(); this.view3d?.setCount(Number(this.countIn.value)); } });
+    this.tools3d = h('span', { class: 'tools-3d', hidden: true }, this.sceneSel,
+      h('label', { class: 'toggle' }, 'Packs', this.countIn),
+      h('button', { class: 'secondary tiny', id: 'again3d', onclick: () => this.view3d?.again() }, 'Drop again'),
+      h('button', { class: 'secondary tiny', id: 'push3d', onclick: () => this.view3d?.push() }, 'Push'),
+      h('button', { class: 'secondary tiny', id: 'png3d', onclick: async () => { const b = await this.view3d?.snapshot(); if (b) this.onSnapshot?.(b); } }, 'Save PNG'));
     this.toolbar = h('div', { class: 'stage-bar' },
       h('div', { class: 'tabs', role: 'tablist' }, this.tabs),
-      this.toolsDesign,
-      h('div', { class: 'zoom' },
+      this.toolsDesign, this.tools3d,
+      this.zoomBox = h('div', { class: 'zoom' },
         h('button', { class: 'ghost tiny', title: 'Zoom out', onclick: () => this.zoomBy(1 / 1.25) }, '−'),
         this.zoomLabel,
         h('button', { class: 'ghost tiny', title: 'Zoom in', onclick: () => this.zoomBy(1.25) }, '+'),
         h('button', { class: 'ghost tiny', title: 'Fit to the window', onclick: () => { this.zoom = null; this.schedule(); } }, 'Fit view')));
     this.canvas = h('div', { class: 'canvas' });
-    this.viewport = h('div', { class: 'viewport', tabindex: 0 }, this.canvas);
+    this.root3d = h('div', { class: 'view3d', hidden: true });
+    this.viewport = h('div', { class: 'viewport', tabindex: 0 }, this.canvas, this.root3d);
     root.append(this.toolbar, this.viewport);
 
     this.viewport.addEventListener('pointerdown', (e) => this.pointerDown(e));
@@ -50,6 +61,7 @@ export class Stage {
   }
 
   setTab(tab) {
+    if (this.tab === '3d' && tab !== '3d') this.view3d?.stop();
     this.tab = tab;
     this.zoom = null;
     this.updateTabs();
@@ -59,6 +71,44 @@ export class Stage {
   updateTabs() {
     for (const t of this.tabs) t.setAttribute('aria-selected', String(t.dataset.tab === this.tab));
     this.toolsDesign.hidden = this.tab !== 'design';
+    this.tools3d.hidden = this.tab !== '3d';
+    this.canvas.hidden = this.tab === '3d';
+    this.root3d.hidden = this.tab !== '3d';
+    this.zoomBox.hidden = this.tab === '3d';
+  }
+
+  syncCount() {
+    const max = MAX_COUNT[this.sceneSel.value] ?? 40;
+    this.countIn.max = max;
+    if (Number(this.countIn.value) > max) this.countIn.value = max;
+  }
+
+  // The 3D view loads three.js on first use and rebuilds its textures a moment after the
+  // design stops changing.
+  async render3d(design) {
+    if (!this.view3d) {
+      const { View3D } = await import('../three/view3d.js');
+      this.view3d ??= new View3D(this.root3d);
+    }
+    this.view3d.start();
+    if (design === this.design3d) return;
+    this.design3d = design;
+    clearTimeout(this.timer3d);
+    this.timer3d = setTimeout(async () => {
+      const pack = packFaces(design, this.env);
+      const scenes = scenesFor(pack.kind);
+      const sig = scenes.join('|');
+      if (this.sceneSel.dataset.sig !== sig) {
+        this.sceneSel.replaceChildren(...scenes.map((k) => h('option', { value: k }, SCENES[k].label)));
+        this.sceneSel.dataset.sig = sig;
+      }
+      this.view3d.sceneName = scenes.includes(this.sceneSel.value) ? this.sceneSel.value : scenes[0];
+      this.sceneSel.value = this.view3d.sceneName;
+      this.syncCount();
+      this.view3d.count = Number(this.countIn.value);
+      await this.view3d.setPack(pack, design.mockup?.background);
+      this.root3d.dataset.ready = '1';
+    }, this.view3d.pack ? 350 : 0);
   }
 
   zoomBy(f) {
@@ -82,6 +132,10 @@ export class Stage {
 
   render() {
     const design = this.store.get();
+    if (this.tab === '3d') {
+      this.render3d(design);
+      return;
+    }
     let svg, box;
     if (this.tab === 'design') {
       const r = renderSheet(design, this.env, { mode: 'design', margin: 14, dieline: this.show.dieline, guides: this.show.guides });
