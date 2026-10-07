@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>WERTIS Packaging Designer</title>
+  <link rel="icon" href="assets/brand/wertis-logo.svg">
+  <link rel="stylesheet" href="styles.css">
+  <!-- PDF export: jsPDF and svg2pdf (vendored, MIT). -->
+  <script src="vendor/jspdf/jspdf.umd.min.js" defer></script>
+  <script src="vendor/svg2pdf/svg2pdf.umd.min.js" defer></script>
+  <script type="module" src="src/main.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <img src="assets/brand/wertis-logo.svg" alt="WERTIS" height="26">
+      <span>Packaging Designer</span>
+    </div>
+    <div class="top-actions">
+      <button id="undo" class="ghost" title="Undo (Ctrl+Z)" disabled>↶ Undo</button>
+      <button id="redo" class="ghost" title="Redo (Ctrl+Shift+Z)" disabled>↷ Redo</button>
+      <span id="saved" class="saved"></span>
+    </div>
+    <div class="exports" role="group" aria-label="Export">
+      <span class="lbl">Export</span>
+      <button data-export="print-pdf" class="primary" title="Real size, with bleed and a separate dieline layer, text as outlines">Print PDF</button>
+      <button data-export="print-svg" class="secondary">Print SVG</button>
+      <button data-export="proof-pdf" class="secondary">Proof PDF</button>
+      <button data-export="proof-png" class="secondary">Proof PNG</button>
+      <button data-export="mockup-png" class="secondary">Mockup PNG</button>
+    </div>
+  </header>
+  <main class="layout">
+    <aside id="sidebar" class="panel" aria-label="Settings"></aside>
+    <section id="stage" class="stage" aria-label="Preview"></section>
+    <aside id="inspector" class="panel right" aria-label="Selected element"></aside>
+  </main>
+  <div id="boot-status" class="boot">Loading the fonts and your last design…</div>
+</body>
+</html>
