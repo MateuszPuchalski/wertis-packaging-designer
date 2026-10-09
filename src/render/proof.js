@@ -48,13 +48,16 @@ export function renderProof(design, env, { page = 'a3' } = {}) {
   const row1 = 18, row2 = headerH - row1 - 4;
   out += el('path', { d: rectPath(hx, hy, hw, row1 + row2), fill: 'none', stroke: LINE, 'stroke-width': 0.3 });
   out += el('path', { d: `M${n(hx)} ${n(hy + row1)}H${n(hx + hw)}`, stroke: LINE, 'stroke-width': 0.3 });
-  const logo = logoSvg({ box: { x: hx + 3, y: hy + 2.5, w: 34, h: row1 - 5 }, layout: 'full', colors: { gear: '#303030', arc: '#ff9100', word: '#303030', line: '#ff9100' } });
+  // The brand's own colours as the design has them (the palette's orange), and the same gear + WERTIS as on the packs.
+  const brand = (id, fallback) => design.palette.find((sw) => sw.id === id)?.hex ?? fallback;
+  const logo = logoSvg({ box: { x: hx + 3, y: hy + 2.5, w: 34, h: row1 - 5 }, layout: 'markWord', colors: { gear: brand('dark', '#303030'), arc: brand('boxOrange', '#f8992c'), word: brand('dark', '#303030') } });
   out += logo.svg;
   const content = design.content;
   const f = FORMATS[design.format];
   const cells = [
-    ['Product', content.productName?.[content.lang] || design.name, 3],
-    ['Code', content.sku || '—', 1],
+    // The product's own name and code only when they are on the pack; a universal pack goes by the project's name.
+    ['Product', (!design.hidden?.['front.name'] && content.productName?.[content.lang]) || design.name, 3],
+    ['Code', (!design.hidden?.['front.sku'] && content.sku) || '—', 1],
     ['Format', geo.title ?? f.label, 2.2],
     ['Version', design.proof.version || '—', 0.8],
     ['Date', design.proof.date || '—', 1],
