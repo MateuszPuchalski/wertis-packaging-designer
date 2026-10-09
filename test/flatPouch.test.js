@@ -2,6 +2,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { layout, FIELDS } from '../src/formats/flatPouch.js';
 import { normalizeDims } from '../src/formats/common.js';
+import { geometry, panelsWithElements } from '../src/render/sheet.js';
+import { design, env } from './helpers.js';
 
 const defaults = normalizeDims(FIELDS, {});
 
@@ -46,4 +48,21 @@ test('dimension lines cover the total, each panel and the height', () => {
 test('numbers outside the limits are clamped', () => {
   assert.equal(layout({ width: 5, height: 99999 }).dims.width, 40);
   assert.equal(layout({ width: 5, height: 99999 }).dims.height, 1000);
+});
+
+test('a QR code on the back links to the website, beside the website line, inside the footer', () => {
+  const d = design();
+  const parts = panelsWithElements(d, env(), geometry(d));
+  const byId = (id) => parts.flatMap((p) => p.elements).find((e) => e.id === id);
+  const qr = byId('back.urlQr');
+  const url = byId('back.url');
+  assert.equal(qr.type, 'qr');
+  assert.equal(qr.text, d.content.qr, 'the link field is the QR code’s text');
+  assert.ok(url.box.x + url.box.w <= qr.box.x, 'the website line ends before the QR code');
+  const back = parts.find(({ elements }) => elements.some((e) => e.id === 'back.url'));
+  assert.ok(qr.box.x + qr.box.w <= back.panel.w && qr.box.y >= back.panel.info.safe.y, 'inside the panel and its safe area');
+  // Moved by hand, the website line makes room for it again.
+  const moved = panelsWithElements({ ...d, layout: { 'back.urlQr': { x: 0.2, y: 0.5, w: 0.1, h: 0.1 } } }, env(), geometry(d));
+  const q2 = moved.flatMap((p) => p.elements).find((e) => e.id === 'back.urlQr');
+  assert.ok(q2.box.x < qr.box.x, 'the box is where it was put');
 });
