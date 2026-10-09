@@ -91,10 +91,12 @@ export function front(ctx) {
 
   // Footer: the product code on top, then the product name.
   const F = { x: S.x, y: footerTop + 2, w: S.w, h: Math.max(S.y + S.h - footerTop - 2, 6) };
-  els.push({ id: 'front.sku', label: 'Product code', edits: ['sku'], type: 'text', layer: 'fg', text: c.sku, font: 'semibold', align: 'right', valign: 'middle',
-    box: { x: F.x + F.w * 0.5, y: F.y + F.h * 0.08, w: F.w * 0.5, h: F.h * 0.14 }, size: F.h * 0.14 / 0.7, colors: { fill: 'white' } });
-  els.push({ id: 'front.name', label: 'Product name', edits: ['productName'], type: 'text', layer: 'fg', text: c.productName?.[c.lang] ?? '', font: 'bold', align: 'center', valign: 'middle',
-    box: { x: F.x, y: F.y + F.h * 0.4, w: F.w, h: F.h * 0.16 }, size: F.h * 0.16 / 0.7, minSize: 2, colors: { fill: 'dark' } });
+  const skuBox = ctx.box('front.sku', { x: F.x + F.w * 0.5, y: F.y + F.h * 0.08, w: F.w * 0.5, h: F.h * 0.14 });
+  els.push({ id: 'front.sku', label: 'Product code', edits: ['sku'], type: 'text', layer: 'fg', movable: true, resizable: true, text: c.sku, font: 'semibold', align: 'right', valign: 'middle',
+    box: skuBox, size: skuBox.h / 0.7, colors: { fill: 'white' } });
+  const nameBox = ctx.box('front.name', { x: F.x, y: F.y + F.h * 0.4, w: F.w, h: F.h * 0.16 });
+  els.push({ id: 'front.name', label: 'Product name', edits: ['productName'], type: 'text', layer: 'fg', movable: true, resizable: true, text: c.productName?.[c.lang] ?? '', font: 'bold', align: 'center', valign: 'middle',
+    box: nameBox, size: nameBox.h / 0.7, minSize: 2, colors: { fill: 'dark' } });
   return els;
 }
 
@@ -143,9 +145,10 @@ export function back(ctx) {
 
   const F = { x: S.x, y: footerTop + 2, w: S.w, h: Math.max(S.y + S.h - footerTop - 2, 6) };
   // The address without a heading: three lines, so they run larger than the four did.
-  els.push({ id: 'back.address', label: 'Address', edits: ADDRESS_LINES, type: 'text', layer: 'fg', font: 'regular', align: 'left', valign: 'middle', lineHeight: 1.25,
+  const addrBox = ctx.box('back.address', { x: F.x, y: F.y + F.h * 0.12, w: F.w * 0.46, h: F.h * 0.76 });
+  els.push({ id: 'back.address', label: 'Address', edits: ADDRESS_LINES, type: 'text', layer: 'fg', movable: true, resizable: true, font: 'regular', align: 'left', valign: 'middle', lineHeight: 1.25,
     text: [c.company, c.address, c.email].filter(Boolean).join('\n'),
-    box: { x: F.x, y: F.y + F.h * 0.12, w: F.w * 0.46, h: F.h * 0.76 }, size: (F.h * 0.1 / 0.7) * 4 / 3, minSize: 1.4, colors: { fill: 'white' } });
+    box: addrBox, size: (F.h * 0.1 / 0.7) * 4 / 3 * Math.sqrt((addrBox.w * addrBox.h) / (F.w * 0.46 * F.h * 0.76)), minSize: 1.4, colors: { fill: 'white' } });
   const material = MATERIALS[ctx.options.recycle];
   // The disposal marks in the middle of the footer.
   const markSize = Math.min(F.h * 0.55, F.w * 0.075);
@@ -163,8 +166,9 @@ export function back(ctx) {
   const qrBox = ctx.box('back.urlQr', { x: right - qrSize, y: top, w: qrSize, h: qrSize });
   els.push({ id: 'back.urlQr', label: 'QR code', edits: ['qr'], type: 'qr', layer: 'fg', text: c.qr, movable: true, resizable: true, keepAspect: true,
     box: qrBox, colors: { dots: 'black', bg: 'white' } });
-  els.push({ id: 'back.url', label: 'Website', edits: ['url'], type: 'text', layer: 'fg', text: c.url, font: 'bold', align: 'right', valign: 'middle',
-    box: { x: right - colW, y: qrBox.y + qrBox.h + gap, w: colW, h: webH }, size: F.h * 0.15 / 0.7, minSize: 1.6, colors: { fill: 'white' } });
+  const urlBox = ctx.box('back.url', { x: right - colW, y: qrBox.y + qrBox.h + gap, w: colW, h: webH });
+  els.push({ id: 'back.url', label: 'Website', edits: ['url'], type: 'text', layer: 'fg', movable: true, resizable: true, text: c.url, font: 'bold', align: 'right', valign: 'middle',
+    box: urlBox, size: (F.h * 0.15 / 0.7) * (urlBox.h / webH), minSize: 1.6, colors: { fill: 'white' } });
   return els;
 }
 

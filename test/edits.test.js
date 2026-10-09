@@ -36,3 +36,20 @@ test('the label offers its name, codes and link; Produced for its address', () =
   assert.ok(!boxEls.some((e) => e.type === 'ean'));
   assert.ok(boxEls.find((e) => e.id === 'front.sku').edits.includes('ean'));
 });
+
+test('every text can be moved and resized, and a stored box applies to it', () => {
+  for (const f of Object.values(FORMATS)) {
+    for (const tp of f.templates) {
+      const d = createDesign({ format: f.id, template: tp });
+      for (const { elements } of panelsWithElements(d, env())) {
+        for (const e of elements) if (e.type === 'text' && !e.rotate) assert.ok(e.movable && e.resizable, `${tp} ${e.id} is fixed`);
+      }
+    }
+  }
+  const d = createDesign({ format: 'flatPouch' });
+  const find = (x) => panelsWithElements(x, env()).flatMap((p) => p.elements).find((e) => e.id === 'back.url');
+  const before = find(d);
+  const moved = find({ ...d, layout: { 'back.url': { x: 0.1, y: 0.1, w: 0.2, h: before.box.h * 2 / 350 } } });
+  assert.ok(Math.abs(moved.box.x - 25) < 1e-6);
+  assert.ok(moved.size > 0);
+});
