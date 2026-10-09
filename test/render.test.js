@@ -30,9 +30,9 @@ test('editing a swatch recolours every element that uses it', () => {
   const next = { ...d, palette: updateSwatch(d.palette, 'boxOrange', { hex: '#00aa55' }) };
   const before = printSvg(d, env()), after = printSvg(next, env());
   const count = (s, c) => s.split(c).length - 1;
-  assert.ok(count(before, '#f68c1e') >= 4);
-  assert.equal(count(after, '#f68c1e'), 0);
-  assert.equal(count(after, '#00aa55'), count(before, '#f68c1e'));
+  assert.ok(count(before, '#f8992c') >= 4);
+  assert.equal(count(after, '#f8992c'), 0);
+  assert.equal(count(after, '#00aa55'), count(before, '#f8992c'));
 });
 
 test('an element with its own colour keeps it when the swatch changes', () => {

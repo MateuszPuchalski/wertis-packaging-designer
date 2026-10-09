@@ -6,7 +6,7 @@ import { WERTIS_PALETTE } from '../src/brand/wertis.js';
 const pal = WERTIS_PALETTE;
 
 test('colour references resolve', () => {
-  assert.equal(resolveColor('boxOrange', pal), '#f68c1e');
+  assert.equal(resolveColor('boxOrange', pal), '#f8992c');
   assert.equal(resolveColor({ swatch: 'dark' }, pal), '#303030');
   assert.equal(resolveColor({ custom: '#ABC' }, pal), '#aabbcc');
   assert.equal(resolveColor({ none: true }, pal), 'none');
@@ -14,7 +14,7 @@ test('colour references resolve', () => {
 });
 
 test('hex input is cleaned up', () => {
-  assert.equal(normalizeHex('F68C1E'), '#f68c1e');
+  assert.equal(normalizeHex('F8992C'), '#f8992c');
   assert.equal(normalizeHex(' #fff '), '#ffffff');
   assert.equal(normalizeHex('orange'), null);
 });
@@ -35,8 +35,8 @@ test('new swatches get unique ids', () => {
 
 test('presets merge by id and keep extra swatches', () => {
   const mine = addSwatch(updateSwatch(pal, 'boxOrange', { hex: '#000000' }), { name: 'Extra', hex: '#123456' });
-  const merged = mergePalette(mine, [makeSwatch({ id: 'boxOrange', name: 'Box Orange', hex: '#f68c1e' }), makeSwatch({ id: 'brandNew', name: 'New', hex: '#abcdef' })]);
-  assert.equal(merged.find((s) => s.id === 'boxOrange').hex, '#f68c1e');
+  const merged = mergePalette(mine, [makeSwatch({ id: 'boxOrange', name: 'Box Orange', hex: '#f8992c' }), makeSwatch({ id: 'brandNew', name: 'New', hex: '#abcdef' })]);
+  assert.equal(merged.find((s) => s.id === 'boxOrange').hex, '#f8992c');
   assert.ok(merged.some((s) => s.id === 'extra'));
   assert.ok(merged.some((s) => s.id === 'brandNew'));
 });

@@ -28,7 +28,7 @@ test('the label offers its name, codes and link; Produced for its address', () =
   const byId = Object.fromEntries(els.map((e) => [e.id, e]));
   assert.deepEqual(byId['back.label'].edits, ['productName', 'sku', 'ean', 'qr', 'url']);
   assert.deepEqual(byId['back.address'].edits, ['company', 'address', 'email'], 'the pouch’s address has no heading');
-  assert.equal(byId['back.address'].text, [d.content.company, d.content.address, d.content.email].join('\n'));
+  assert.equal(byId['back.address'].text, 'WERTIS Sp. z o.o.\nSienkiewicze 4\n16-070 Sienkiewicze\nbiuro@wertis.com.pl', 'the postcode and town run under the street');
   // The box drops its barcode when the EAN is empty; its product code still offers the EAN.
   const box = createDesign({ format: 'tuckBox' });
   box.content.ean = '';
@@ -52,4 +52,16 @@ test('every text can be moved and resized, and a stored box applies to it', () =
   const moved = find({ ...d, layout: { 'back.url': { x: 0.1, y: 0.1, w: 0.2, h: before.box.h * 2 / 350 } } });
   assert.ok(Math.abs(moved.box.x - 25) < 1e-6);
   assert.ok(moved.size > 0);
+});
+
+test('the tagline prints on the front and the back of the pouch, under the logo', () => {
+  for (const format of ['flatPouch', 'standUpPouch']) {
+    const els = panelsWithElements(createDesign({ format }), env()).flatMap((p) => p.elements);
+    for (const side of ['front', 'back']) {
+      const tag = els.find((e) => e.id === `${side}.tagline`);
+      const logo = els.find((e) => e.id === `${side}.logo`);
+      assert.ok(tag && tag.edits.includes('tagline'), `${format} ${side} tagline`);
+      assert.ok(tag.box.y >= logo.box.y, `${format} ${side}: under the top of the logo`);
+    }
+  }
 });
