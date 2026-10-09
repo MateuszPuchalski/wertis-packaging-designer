@@ -147,6 +147,9 @@ export default {
 
   // The parts pattern.
   'Solid silhouettes': 'Pełne sylwetki',
+  'Scale with the pack (partly)': 'Skaluj z opakowaniem (częściowo)',
+  'Fixed size': 'Stały rozmiar',
+  'Scale with the pack (fully)': 'Skaluj z opakowaniem (w pełni)',
   'Outlines': 'Kontury',
   'Ignition coil': 'Cewka zapłonowa',
   'Trimmer blade': 'Nóż do podkaszarki',

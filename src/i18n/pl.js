@@ -180,6 +180,7 @@ export default {
   'pattern.keepOne': 'Zostaw co najmniej jedną ikonę.',
   'pattern.style': 'Styl ikon',
   'pattern.outline': 'Grubość konturu',
+  'pattern.scaling': 'Skalowanie wzoru',
   'pattern.size': 'Rozmiar ikon',
   'pattern.spacing': 'Odstęp',
   'pattern.rotation': 'Obrót (±)',
