@@ -5,6 +5,7 @@
 // (logo, texts, label) are drawn on top and may cross a window's edge.
 import { el, n, rectPath, ellipsePath, gearPath, clamp } from './svg.js';
 import { patternSvg, scaledPattern } from './pattern.js';
+import { FORMATS } from '../registry.js';
 import { logoSvg } from '../brand/logo.js';
 import { resolveColor, refSwatchId, findSwatch, mix, cmykFromHex } from '../brand/palette.js';
 import { ean13Svg } from '../codes/ean13.js';
@@ -56,6 +57,22 @@ function metalSvg(rc, base, box, shape, rule = 'nonzero') {
     strips += el('path', { d: rectPath(box.x, box.y + i * step, box.w, step + 0.02), fill: hex });
   }
   return el('g', { 'clip-path': clipDef(rc, shape ?? rectPath(box.x, box.y, box.w, box.h), rule) }, strips);
+}
+
+// Where this panel sits on the whole sheet, for the pattern that runs on across the panels. A pouch's
+// front and back are joined at the sheet's middle and its two ends close into a tube, so its pattern
+// wraps over the width of the two panels.
+function patternSheet(rc, panel) {
+  if (!rc.patternSheet) {
+    const geo = FORMATS[rc.design.format].layout(rc.design.dims);
+    const x0 = Math.min(...geo.panels.map((p) => p.x)), y0 = Math.min(...geo.panels.map((p) => p.y));
+    const x1 = Math.max(...geo.panels.map((p) => p.x + p.w)), y1 = Math.max(...geo.panels.map((p) => p.y + p.h));
+    const pad = geo.bleed ?? 3;
+    const round = rc.design.format !== 'tuckBox';
+    const front = geo.panels.find((p) => p.role === 'front'), back = geo.panels.find((p) => p.role === 'back');
+    rc.patternSheet = { area: { x: x0 - pad, y: y0 - pad, w: x1 - x0 + 2 * pad, h: y1 - y0 + 2 * pad }, wrap: round && front && back ? front.w + back.w : null, cache: new Map() };
+  }
+  return { ...rc.patternSheet, ox: panel.x ?? 0, oy: panel.y ?? 0 };
 }
 
 export function windowPath(w) {
@@ -210,7 +227,7 @@ function elementSvg(rc, e, panel) {
     case 'pattern': {
       const box = e.bleed ? bleedBox(e.box, panel, rc.bleed) : e.box;
       const ink = colorOf(rc, e, 'ink');
-      const body = patternSvg(box, scaledPattern(rc.design.pattern, rc.design.format === 'tuckBox' ? null : rc.design.dims?.height), ink, rc.defs, `${e.id}`, { inline: !!rc.inlineUses });
+      const body = patternSvg(box, scaledPattern(rc.design.pattern, rc.design.format === 'tuckBox' ? null : rc.design.dims?.height), ink, rc.defs, `${e.id}`, { inline: !!rc.inlineUses, sheet: patternSheet(rc, panel) });
       return { svg: body ? el('g', { 'clip-path': clipDef(rc, rectPath(box.x, box.y, box.w, box.h)) }, body) : '', box: e.box };
     }
     case 'gear': {

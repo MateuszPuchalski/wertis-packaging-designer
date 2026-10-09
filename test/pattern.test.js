@@ -68,3 +68,28 @@ test('a smaller pouch draws more, smaller icons than a fixed one; saved projects
   assert.equal(migrate(old).pattern.scaling, 'fixed');
   assert.equal(createDesign({ format: 'flatPouch' }).pattern.scaling, 'auto');
 });
+
+test('a uniform pattern is one layout over the sheet: continuous across the bands and the glued seams', async () => {
+  const { sheetPlacements } = await import('../src/render/pattern.js');
+  const sheet = (ox) => ({ area: { x: -3, y: -3, w: 506, h: 356 }, wrap: 500, ox, oy: 0 });
+  const front = { x: 0, y: 0, w: 250, h: 350 }, back = { x: 0, y: 0, w: 250, h: 350 };
+  const at = (svg, ox) => [...svg.matchAll(/translate\(([-\d.]+) ([-\d.]+)\)/g)].map((m) => `${(Number(m[1]) + ox).toFixed(2)},${m[2]}`);
+  const draw = (box, ox, uniform, key = 'k') => patternSvg(box, { uniform }, '#e27814', new Map(), key, { inline: true, sheet: sheet(ox) });
+  // The front's right edge and the back's left edge are one seam: icons that reach across are in both, at one sheet position.
+  const f = at(draw(front, 0, true), 0), b = at(draw(back, 250, true), 250);
+  const shared = f.filter((p) => b.includes(p));
+  assert.ok(shared.length > 3 && shared.every((p) => Math.abs(Number(p.split(',')[0]) - 250) < 20), 'icons on the seam are in both panels');
+  // The pouch closes into a tube, so the ends repeat: a column at x and at x + 500 are the same icon.
+  const ps = sheetPlacements({ x: -60, y: 0, w: 620, h: 100 }, { uniform: true }, 500);
+  const left = ps.filter((p) => p.x > -40 && p.x < 40), right = ps.filter((p) => p.x > 460 && p.x < 540);
+  assert.ok(left.length > 0 && left.every((p) => right.some((q) => Math.abs(q.x - 500 - p.x) < 1e-6 && Math.abs(q.y - p.y) < 1e-6 && q.icon === p.icon)), 'the far edges meet');
+  assert.ok(draw(front, 0, false, 'front.body') !== draw(back, 250, false, 'back.body'), 'off: each area lays out its own');
+});
+
+test('new designs have a uniform pattern, projects saved before keep theirs', async () => {
+  const { createDesign, migrate } = await import('../src/design.js');
+  assert.equal(createDesign({ format: 'flatPouch' }).pattern.uniform, true);
+  const old = JSON.parse(JSON.stringify(createDesign({ format: 'flatPouch' })));
+  delete old.pattern.uniform;
+  assert.equal(migrate(old).pattern.uniform, false);
+});

@@ -181,6 +181,7 @@ export default {
   'pattern.style': 'Styl ikon',
   'pattern.outline': 'Grubość konturu',
   'pattern.scaling': 'Skalowanie wzoru',
+  'pattern.uniform': 'Jednolity wzór na całej stronie i na obu stronach',
   'pattern.size': 'Rozmiar ikon',
   'pattern.spacing': 'Odstęp',
   'pattern.rotation': 'Obrót (±)',
