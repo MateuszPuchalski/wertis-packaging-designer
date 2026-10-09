@@ -162,8 +162,10 @@ export function genericBody(ctx) {
   els.push({ id: 'front.logo', label: 'Logo', type: 'logo', layer: 'fg', layout: 'word', registered: !!ctx.options.registered, movable: true, resizable: true, keepAspect: true, box: logoBox,
     colors: { gear: 'white', arc: 'white', word: 'white', line: 'white' } });
   const markW = fit.w * 0.5;
-  els.push({ id: 'front.gear', label: 'Gear', type: 'logo', layer: 'fg', layout: 'mark', align: 'center', valign: 'bottom',
-    box: { x: fit.x + (fit.w - markW) / 2, y: B.top - markW * 0.19 + B.edge, w: markW, h: markW * 0.19 }, colors: { gear: 'black', arc: { none: true }, word: 'black', line: 'black' } });
+  // The gear sits on the band's top edge, a little higher than flush so more of it shows above the band;
+  // it can be moved and resized like the logo.
+  els.push({ id: 'front.gear', label: 'Gear', type: 'logo', layer: 'fg', layout: 'mark', align: 'center', valign: 'bottom', movable: true, resizable: true, keepAspect: true,
+    box: ctx.box('front.gear', { x: fit.x + (fit.w - markW) / 2, y: B.top - markW * 0.19 + B.edge - markW * 0.07, w: markW, h: markW * 0.19 }), colors: { gear: 'black', arc: { none: true }, word: 'black', line: 'black' } });
   const tag = taglineUnder(partBox(fit, 'word'), { scale: (ctx.options.taglineSize ?? 100) / 100, ratio: 0.22 });
   els.push({ id: 'front.tagline', label: 'Tagline', edits: ['tagline'], type: 'text', layer: 'fg', text: c.tagline, font: 'condSemibold', align: 'right', valign: 'top', spacing: 0.02,
     box: tag.box, size: tag.size, minSize: 1.2, colors: WHITE });

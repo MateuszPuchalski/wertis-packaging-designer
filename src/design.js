@@ -82,8 +82,8 @@ export function migrate(input) {
     custom: cleanCustom(json.custom),
     pictures: cleanPictures(json.pictures),
     hidden: { ...(json.hidden ?? {}) },
-    // Projects saved before the scaling and uniform choices keep their pattern as it was drawn.
-    pattern: { ...base.pattern, ...(json.pattern ? { scaling: 'fixed', uniform: false, ...json.pattern } : {}) },
+    // Projects saved before the scaling choice keep their icons at a fixed size; the continuous pattern (uniform) applies to every project, as the point of it is that the pattern runs on across the folds and seams.
+    pattern: { ...base.pattern, ...(json.pattern ? { scaling: 'fixed', ...json.pattern } : {}) },
     content: { ...base.content, ...(json.content ?? {}), productName: { ...base.content.productName, ...(json.content?.productName ?? {}) } },
     proof: { ...base.proof, ...(json.proof ?? {}) },
     // Projects from before the 3D part existed stay empty.
