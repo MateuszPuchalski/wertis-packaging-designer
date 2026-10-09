@@ -9,7 +9,30 @@ import { el, n } from './svg.js';
 
 export const ICON_IDS = PATTERN_ICONS.map((i) => i.id);
 
-export const PATTERN_DEFAULTS = { icons: null, style: 'solid', outline: 3, size: 18, spacing: 30, rotation: 180, jitter: 0.35, sizeJitter: 0.2, seed: 1 };
+export const PATTERN_DEFAULTS = { icons: null, style: 'solid', outline: 3, size: 18, spacing: 30, rotation: 180, jitter: 0.35, sizeJitter: 0.2, seed: 1, scaling: 'auto' };
+
+// How the icons follow the size of the pack. Fixed keeps them in mm (a bigger pack just shows more
+// of them); full scales size and spacing with the height; auto is in between, the square root of
+// the ratio, so a small pouch keeps its look without tiny icons. The settings are for the reference
+// pack (a 350 mm tall pouch), and the icons never shrink below a floor that still prints cleanly.
+export const PATTERN_SCALING = [['auto', 'Scale with the pack (partly)'], ['fixed', 'Fixed size'], ['full', 'Scale with the pack (fully)']];
+export const PATTERN_REF_HEIGHT = 350;
+const EXPONENT = { auto: 0.5, fixed: 0, full: 1 };
+const FLOOR = { size: 7, spacing: 12 };
+
+export function patternScale(settings, packHeight) {
+  const e = EXPONENT[settings?.scaling ?? PATTERN_DEFAULTS.scaling] ?? 0;
+  const h = Number(packHeight);
+  return e && h > 0 ? (h / PATTERN_REF_HEIGHT) ** e : 1;
+}
+
+// The settings with size and spacing scaled for a pack `packHeight` mm tall (null: not scaled, as for boxes).
+export function scaledPattern(settings, packHeight) {
+  const k = packHeight == null ? 1 : patternScale(settings, packHeight);
+  if (k === 1) return settings;
+  const s = { ...PATTERN_DEFAULTS, ...settings };
+  return { ...settings, size: Math.max(Math.min(s.size, FLOOR.size), s.size * k), spacing: Math.max(Math.min(s.spacing, FLOOR.spacing), s.spacing * k) };
+}
 
 export const PATTERN_STYLES = [['solid', 'Solid silhouettes'], ['outline', 'Outlines']];
 

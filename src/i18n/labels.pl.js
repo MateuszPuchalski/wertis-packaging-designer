@@ -52,6 +52,9 @@ export default {
   'No window': 'Bez okienka',
   'Window corner radius': 'Promień narożników okienka',
   'Matching window on the back': 'Takie samo okienko z tyłu',
+  'Back side': 'Tył',
+  'Printed': 'Zadrukowany',
+  'Clear film (unprinted)': 'Przezroczysta folia (bez druku)',
   'Silver edges on the black band': 'Srebrne krawędzie czarnego pasa',
   'Big gear on the back': 'Duże koło zębate z tyłu',
   '“Quality You Can Trust” size': 'Rozmiar „Quality You Can Trust”',
@@ -147,6 +150,9 @@ export default {
 
   // The parts pattern.
   'Solid silhouettes': 'Pełne sylwetki',
+  'Scale with the pack (partly)': 'Skaluj z opakowaniem (częściowo)',
+  'Fixed size': 'Stały rozmiar',
+  'Scale with the pack (fully)': 'Skaluj z opakowaniem (w pełni)',
   'Outlines': 'Kontury',
   'Ignition coil': 'Cewka zapłonowa',
   'Trimmer blade': 'Nóż do podkaszarki',

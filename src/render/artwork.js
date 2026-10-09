@@ -4,7 +4,7 @@
 // out where a window is: no ink at all there, as the film stays clear. Foreground elements
 // (logo, texts, label) are drawn on top and may cross a window's edge.
 import { el, n, rectPath, ellipsePath, gearPath, clamp } from './svg.js';
-import { patternSvg } from './pattern.js';
+import { patternSvg, scaledPattern } from './pattern.js';
 import { logoSvg } from '../brand/logo.js';
 import { resolveColor, refSwatchId, findSwatch, mix, cmykFromHex } from '../brand/palette.js';
 import { ean13Svg } from '../codes/ean13.js';
@@ -210,7 +210,7 @@ function elementSvg(rc, e, panel) {
     case 'pattern': {
       const box = e.bleed ? bleedBox(e.box, panel, rc.bleed) : e.box;
       const ink = colorOf(rc, e, 'ink');
-      const body = patternSvg(box, rc.design.pattern, ink, rc.defs, `${e.id}`, { inline: !!rc.inlineUses });
+      const body = patternSvg(box, scaledPattern(rc.design.pattern, rc.design.format === 'tuckBox' ? null : rc.design.dims?.height), ink, rc.defs, `${e.id}`, { inline: !!rc.inlineUses });
       return { svg: body ? el('g', { 'clip-path': clipDef(rc, rectPath(box.x, box.y, box.w, box.h)) }, body) : '', box: e.box };
     }
     case 'gear': {

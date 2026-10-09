@@ -185,6 +185,7 @@ export default {
   'pattern.keepOne': 'Keep at least one icon.',
   'pattern.style': 'Icon style',
   'pattern.outline': 'Outline width',
+  'pattern.scaling': 'Pattern scaling',
   'pattern.size': 'Icon size',
   'pattern.spacing': 'Spacing',
   'pattern.rotation': 'Rotation (±)',

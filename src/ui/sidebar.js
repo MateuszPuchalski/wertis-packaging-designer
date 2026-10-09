@@ -10,7 +10,7 @@ import { t, label, msgOf } from '../i18n/index.js';
 import { FORMATS, TEMPLATES } from '../registry.js';
 import { switchFormat, setIn } from '../design.js';
 import { PATTERN_ICONS } from '../brand/patternIcons.js';
-import { PATTERN_STYLES } from '../render/pattern.js';
+import { PATTERN_STYLES, PATTERN_SCALING } from '../render/pattern.js';
 import { PROOF_PAGES } from '../render/proof.js';
 import { MOCKUP_VIEWS } from '../render/mockup.js';
 import { OUTPUT_INTENTS } from '../export/documents.js';
@@ -101,6 +101,7 @@ export function sidebar(store, { getParts, project }) {
   const P = (key, text, def, min, max, step, unit = 'mm') => fieldControl(store, ['pattern'], { key, text, type: 'number', default: def, min, max, step, unit });
   add(pat, fieldControl(store, ['pattern'], { key: 'style', text: t('pattern.style'), type: 'select', default: 'solid', options: PATTERN_STYLES }),
     fieldControl(store, ['pattern'], { key: 'outline', text: t('pattern.outline'), type: 'number', default: 3, min: 0.5, max: 10, step: 0.5, unit: '', whenNot: ['style', 'solid'] }),
+    fieldControl(store, ['pattern'], { key: 'scaling', text: t('pattern.scaling'), type: 'select', default: 'auto', options: PATTERN_SCALING }),
     P('size', t('pattern.size'), 18, 3, 120, 0.5), P('spacing', t('pattern.spacing'), 30, 6, 200, 0.5), P('rotation', t('pattern.rotation'), 180, 0, 180, 5, '°'),
     P('jitter', t('pattern.jitter'), 0.35, 0, 1, 0.05, ''), P('sizeJitter', t('pattern.sizeJitter'), 0.2, 0, 0.6, 0.05, ''), P('seed', t('pattern.seed'), 1, 0, 99999, 1, ''));
   pat.body.append(h('button', { class: 'secondary', onclick: () => { store.set(['pattern', 'seed'], Math.floor(Math.random() * 99999)); store.settle(); } }, t('pattern.shuffle')));

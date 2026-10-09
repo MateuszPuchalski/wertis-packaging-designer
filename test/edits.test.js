@@ -83,3 +83,22 @@ test('the pouches offer the four sizes, and each one builds and prints', async (
     }
   }
 });
+
+test('a clear back is bare film: one window over the whole face, no bands, small print in dark ink', async () => {
+  const { packFaces } = await import('../src/render/faces.js');
+  for (const format of ['flatPouch', 'standUpPouch']) {
+    const d = createDesign({ format });
+    d.options = { ...d.options, backStyle: 'clear' };
+    const back = panelsWithElements(d, env()).find((p) => p.panel.role === 'back');
+    const ids = back.elements.map((e) => e.id);
+    assert.ok(ids.includes('back.window'), `${format} back window`);
+    assert.ok(!ids.some((id) => /header|body|footer|gear|edge/.test(id)), `${format} no bands, pattern or gear`);
+    const win = back.elements.find((e) => e.id === 'back.window');
+    assert.deepEqual([win.box.w, win.box.h], [back.panel.w, back.panel.h]);
+    assert.equal(back.elements.find((e) => e.id === 'back.url').colors.fill, 'black', 'dark ink on clear film');
+    const faces = packFaces(d, env());
+    assert.match(faces.faces.filmBack, /<path d="M/, `${format} the 3D back is film`);
+  }
+  const printed = panelsWithElements(createDesign({ format: 'flatPouch' }), env()).find((p) => p.panel.role === 'back');
+  assert.ok(printed.elements.some((e) => e.id === 'back.header') && !printed.elements.some((e) => e.id === 'back.window'), 'printed stays the default');
+});
