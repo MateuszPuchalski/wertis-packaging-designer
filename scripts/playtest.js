@@ -384,14 +384,12 @@ export async function playtest() {
     }
     await page.selectOption('#scene3d', 'stack');
     await page.waitForTimeout(1500);
-    const moved = await page.evaluate(async () => {
-      const v = window.wertis.stage.view3d;
-      const before = v.items.map((i) => i.body.position.x + i.body.position.z);
-      v.push();
-      await new Promise((r) => setTimeout(r, 1500));
-      return v.items.some((i, k) => Math.abs(i.body.position.x + i.body.position.z - before[k]) > 0.01);
-    });
-    assert.ok(moved, 'a push moves the stack');
+    // The bodies move a frame at a time, and software WebGL frames can be slow, so wait for the
+    // movement itself (up to two minutes) rather than for a fixed few seconds.
+    const pushStart = await page.evaluate(() => window.wertis.stage.view3d.items.map((i) => [i.body.position.x, i.body.position.z]));
+    await page.evaluate(() => window.wertis.stage.view3d.push());
+    await page.waitForFunction((b) => window.wertis.stage.view3d.items.some((i, k) => Math.abs(i.body.position.x - b[k][0]) + Math.abs(i.body.position.z - b[k][1]) > 0.01), pushStart, { timeout: 120000 })
+      .catch(() => { throw new Error('a push does not move the stack'); });
     step('the 3D tab shows the packs in the shop (pouches on hooks, boxes on shelves), hangs, piles and stacks them, and pushing moves them');
     await page.click('[data-tab="design"]');
 

@@ -101,7 +101,7 @@ logos, label and recycling marks on the preview. The editor speaks Polish or Eng
 
 "Quality You Can Trust" has its own size setting under **Format → Layout & window** (40 to 300 %). It stays right-aligned under the WERTIS word on the pouch back, the box front and the lid. On the pouch back it can also be moved and resized on the preview, like the logo: pull its corner, or type its height in the card.
 
-The pouch back carries a QR code beside the website line. It links to the link field under Texts, and can be moved and resized too.
+The pouch back carries a QR code above the website line, at the right. It links to the link field under Texts, and can be moved and resized too.
 
 The pattern of parts icons comes in two styles: solid silhouettes, or outlines. The recycling
 marks (the triangle with the material code, plus the tidyman) are vector shapes; pick the
@@ -160,9 +160,9 @@ that the files are byte-for-byte the same in both languages.
 
 ## Example products
 
-- **Pouches** start with the Stihl MS170 / MS180 clutch drum ("Bęben sprzęgła Stihl"). It
-  has placeholder codes: the SKU W00-0000, and the EAN 2000000000008 from GS1's
-  in-store-only range, so it can never match a real product. Type in the real codes.
+- **Pouches** start universal: the example names the Stihl MS170 / MS180 clutch drum kit
+  ("Bęben sprzęgła Stihl"), with no product code and no barcode. Preflight then notes that
+  there is no EAN-13 until you type in the real one.
 - **Boxes** start with the W09-0414 carburettor from its box artwork.
 
 ## Formats

@@ -89,19 +89,12 @@ export function front(ctx) {
     colors: { gear: 'dark', arc: 'white', word: 'dark', line: 'white' },
   });
 
-  // Footer: small logo and the code on top, the product name, then the two notes.
+  // Footer: the product code on top, then the product name.
   const F = { x: S.x, y: footerTop + 2, w: S.w, h: Math.max(S.y + S.h - footerTop - 2, 6) };
-  els.push({
-    id: 'front.footerLogo', label: 'Footer logo', type: 'logo', layer: 'fg', layout: 'word', movable: true, resizable: true, keepAspect: true,
-    box: ctx.box('front.footerLogo', { x: F.x, y: F.y + F.h * 0.06, w: F.w * 0.3, h: F.h * 0.18 }), align: 'left',
-    colors: { gear: 'dark', arc: 'white', word: 'dark', line: 'dark' },
-  });
   els.push({ id: 'front.sku', label: 'Product code', edits: ['sku'], type: 'text', layer: 'fg', text: c.sku, font: 'semibold', align: 'right', valign: 'middle',
     box: { x: F.x + F.w * 0.5, y: F.y + F.h * 0.08, w: F.w * 0.5, h: F.h * 0.14 }, size: F.h * 0.14 / 0.7, colors: { fill: 'white' } });
   els.push({ id: 'front.name', label: 'Product name', edits: ['productName'], type: 'text', layer: 'fg', text: c.productName?.[c.lang] ?? '', font: 'bold', align: 'center', valign: 'middle',
     box: { x: F.x, y: F.y + F.h * 0.4, w: F.w, h: F.h * 0.16 }, size: F.h * 0.16 / 0.7, minSize: 2, colors: { fill: 'dark' } });
-  els.push({ id: 'front.note1', label: 'Note', edits: ['note1'], type: 'text', layer: 'fg', text: c.note1, font: 'bold', upper: true, align: 'center', valign: 'middle', spacing: 0.02,
-    box: { x: F.x, y: F.y + F.h * 0.7, w: F.w, h: F.h * 0.11 }, size: F.h * 0.11 / 0.7, minSize: 1.6, colors: { fill: 'white' } });
   return els;
 }
 
@@ -154,24 +147,24 @@ export function back(ctx) {
     text: [c.company, c.address, c.email].filter(Boolean).join('\n'),
     box: { x: F.x, y: F.y + F.h * 0.12, w: F.w * 0.46, h: F.h * 0.76 }, size: (F.h * 0.1 / 0.7) * 4 / 3, minSize: 1.4, colors: { fill: 'white' } });
   const material = MATERIALS[ctx.options.recycle];
-  // Then the disposal marks, then the website at the right.
+  // The disposal marks in the middle of the footer.
   const markSize = Math.min(F.h * 0.55, F.w * 0.075);
   const marks = [material?.code ? 'recycle' : null, ctx.options.tidyman ? 'tidyman' : null].filter(Boolean);
-  let urlX = F.x + F.w * 0.5;
   if (marks.length) {
     const mw = marks.length * markSize + (marks.length - 1) * markSize * 0.25;
     const mb = ctx.box('back.marks', { x: F.x + F.w * 0.49, y: F.y + (F.h - markSize) / 2, w: mw, h: markSize });
     els.push({ id: 'back.marks', label: 'Recycling marks', type: 'marks', layer: 'fg', marks, material, movable: true, resizable: true, keepAspect: true, box: mb, colors: { fill: 'black' } });
-    urlX = Math.max(urlX, mb.x + mb.w + F.w * 0.03);
   }
-  // A QR code at the far right links to the site (the link field, which is the QR's text);
-  // the website line sits beside it.
-  const qrSize = Math.min(F.h * 0.5, F.w * 0.11);
-  const qrBox = ctx.box('back.urlQr', { x: F.x + F.w - qrSize, y: F.y + (F.h - qrSize) / 2, w: qrSize, h: qrSize });
+  // At the right: a QR code, bigger than before, with the website line under it. Both end at the
+  // footer's right edge. The QR links to the site (the link field, which is the code's text).
+  const right = F.x + F.w, colW = F.w * 0.2;
+  const qrSize = Math.min(F.h * 0.66, F.w * 0.15), gap = F.h * 0.02, webH = F.h * 0.24;
+  const top = F.y + Math.max(0, (F.h - (qrSize + gap + webH)) / 2);
+  const qrBox = ctx.box('back.urlQr', { x: right - qrSize, y: top, w: qrSize, h: qrSize });
   els.push({ id: 'back.urlQr', label: 'QR code', edits: ['qr'], type: 'qr', layer: 'fg', text: c.qr, movable: true, resizable: true, keepAspect: true,
     box: qrBox, colors: { dots: 'black', bg: 'white' } });
   els.push({ id: 'back.url', label: 'Website', edits: ['url'], type: 'text', layer: 'fg', text: c.url, font: 'bold', align: 'right', valign: 'middle',
-    box: { x: urlX, y: F.y + F.h * 0.35, w: Math.max(qrBox.x - F.w * 0.02 - urlX, 4), h: F.h * 0.3 }, size: F.h * 0.15 / 0.7, minSize: 1.6, colors: { fill: 'white' } });
+    box: { x: right - colW, y: qrBox.y + qrBox.h + gap, w: colW, h: webH }, size: F.h * 0.15 / 0.7, minSize: 1.6, colors: { fill: 'white' } });
   return els;
 }
 

@@ -50,7 +50,7 @@ test('numbers outside the limits are clamped', () => {
   assert.equal(layout({ width: 5, height: 99999 }).dims.height, 1000);
 });
 
-test('a QR code on the back links to the website, beside the website line, inside the footer', () => {
+test('a QR code on the back links to the website: above the website line, at the right, large', () => {
   const d = design();
   const parts = panelsWithElements(d, env(), geometry(d));
   const byId = (id) => parts.flatMap((p) => p.elements).find((e) => e.id === id);
@@ -58,10 +58,12 @@ test('a QR code on the back links to the website, beside the website line, insid
   const url = byId('back.url');
   assert.equal(qr.type, 'qr');
   assert.equal(qr.text, d.content.qr, 'the link field is the QR code’s text');
-  assert.ok(url.box.x + url.box.w <= qr.box.x, 'the website line ends before the QR code');
+  assert.ok(qr.box.y + qr.box.h <= url.box.y + 1e-9, 'the QR code sits above the website line');
+  assert.ok(Math.abs(qr.box.x + qr.box.w - (url.box.x + url.box.w)) < 1e-9, 'both end at the right edge of the footer');
+  assert.ok(qr.box.w >= 30, `the QR code is ${qr.box.w.toFixed(1)} mm`);
   const back = parts.find(({ elements }) => elements.some((e) => e.id === 'back.url'));
   assert.ok(qr.box.x + qr.box.w <= back.panel.w && qr.box.y >= back.panel.info.safe.y, 'inside the panel and its safe area');
-  // Moved by hand, the website line makes room for it again.
+  // Moved by hand, it goes where it is put.
   const moved = panelsWithElements({ ...d, layout: { 'back.urlQr': { x: 0.2, y: 0.5, w: 0.1, h: 0.1 } } }, env(), geometry(d));
   const q2 = moved.flatMap((p) => p.elements).find((e) => e.id === 'back.urlQr');
   assert.ok(q2.box.x < qr.box.x, 'the box is where it was put');

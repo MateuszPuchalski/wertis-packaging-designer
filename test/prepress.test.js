@@ -68,7 +68,11 @@ test('preflight finds what would print wrong', () => {
   assert.match(msgs, /error: EAN-13 .*check digit/);
   assert.match(msgs, /error: “Silver” prints as a spot ink but has no spot name/);
   assert.match(msgs, /warn: “Band Black” has 400 % total ink/);
-  assert.match(preflight(design(), env()).items.map((i) => i.message).join('\n'), /in-store range/);
+  // The universal default has no barcode; a placeholder EAN from the in-store range is flagged.
+  assert.match(preflight(design(), env()).items.map((i) => i.message).join('\n'), /no EAN-13 on this pack/);
+  const inStore = design();
+  inStore.content.ean = '2000000000008';
+  assert.match(preflight(inStore, env()).items.map((i) => i.message).join('\n'), /in-store range/);
 });
 
 test('GS1: bar width reduction thins the bars; QR codes keep 4 modules of quiet zone', () => {
