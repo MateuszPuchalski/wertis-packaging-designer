@@ -39,7 +39,7 @@ export default {
   'Tuck flap': 'Klapka wsuwana',
   'Dust flap depth': 'Głębokość klapek bocznych',
   'Glue flap': 'Klapka klejowa',
-  'Thumb notch': 'Wycięcie na palec',
+  'Thumb tab and lock slot': 'Języczek na palec i szczelina zamka',
   'Board allowance': 'Naddatek na grubość kartonu',
 
   // Templates and their options.
@@ -190,4 +190,6 @@ export default {
   'Green': 'Zielone',
   'White': 'Białe',
   'Black': 'Czarne',
+  "The printer's file (Century Gothic, Myriad Pro)": 'Plik drukarni (Century Gothic, Myriad Pro)',
+  'The app look (Barlow)': 'Wygląd aplikacji (Barlow)',
 };

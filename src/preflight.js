@@ -64,7 +64,7 @@ export function preflight(design, env) {
   for (const { panel, elements } of parts) {
     for (const e of elements) {
       if (design.hidden?.[e.id] || e.type !== 'text' || !e.text) continue;
-      const laid = env.text.layout({ ...e.box, text: e.text, font: e.font, size: e.size, minSize: e.minSize, upper: e.upper, wrap: e.wrap, spacing: e.spacing, lineHeight: e.lineHeight, maxLines: e.maxLines });
+      const laid = env.text.view(design.fonts).layout({ ...e.box, text: e.text, font: e.font, size: e.size, minSize: e.minSize, upper: e.upper, wrap: e.wrap, spacing: e.spacing, lineHeight: e.lineHeight, maxLines: e.maxLines });
       const pt = (laid.size / 0.3528).toFixed(1);
       if (laid.size < MIN_TEXT_MM) add('warn', 'Text', `“${e.label}” is ${pt} pt; under 6 pt may not print cleanly.`, e.id, 'pf.text.small', { el: L(e.label), pt });
     }

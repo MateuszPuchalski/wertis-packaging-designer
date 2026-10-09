@@ -276,7 +276,7 @@ function elementSvg(rc, e, panel) {
       if (e.registered && colors.word !== 'none' && LOGO_LAYOUTS[e.layout ?? 'full']?.parts.includes('word')) {
         const word = partBox(fitLogo(e.box, e.layout, align, valign), 'word');
         const size = word.h * 0.62;
-        const reg = rc.text.layout({ text: '®', x: word.x + word.w + word.h * 0.05, y: word.y - word.h * 0.02, font: 'regular', size, align: 'left', valign: 'top' });
+        const reg = rc.text.layout({ text: '®', x: word.x + word.w + word.h * 0.05, y: word.y - word.h * 0.02, font: 'web', size, align: 'left', valign: 'top' });
         logo.svg += el('g', { fill: colors.word }, reg.svg);
       }
       return logo;
