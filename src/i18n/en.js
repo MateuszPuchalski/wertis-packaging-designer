@@ -26,6 +26,9 @@ export default {
   'top.export': 'Export',
 
   // Exports.
+  'export.all': 'All files, all sizes (ZIP)',
+  'export.allHint': 'Print PDF, dieline, print SVG, proof and mockup for every size, plus the project file',
+  'export.everything': 'Everything',
   'export.forPrinter': 'For the printer',
   'export.forApproval': 'For approval',
   'export.presentation': 'Presentation',

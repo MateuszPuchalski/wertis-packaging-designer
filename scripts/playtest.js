@@ -7,6 +7,7 @@
 //   npm run playtest            (PORT=xxxx to pick the port, default 8190)
 import { spawn } from 'node:child_process';
 import { mkdirSync, writeFileSync } from 'node:fs';
+import { readFile } from 'node:fs/promises';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import assert from 'node:assert/strict';
 import { chromium } from 'playwright';
@@ -261,6 +262,20 @@ export async function playtest() {
       const path = await dl.path();
       assert.ok(path, `${key} downloaded`);
       step(`Export → ${key} downloads ${dl.suggestedFilename()}`);
+    }
+
+    // Everything for every size comes as one zip: a folder per size with the six files, and the project file.
+    {
+      const [dl] = await Promise.all([page.waitForEvent('download', { timeout: 280000 }), exportVia(page, 'all-zip')]);
+      assert.match(dl.suggestedFilename(), /-all-files\.zip$/);
+      const bytes = await readFile(await dl.path());
+      // Each name is written twice (local header and central directory), so six files show up 12 times.
+      const text = bytes.toString('latin1');
+      for (const folder of ['10x15-cm', '14x20-cm', '20x28-cm', '25x35-cm']) {
+        assert.equal(text.split(`${folder}/`).length - 1, 12, `${folder} has its six files`);
+      }
+      assert.ok(text.includes('.wertis.json'), 'the project file is in the zip');
+      step(`Export → all-zip downloads ${dl.suggestedFilename()}`);
     }
 
     // A product photo (drawn in the page: a shaded filter body) goes in through the Mockup
