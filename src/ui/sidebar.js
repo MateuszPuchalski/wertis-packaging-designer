@@ -9,13 +9,16 @@ import { getPref, setPref } from './prefs.js';
 import { t, label, msgOf } from '../i18n/index.js';
 import { FORMATS, TEMPLATES } from '../registry.js';
 import { switchFormat, setIn } from '../design.js';
+import { applyDieline } from '../edit/importDieline.js';
+import { addPicture } from '../edit/pictures.js';
+import { readDieline, readPicture } from './importFiles.js';
 import { PATTERN_ICONS } from '../brand/patternIcons.js';
 import { PATTERN_STYLES, PATTERN_SCALING } from '../render/pattern.js';
 import { PROOF_PAGES } from '../render/proof.js';
 import { MOCKUP_VIEWS } from '../render/mockup.js';
 import { OUTPUT_INTENTS } from '../export/documents.js';
 
-export function sidebar(store, { getParts, project }) {
+export function sidebar(store, { getParts, project, select }) {
   const syncs = [];
   const add = (sec, ...ctrls) => {
     for (const c of ctrls) { sec.body.append(c.el); syncs.push(c.sync); }
@@ -29,8 +32,8 @@ export function sidebar(store, { getParts, project }) {
 
   // --- Format & size ---
   const fmt = section(t('side.formatSection'), { id: 'sec-format' });
-  const formatSel = h('select', { id: 'format', onchange: () => { store.commit(switchFormat(store.get(), formatSel.value)); store.settle(); } },
-    Object.values(FORMATS).map((f) => h('option', { value: f.id }, label(f.label))));
+  const formatSel = h('select', { id: 'format', onchange: () => { store.commit(switchFormat(store.get(), formatSel.value)); store.settle(); } });
+  let hadCustom = null;
   const templateSel = h('select', { id: 'template', onchange: () => { store.commit(switchFormat(store.get(), store.get().format, templateSel.value)); store.settle(); } });
   // The sizes the pack is made in: one pick sets width and height; any other numbers read "Custom".
   const sizeSel = h('select', { id: 'size', onchange: () => {
@@ -43,8 +46,37 @@ export function sidebar(store, { getParts, project }) {
   const dimsBox = h('div', { class: 'fields' });
   let dimsSig = '';
   let dimSyncs = [];
+  // Files: an .ai or PDF gives a dieline (its cyan cut and red fold lines) or a picture; images give pictures.
+  const pickFile = (accept, onFile) => {
+    const input = h('input', { type: 'file', accept, hidden: true, onchange: async () => {
+      const file = input.files?.[0];
+      input.value = '';
+      if (!file) return;
+      document.body.classList.add('busy');
+      try { await onFile(file); } catch (err) { console.error(err); toast(msgOf(err), 'error'); } finally { document.body.classList.remove('busy'); }
+    } });
+    return input;
+  };
+  const dielineInput = pickFile('.ai,.pdf,application/pdf', async (file) => {
+    const { dieline, name } = await readDieline(file);
+    store.commit(applyDieline(store.get(), dieline, name));
+    store.settle();
+    toast(t('file.dielineDone', { name, w: Math.round(dieline.w * 10) / 10, h: Math.round(dieline.h * 10) / 10 }));
+  });
+  const pictureInput = pickFile('.ai,.pdf,application/pdf,image/png,image/jpeg,image/webp', async (file) => {
+    const pic = await readPicture(file);
+    const { design, id } = addPicture(store.get(), pic);
+    store.commit(design);
+    store.settle();
+    select(`pic.${id}`);
+    toast(t('file.pictureDone', { name: pic.name }));
+  });
+  const fileBlock = h('div', { class: 'file-block' },
+    h('button', { class: 'secondary', id: 'load-dieline', onclick: () => dielineInput.click() }, icon('upload'), t('file.dieline')),
+    h('button', { class: 'secondary', id: 'add-picture', onclick: () => pictureInput.click() }, icon('image'), t('file.picture')),
+    dielineInput, pictureInput, h('p', { class: 'help' }, t('file.help')));
   fmt.body.append(h('label', { class: 'row' }, h('span', { class: 'lbl' }, t('side.format')), h('span', { class: 'ctl' }, formatSel)),
-    h('label', { class: 'row' }, h('span', { class: 'lbl' }, t('side.template')), h('span', { class: 'ctl' }, templateSel)), sizeRow, dimsBox);
+    h('label', { class: 'row' }, h('span', { class: 'lbl' }, t('side.template')), h('span', { class: 'ctl' }, templateSel)), sizeRow, dimsBox, fileBlock);
 
   // --- Layout (template options) ---
   const lay = section(t('side.layoutSection'), { id: 'sec-layout' });
@@ -52,6 +84,13 @@ export function sidebar(store, { getParts, project }) {
   let layoutSyncs = [];
   lay.body.append(layoutBox, h('p', { class: 'help' }, t('side.layoutHelp')));
   syncs.push((d) => {
+    // The imported dieline is a format only once a file has given one.
+    const hasCustom = !!d.custom;
+    if (hasCustom !== hadCustom) {
+      hadCustom = hasCustom;
+      clear(formatSel);
+      for (const f of Object.values(FORMATS)) if (!f.custom || hasCustom) formatSel.append(h('option', { value: f.id }, label(f.label)));
+    }
     syncValue(formatSel, d.format);
     const f = FORMATS[d.format];
     const sig = `${d.format}|${d.template}`;

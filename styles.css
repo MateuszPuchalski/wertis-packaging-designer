@@ -162,6 +162,8 @@ textarea { width: 100%; resize: vertical; }
 
 .row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .row[hidden] { display: none; }
+.file-block { display: grid; gap: 6px; margin-top: 10px; }
+.file-block button { display: flex; align-items: center; justify-content: center; gap: 8px; }
 .row .lbl { color: #4a4642; }
 .row .ctl { display: flex; align-items: center; gap: 5px; }
 .row .ctl select { max-width: 200px; }
@@ -355,3 +357,6 @@ table.keys td:first-child { white-space: nowrap; width: 1%; padding-right: 14px;
 .more-langs > .fields { padding-left: 8px; border-left: 2px solid var(--line); }
 .inspector > .insp-list > .insp-list-head { position: sticky; top: 0; z-index: 1; background: var(--panel); padding-bottom: 2px; }
 .inspector > .insp-list > .search-box { position: sticky; top: 26px; z-index: 1; box-shadow: 0 -6px 0 var(--panel); }
+
+.no3d { display: grid; place-items: center; height: 100%; padding: 24px; color: #6d6a66; text-align: center; }
+.no3d[hidden] { display: none; }

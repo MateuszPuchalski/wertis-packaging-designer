@@ -49,12 +49,23 @@ test('snap-lock and tuck bottoms', () => {
   }
 });
 
-test('a new box starts with the W09-0414 carburettor', () => {
+test('a new box is the universal one: L95 W65 H50, no technical data, product name or PAP mark', () => {
   const d = design({ format: 'tuckBox' });
+  assert.equal(d.template, 'boxGeneric');
+  assert.deepEqual([d.dims.length, d.dims.width, d.dims.height], [95, 65, 50]);
+  assert.equal(d.options.recycle, 'none', 'no PAP mark');
+  const els = renderSheet(d, env()).hits.map((h) => h.id);
+  for (const id of ['back.specs', 'back.specsTitle', 'front.name', 'front.subtitle', 'front.sku', 'front.ean']) assert.ok(!els.includes(id), `${id} is not on the universal box`);
+  assert.ok(els.includes('back.category') && els.includes('front.logo'), 'it keeps the spare-parts category and the logo');
+});
+
+test('the product box (W09-0414 style) still carries the carburettor and its data', () => {
+  const d = design({ format: 'tuckBox', template: 'boxProduct' });
   assert.equal(d.content.sku, 'W09-0414');
   assert.equal(d.content.ean, '5905947594658');
   assert.equal(d.content.productName.pl, 'Gaźnik do kosy spalinowej 15mm');
-  assert.equal(d.template, 'boxProduct');
+  const els = renderSheet(d, env()).hits.map((h) => h.id);
+  for (const id of ['back.specs', 'front.name', 'front.ean']) assert.ok(els.includes(id), `${id} is on the product box`);
 });
 
 test('both box templates render to print, proof and mockup', () => {
@@ -73,7 +84,7 @@ test('both box templates render to print, proof and mockup', () => {
 });
 
 test('the box EAN keeps at least 80 % width', () => {
-  const d = design({ format: 'tuckBox', dims: undefined });
+  const d = design({ format: 'tuckBox', template: 'boxProduct', dims: undefined });
   d.dims = { ...d.dims, height: 30 };
   const hit = renderSheet(d, env()).hits.find((h) => h.id === 'front.ean');
   assert.ok(hit.box.w >= 113 * 0.264 - 1e-6, `EAN is ${hit.box.w} mm wide`);

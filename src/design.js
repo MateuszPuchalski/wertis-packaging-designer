@@ -5,6 +5,8 @@ import { WERTIS_PALETTE, exampleContent } from './brand/wertis.js';
 import { makeSwatch, refSwatchId, findSwatch, canDeleteSwatch } from './brand/palette.js';
 import { PATTERN_DEFAULTS } from './render/pattern.js';
 import { normalizeDims } from './formats/common.js';
+import { cleanCustom } from './formats/customDieline.js';
+import { cleanPictures, defaultPanelId } from './edit/pictures.js';
 
 export const SCHEMA = 'wertis-packaging';
 export const SCHEMA_VERSION = 1;
@@ -37,6 +39,9 @@ export function createDesign({ format = 'flatPouch', template, date = '' } = {})
     palette: clone(WERTIS_PALETTE),
     colors: {}, // `${elementId}.${slot}` → colour reference (see brand/palette.js)
     layout: {}, // elementId → { x, y, w, h } as fractions of its panel
+    custom: null, // an imported dieline (formats/customDieline.js): { name, w, h, cut, fold, outline } in mm
+    pictures: {}, // id → { panel, src, name, ratio }: images and .ai pages placed on a panel
+    gradients: {}, // band elementId → { to: swatch id, dir: 'down' | 'up' | 'right' | 'left' }: the fill runs into that swatch
     hidden: defaultHidden(t.id), // elementId → true
     pattern: { ...PATTERN_DEFAULTS },
     content: example.content,
@@ -68,6 +73,9 @@ export function migrate(input) {
     palette: Array.isArray(json.palette) && json.palette.length ? json.palette.map((s) => makeSwatch(s)) : base.palette,
     colors: { ...(json.colors ?? {}) },
     layout: { ...(json.layout ?? {}) },
+    gradients: { ...(json.gradients ?? {}) },
+    custom: cleanCustom(json.custom),
+    pictures: cleanPictures(json.pictures),
     hidden: { ...(json.hidden ?? {}) },
     // Projects saved before the scaling and uniform choices keep their pattern as it was drawn.
     pattern: { ...base.pattern, ...(json.pattern ? { scaling: 'fixed', uniform: false, ...json.pattern } : {}) },
@@ -104,7 +112,14 @@ export function serialize(design) {
 export function switchFormat(design, format, template) {
   const f = FORMATS[format];
   const t = TEMPLATES[template && f.templates.includes(template) ? template : f.templates[0]];
-  return { ...design, format: f.id, template: t.id, dims: defaultsOf(f.fields), options: { ...defaultsOf(t.options) }, layout: {}, hidden: defaultHidden(t.id) };
+  const next = { ...design, format: f.id, template: t.id, dims: defaultsOf(f.fields), options: { ...defaultsOf(t.options) }, layout: {}, hidden: defaultHidden(t.id) };
+  // Pictures follow to the new format's first panel (their old panels do not exist there).
+  const ids = Object.keys(next.pictures ?? {});
+  if (ids.length) {
+    const panel = defaultPanelId(next);
+    next.pictures = Object.fromEntries(ids.map((id) => [id, { ...next.pictures[id], panel }]));
+  }
+  return next;
 }
 
 // Immutable update along a path: setIn(d, ['content', 'sku'], 'X') returns a new design

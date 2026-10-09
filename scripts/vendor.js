@@ -16,6 +16,9 @@ const LIBS = [
   // The 3D tab: three.js (loaded through the import map in index.html) and cannon-es physics.
   { pkg: 'three', dir: 'three', files: [['build/three.module.js', 'three.module.js'], ['build/three.core.js', 'three.core.js'], ['examples/jsm/controls/OrbitControls.js', 'OrbitControls.js'], ['examples/jsm/environments/RoomEnvironment.js', 'RoomEnvironment.js'], ['examples/jsm/geometries/RoundedBoxGeometry.js', 'RoundedBoxGeometry.js'], ['LICENSE', 'LICENSE']] },
   { pkg: 'cannon-es', dir: 'cannon-es', files: [['dist/cannon-es.js', 'cannon-es.js'], ['LICENSE', 'LICENSE']] },
+  // Reads an .ai (Illustrator saves a PDF inside) or a PDF: the dieline's cut and fold lines, and the
+  // page as a picture. Loaded only when a file is chosen; the worker does the parsing.
+  { pkg: 'pdfjs-dist', dir: 'pdfjs', license: 'Apache-2.0', files: [['build/pdf.min.mjs', 'pdf.min.mjs'], ['build/pdf.worker.min.mjs', 'pdf.worker.min.mjs'], ['LICENSE', 'LICENSE']] },
 ];
 
 // qrcode-generator ships its MIT licence only in the source header.
@@ -47,7 +50,7 @@ const lines = ['# Vendored browser libraries', '', 'Copied from node_modules by 
 for (const lib of LIBS) {
   mkdirSync(`${root}vendor/${lib.dir}`, { recursive: true });
   for (const [from, to] of lib.files) copyFileSync(nm(`${lib.pkg}/${from}`), `${root}vendor/${lib.dir}/${to}`);
-  lines.push(`- \`${lib.dir}/\`: ${lib.pkg} ${version(lib.pkg)} (MIT)`);
+  lines.push(`- \`${lib.dir}/\`: ${lib.pkg} ${version(lib.pkg)} (${lib.license ?? 'MIT'})`);
 }
 writeFileSync(`${root}vendor/qrcode-generator/LICENSE`, QR_LICENSE);
 writeFileSync(`${root}vendor/README.md`, `${lines.join('\n')}\n`);

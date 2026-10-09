@@ -15,7 +15,9 @@ logos, label and recycling marks on the preview. The editor speaks Polish or Eng
     GRACoL 2013).
   - **Dieline:** in its own spot inks, "Dieline" (cuts) and "Crease" (folds), set to
     overprint.
-  - **Marks:** crop marks in registration colour, and a slug line with the file's details.
+  - **Files in:** an `.ai` (Illustrator saves a PDF inside) or a PDF can be read in the browser (pdf.js, vendored, loaded only when you choose a file). Format tab, "Dieline from .ai / PDF…": the file's cyan cut lines and red fold lines become the sheet (kept in the project), with a free canvas of board colour, pattern, logo, tagline and website to move around; the 3D view is not available for it. "Add picture…": the page of an `.ai` / PDF, or a PNG / JPG, placed on a panel as a picture you move, resize, send to another panel or remove (kept in the project as an image of at most 3000 px). Nothing leaves your machine.
+- **Gradients:** any band (header, black band, footer) can run into another swatch, top to bottom, bottom to top or sideways: pick the band, then "Gradient to" on its card. The print file draws it as thin flat strips, each an exact CMYK mix of the two swatches, so there are no gradient objects and every ink stays a plain process mix.
+- **Marks:** crop marks in registration colour, and a slug line with the file's details.
   - **Pages:** page 2 is the dieline alone. For clear film, page 3 is the white underprint
     plate (spot "White"), which covers everything except the windows and holes.
   - **Text and transparency:** all text is outlines and nothing is transparent. A placed
@@ -123,7 +125,7 @@ material under **Format → Layout & window**.
   right-click → Edit the text) and its card offers exactly its words: the label its product
   name (the pack's main language first, the other languages folded under it), product code,
   EAN-13 (checked as you type), QR link and website; the pouch's address its company, street
-  and e-mail (no heading; the box keeps "Produced for" as its heading); the box's technical data
+  and e-mail (no heading); the box's address block the same, plus the country (Poland); the box's technical data
   its heading and one line per item; and so on. A box drops its barcode when the EAN is empty,
   so its product code offers the EAN too.
 
@@ -165,7 +167,7 @@ that the files are byte-for-byte the same in both languages.
   barcode, and the 3D pack starts empty (choose the Stihl clutch kit in the 3D toolbar).
   Preflight notes the missing EAN-13 until you type in the real one. The texts keep the
   example Stihl name, so a shown element has words to start from.
-- **Boxes** start with the W09-0414 carburettor from its box artwork.
+- **Boxes** start universal too: the generic "CZĘŚCI ZAMIENNE / SPARE PARTS" box at L95 × W65 × H50 mm, with no technical data, product name or PAP mark. The product box (W09-0414 style) is the other template and brings the carburettor, its technical data and its codes.
 
 ## Formats
 

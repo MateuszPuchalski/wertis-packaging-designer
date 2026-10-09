@@ -6,7 +6,10 @@ import { icon } from './icons.js';
 import { t, label } from '../i18n/index.js';
 import { resolveColor, refSwatchId, findSwatch, normalizeHex } from '../brand/palette.js';
 import { LOGO_PRESETS } from '../brand/wertis.js';
+import { GRADIENT_DIRS } from '../render/artwork.js';
+import { TRANSPARENT } from '../brand/palette.js';
 import { showAll, resetColors, hasOwnColors, hiddenCount } from '../edit/actions.js';
+import { removePicture, movePicture, panelIds } from '../edit/pictures.js';
 import { textFields } from './textFields.js';
 
 const r1 = (v) => Math.round(v * 10) / 10;
@@ -139,6 +142,32 @@ export function inspector(store, { getParts, getHit, select, getSelected, showSe
         syncs.push(r.sync);
         block.append(r.el);
       }
+      if (elem.type === 'rect') {
+        const toSel = h('select', { id: 'insp-gradient-to', onchange: () => {
+          const to = toSel.value;
+          store.set(['gradients', id], to ? { to, dir: store.get().gradients?.[id]?.dir ?? 'down' } : undefined);
+          store.settle();
+        } });
+        const dirSel = h('select', { id: 'insp-gradient-dir', onchange: () => {
+          const g = store.get().gradients?.[id];
+          if (g) { store.set(['gradients', id], { ...g, dir: dirSel.value }); store.settle(); }
+        } }, GRADIENT_DIRS.map(([v, l]) => h('option', { value: v }, label(l))));
+        const dirRow = h('label', { class: 'row' }, h('span', { class: 'lbl' }, t('insp.gradientDir')), h('span', { class: 'ctl' }, dirSel));
+        block.append(h('label', { class: 'row' }, h('span', { class: 'lbl' }, t('insp.gradient')), h('span', { class: 'ctl' }, toSel)), dirRow);
+        let sig = '';
+        syncs.push((d) => {
+          const s2 = d.palette.map((sw) => sw.id).join();
+          if (s2 !== sig) {
+            sig = s2;
+            clear(toSel);
+            toSel.append(h('option', { value: '' }, t('insp.gradientNone')), ...d.palette.filter((sw) => sw.role !== TRANSPARENT).map((sw) => h('option', { value: sw.id }, sw.name)));
+          }
+          const g = d.gradients?.[id];
+          syncValue(toSel, g?.to ?? '');
+          syncValue(dirSel, g?.dir ?? 'down');
+          dirRow.hidden = !g;
+        });
+      }
       if (elem.type === 'logo') {
         block.append(h('div', { class: 'logo-presets' }, h('span', { class: 'lbl' }, t('insp.logoColours')),
           Object.entries(LOGO_PRESETS).map(([k, p]) => h('button', { class: 'secondary tiny', onclick: () => {
@@ -159,6 +188,15 @@ export function inspector(store, { getParts, getHit, select, getSelected, showSe
       const pr = posRows(elem, hit, panel);
       syncs.push(pr.sync);
       card.append(pr.el);
+    }
+    // A placed picture can go to another panel or be removed.
+    if (/^pic\./.test(id)) {
+      const pid = id.slice(4);
+      const panelSel = h('select', { id: 'insp-picture-panel', onchange: () => { store.commit(movePicture(store.get(), pid, panelSel.value)); store.settle(); } },
+        panelIds(store.get()).map((p) => h('option', { value: p.id }, label(p.label))));
+      const remove = h('button', { class: 'secondary', id: 'insp-picture-remove', onclick: () => { select(null); store.commit(removePicture(store.get(), pid)); store.settle(); } }, icon('trash', 14), t('insp.removePicture'));
+      card.append(h('div', { class: 'insp-block' }, h('label', { class: 'row' }, h('span', { class: 'lbl' }, t('insp.picturePanel')), h('span', { class: 'ctl' }, panelSel)), remove));
+      syncs.push((d) => syncValue(panelSel, d.pictures?.[pid]?.panel ?? ''));
     }
     const vis = h('input', { type: 'checkbox', id: 'insp-visible', onchange: () => { store.set(['hidden', id], vis.checked ? undefined : true); store.settle(); } });
     card.append(h('div', { class: 'insp-block' }, h('label', { class: 'row check' }, vis, h('span', {}, t('insp.show')))));
@@ -234,7 +272,7 @@ export function inspector(store, { getParts, getHit, select, getSelected, showSe
     sync(design) {
       const id = getSelected();
       // The panel sizes and the options move elements, so they rebuild the card too.
-      const shape = `${design.format}|${design.template}|${JSON.stringify(design.options)}|${JSON.stringify(design.dims)}`;
+      const shape = `${design.format}|${design.template}|${JSON.stringify(design.options)}|${JSON.stringify(design.dims)}|${Object.entries(design.pictures ?? {}).map(([k, v]) => `${k}:${v.panel}`).join()}|${design.custom ? design.custom.w : ''}`;
       const sig = `${id}|${shape}`;
       if (!built || built.sig !== sig) built = { sig, syncs: buildCard(id) };
       if (shape !== listSig) {

@@ -11,7 +11,7 @@ import { dielineSvg, dielineColors } from './dieline.js';
 import { cmykFromHex } from '../brand/palette.js';
 
 export function geometry(design) {
-  return FORMATS[design.format].layout(design.dims);
+  return FORMATS[design.format].layout(design.dims, design);
 }
 
 // The template's elements for every panel.
@@ -26,8 +26,22 @@ export function panelsWithElements(design, env, geo = geometry(design)) {
         return o ? { x: o.x * panel.w, y: o.y * panel.h, w: o.w * panel.w, h: o.h * panel.h } : def;
       },
     };
-    return { panel, elements: make ? make(ctx).map((e) => freeText(e, ctx)) : [] };
+    return { panel, elements: [...(make ? make(ctx).map((e) => freeText(e, ctx)) : []), ...pictureElements(ctx)] };
   });
+}
+
+// The pictures the project holds for this panel, on top of the template's own pieces. They start fitted
+// into the safe area, centred; the stored box (a drag or resize) wins like for every element.
+function pictureElements(ctx) {
+  const out = [];
+  for (const [id, p] of Object.entries(ctx.design.pictures ?? {})) {
+    if (p.panel !== ctx.panel.id) continue;
+    const S = ctx.panel.info?.safe ?? { x: 0, y: 0, w: ctx.panel.w, h: ctx.panel.h };
+    const w = Math.min(S.w, S.h * p.ratio), h = w / p.ratio;
+    out.push({ id: `pic.${id}`, label: p.name || 'Picture', type: 'image', layer: 'fg', movable: true, resizable: true, keepAspect: true, src: p.src, pw: p.ratio, ph: 1, colors: {},
+      box: ctx.box(`pic.${id}`, { x: S.x + (S.w - w) / 2, y: S.y + (S.h - h) / 2, w, h }) });
+  }
+  return out;
 }
 
 // Text a template left fixed (the boxes' own lines) can be moved and resized like the rest:

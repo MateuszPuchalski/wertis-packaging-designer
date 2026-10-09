@@ -59,9 +59,9 @@ async function boot() {
   const insp = inspector(store, { getParts, getHit: (hid) => stage.hit(hid), select, getSelected: () => stage.selected, showSection: (sec) => side.showSection(sec) });
   stage.onRendered = () => insp.refresh();
   const project = projectSection(store, { getId: () => id, setId: (nid) => { id = nid; rememberCurrent(nid); }, today });
-  const side = sidebar(store, { getParts, project });
-  // Preflight's Show: the element on the Design tab.
+  // Preflight's Show (and a picture just added): the element on the Design tab.
   const show = (sid) => { if (stage.tab !== 'design') stage.setTab('design'); select(sid); };
+  const side = sidebar(store, { getParts, project, select: show });
   const top = topbar(document.querySelector('.topbar'), { store, env, getId: () => id, project, today, select: show });
   document.getElementById('sidebar').append(side.el);
   document.getElementById('inspector').append(insp.el);

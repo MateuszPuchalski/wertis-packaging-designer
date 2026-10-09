@@ -30,7 +30,7 @@ test('the label offers its name, codes and link; Produced for its address', () =
   assert.deepEqual(byId['back.address'].edits, ['company', 'address', 'email'], 'the pouch’s address has no heading');
   assert.equal(byId['back.address'].text, 'WERTIS Sp. z o.o.\nSienkiewicze 4\n16-070 Sienkiewicze\nbiuro@wertis.com.pl', 'the postcode and town run under the street');
   // The box drops its barcode when the EAN is empty; its product code still offers the EAN.
-  const box = createDesign({ format: 'tuckBox' });
+  const box = createDesign({ format: 'tuckBox', template: 'boxProduct' });
   box.content.ean = '';
   const boxEls = panelsWithElements(box, env()).flatMap((p) => p.elements);
   assert.ok(!boxEls.some((e) => e.type === 'ean'));
@@ -108,4 +108,39 @@ test('a window on the back replaces the big gear, so both sides are clear window
   assert.ok(back({}).includes('back.gear'), 'the gear stays by default');
   const both = back({ backWindow: true });
   assert.ok(both.includes('back.window') && !both.includes('back.gear'), 'window on the back, no gear');
+});
+
+test('a band can run into another swatch: flat strips, each an exact CMYK mix, saved with the project', async () => {
+  const { renderSheet } = await import('../src/render/sheet.js');
+  const { migrate } = await import('../src/design.js');
+  const { resetColors, hasOwnColors } = await import('../src/edit/actions.js');
+  const d = createDesign({ format: 'flatPouch' });
+  assert.deepEqual(d.gradients, {});
+  const flat = renderSheet(d, env(), { mode: 'print' });
+  const g = { ...d, gradients: { 'front.header': { to: 'black', dir: 'down' } } };
+  const run = renderSheet(g, env(), { mode: 'print' });
+  assert.ok(run.svg.length > flat.svg.length, 'strips instead of one fill');
+  assert.ok(!/linearGradient/.test(run.svg), 'no gradient objects in the print file');
+  const from = d.palette.find((s) => s.id === 'boxOrange').cmyk, to = d.palette.find((s) => s.id === 'black').cmyk;
+  const mixes = [...run.cmyk.values()].filter((v) => Array.isArray(v) && v[3] > from[3] && v[3] < to[3]);
+  assert.ok(mixes.length > 8, 'steps between the two swatches, each with its own CMYK');
+  for (const v of mixes) assert.ok(v.length === 4 && v.every(Number.isFinite));
+  assert.ok(run.used.has('black'), 'the target swatch counts as used');
+  for (const dir of ['up', 'left', 'right']) assert.ok(renderSheet({ ...g, gradients: { 'front.header': { to: 'black', dir } } }, env(), { mode: 'print' }).svg.length > flat.svg.length, dir);
+  assert.deepEqual(migrate(JSON.parse(JSON.stringify(g))).gradients, g.gradients, 'saved and loaded back');
+  assert.deepEqual(migrate(JSON.parse(JSON.stringify(d))).gradients, {}, 'older projects have none');
+  assert.ok(hasOwnColors(g, 'front.header'));
+  assert.deepEqual(resetColors(g, 'front.header').gradients, {}, 'reset colours drops it');
+  const missing = renderSheet({ ...d, gradients: { 'front.header': { to: 'nope', dir: 'down' } } }, env(), { mode: 'print' });
+  assert.equal(missing.svg.length, flat.svg.length, 'a swatch that was deleted falls back to the flat colour');
+});
+
+test('the box address block starts with the company and ends with the country, no "Produced for" heading', () => {
+  const box = createDesign({ format: 'tuckBox' });
+  const addr = panelsWithElements(box, env()).flatMap((p) => p.elements).filter((e) => e.id.endsWith('.address'));
+  assert.ok(addr.length >= 2, 'the box repeats it on its panels');
+  for (const e of addr) {
+    assert.deepEqual(e.edits, ['company', 'address', 'country', 'email']);
+    assert.equal(e.text, 'WERTIS Sp. z o.o.\nSienkiewicze 4\n16-070 Sienkiewicze\nPoland\nbiuro@wertis.com.pl');
+  }
 });

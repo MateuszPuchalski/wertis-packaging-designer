@@ -149,6 +149,14 @@ export default {
   'Clutch drum kit, Stihl MS170 / MS180': 'Zestaw bębna sprzęgła, Stihl MS170 / MS180',
 
   // The parts pattern.
+  'Top to bottom': 'Z góry na dół',
+  'Bottom to top': 'Z dołu do góry',
+  'Left to right': 'Od lewej do prawej',
+  'Right to left': 'Od prawej do lewej',
+  'Imported dieline': 'Formatka z pliku',
+  'Free canvas on the imported dieline': 'Wolne płótno na formatce z pliku',
+  'Sheet': 'Arkusz',
+  'Picture': 'Obraz',
   'Solid silhouettes': 'Pełne sylwetki',
   'Scale with the pack (partly)': 'Skaluj z opakowaniem (częściowo)',
   'Fixed size': 'Stały rozmiar',

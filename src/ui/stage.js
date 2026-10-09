@@ -91,7 +91,9 @@ export class Stage {
 
     this.canvas = h('div', { class: 'canvas' });
     this.root3d = h('div', { class: 'view3d', hidden: true });
-    this.viewport = h('div', { class: 'viewport', tabindex: 0, 'aria-label': t('stage.preview') }, this.canvas, this.root3d);
+    // An imported dieline has no pack to build in 3D.
+    this.no3d = h('div', { class: 'no3d', hidden: true }, t('3d.unavailable'));
+    this.viewport = h('div', { class: 'viewport', tabindex: 0, 'aria-label': t('stage.preview') }, this.canvas, this.root3d, this.no3d);
     this.rulers = new Rulers();
     this.tag = h('div', { class: 'hover-tag', hidden: true, 'aria-hidden': 'true' });
     this.main = h('div', { class: 'stage-main' }, this.rulers.corner, this.rulers.top, this.rulers.left, this.viewport, this.tag);
@@ -158,6 +160,11 @@ export class Stage {
   // The 3D view loads three.js on first use and rebuilds its textures a moment after the
   // design stops changing.
   async render3d(design) {
+    const none = design.format === 'customDieline';
+    this.no3d.hidden = !none;
+    this.root3d.hidden = none;
+    this.tools3d.hidden = none;
+    if (none) { this.view3d?.stop(); return; }
     if (!this.view3d) {
       const { View3D } = await import('../three/view3d.js');
       this.view3d ??= new View3D(this.root3d);

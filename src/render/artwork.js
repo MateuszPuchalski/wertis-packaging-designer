@@ -40,6 +40,33 @@ function metalAt(t) {
   return METAL[METAL.length - 1][1];
 }
 
+// A band that runs from its own colour into another swatch, as `dir` says. Previews and print files
+// alike get thin strips of flat colour (no gradient objects), each an exact CMYK mix of the two swatches,
+// so the print PDF keeps every ink a plain process mix; a spot swatch takes part by its CMYK numbers.
+export const GRADIENT_DIRS = [['down', 'Top to bottom'], ['up', 'Bottom to top'], ['right', 'Left to right'], ['left', 'Right to left']];
+
+function gradientSvg(rc, e, box, r, from, g) {
+  const to = findSwatch(rc.design.palette, g.to);
+  if (!to || from === 'none') return null;
+  rc.used.add(to.id);
+  const horizontal = g.dir === 'right' || g.dir === 'left';
+  const reverse = g.dir === 'up' || g.dir === 'left';
+  const len = horizontal ? box.w : box.h;
+  const count = Math.round(clamp(len / 0.5, 8, 80));
+  const step = len / count;
+  const c0 = rc.cmyk?.get(from) ?? cmykFromHex(from), c1 = to.cmyk;
+  let strips = '';
+  for (let i = 0; i < count; i++) {
+    const t0 = (i + 0.5) / count, t = reverse ? 1 - t0 : t0;
+    const hex = mix(from, to.hex, t);
+    if (rc.cmyk && !rc.cmyk.has(hex)) rc.cmyk.set(hex, c0.map((v, k) => Math.round((v + (c1[k] - v) * t) * 10) / 10));
+    // Each strip runs on to the far end and the next one paints over it, so no hairline shows between them.
+    const x = horizontal ? box.x + i * step : box.x, y = horizontal ? box.y : box.y + i * step;
+    strips += el('path', { d: rectPath(x, y, horizontal ? len - i * step : box.w, horizontal ? box.h : len - i * step), fill: hex });
+  }
+  return el('g', { 'clip-path': clipDef(rc, rectPath(box.x, box.y, box.w, box.h, r)) }, strips);
+}
+
 function metalSvg(rc, base, box, shape, rule = 'nonzero') {
   if (rc.mode !== 'print') return el('path', { d: shape ?? rectPath(box.x, box.y, box.w, box.h), fill: silverGradient(rc, base), 'fill-rule': rule });
   const v0 = rc.cmyk?.get(base);
@@ -64,7 +91,7 @@ function metalSvg(rc, base, box, shape, rule = 'nonzero') {
 // wraps over the width of the two panels.
 function patternSheet(rc, panel) {
   if (!rc.patternSheet) {
-    const geo = FORMATS[rc.design.format].layout(rc.design.dims);
+    const geo = FORMATS[rc.design.format].layout(rc.design.dims, rc.design);
     const x0 = Math.min(...geo.panels.map((p) => p.x)), y0 = Math.min(...geo.panels.map((p) => p.y));
     const x1 = Math.max(...geo.panels.map((p) => p.x + p.w)), y1 = Math.max(...geo.panels.map((p) => p.y + p.h));
     const pad = geo.bleed ?? 3;
@@ -217,7 +244,9 @@ function elementSvg(rc, e, panel) {
     case 'rect': {
       const box = e.bleed ? bleedBox(e.box, panel, rc.bleed) : e.box;
       const fill = colorOf(rc, e, 'fill');
-      return { svg: fill === 'none' ? '' : el('path', { d: rectPath(box.x, box.y, box.w, box.h, e.r ?? 0), fill }), box: e.box };
+      const grad = rc.design.gradients?.[e.id];
+      const svg = (grad && gradientSvg(rc, e, box, e.r ?? 0, fill, grad)) || (fill === 'none' ? '' : el('path', { d: rectPath(box.x, box.y, box.w, box.h, e.r ?? 0), fill }));
+      return { svg, box: e.box };
     }
     case 'silver': {
       const box = e.bleed ? bleedBox(e.box, panel, rc.bleed) : e.box;

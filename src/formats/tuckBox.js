@@ -167,4 +167,4 @@ export function layout(input) {
   };
 }
 
-export const tuckBox = { id: 'tuckBox', label: 'Folding box', example: 'box', fields: FIELDS, layout, templates: ['boxProduct', 'boxGeneric'] };
+export const tuckBox = { id: 'tuckBox', label: 'Folding box', example: 'box', fields: FIELDS, layout, templates: ['boxGeneric', 'boxProduct'] };

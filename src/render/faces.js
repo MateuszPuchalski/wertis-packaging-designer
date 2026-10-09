@@ -122,6 +122,7 @@ function pouchFaces(design, env, geo, parts) {
 export function packFaces(design, env) {
   const geo = geometry(design);
   const parts = panelsWithElements(design, env, geo);
+  if (geo.format === 'customDieline') throw Object.assign(new Error('An imported dieline has no 3D view.'), { i18n: { key: '3d.unavailable', params: {} } });
   return geo.format === 'tuckBox' ? boxFaces(design, env, geo, parts) : pouchFaces(design, env, geo, parts);
 }
 

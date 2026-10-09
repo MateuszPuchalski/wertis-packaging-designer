@@ -22,6 +22,7 @@ export const WERTIS_PALETTE = [
 export const WERTIS = {
   company: 'WERTIS Sp. z o.o.',
   address: 'Sienkiewicze 4, 16-070 Sienkiewicze',
+  country: 'Poland',
   email: 'biuro@wertis.com.pl',
   url: 'www.wertis.com.pl',
   qr: 'https://www.wertis.com.pl',
@@ -82,8 +83,8 @@ const EXAMPLES = {
   },
 };
 
-// The lines of the "Produced for" block, in order.
-export const ADDRESS = ['producedFor', 'company', 'address', 'email'];
+// The lines of the box's address block, in order (the street line runs on to the postcode and town).
+export const ADDRESS = ['company', 'address', 'country', 'email'];
 
 const COMMON_CONTENT = {
   lang: 'pl',
@@ -91,9 +92,10 @@ const COMMON_CONTENT = {
   note1: 'ZAMIENNIK WYSOKIEJ JAKOŚCI',
   category: 'CZĘŚCI ZAMIENNE',
   categoryEn: 'SPARE PARTS',
-  producedFor: 'Produced for:',
+  producedFor: 'Produced for:', // no longer printed: the address block starts with the company
   company: WERTIS.company,
   address: WERTIS.address,
+  country: WERTIS.country,
   email: WERTIS.email,
   url: WERTIS.url,
   qr: WERTIS.qr,

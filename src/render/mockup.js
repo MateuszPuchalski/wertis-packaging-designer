@@ -146,10 +146,26 @@ function boxMockup(design, env, geo, parts) {
   return { svg: wrapSvg(el('defs', {}, [...ctx.defs.values(), ...defs].join('')) + backdrop + body3d, box), box };
 }
 
+// An imported dieline has no folded pack to show: the flat sheet as it will print, with a soft shadow.
+function sheetMockup(design, env, geo, parts) {
+  const ctx = rc(design, env);
+  const part = parts[0];
+  const W = part.panel.w, H = part.panel.h;
+  const m = Math.max(W, H) * 0.08;
+  const box = { x: -m, y: -m, w: W + 2 * m, h: H + 2 * m };
+  const art = panelArt(ctx, { ...part.panel, bleedSides: { l: false, t: false, r: false, b: false } }, part.elements).svg;
+  const defs = el('filter', { id: 'mk-sheet-shadow', x: '-10%', y: '-10%', width: '120%', height: '120%' }, el('feDropShadow', { dx: 0, dy: n(H * 0.012), stdDeviation: n(H * 0.012), 'flood-opacity': 0.35 }));
+  const bg = design.mockup?.background ?? '#e8e4dc';
+  const body = el('rect', { x: box.x, y: box.y, width: box.w, height: box.h, fill: bg })
+    + el('g', { filter: 'url(#mk-sheet-shadow)' }, el('path', { d: rectPath(0, 0, W, H), fill: '#ffffff' })) + art;
+  return { svg: wrapSvg(el('defs', {}, [...ctx.defs.values(), defs].join('')) + body, box), box };
+}
+
 export function mockupSvg(design, env) {
   const geo = geometry(design);
   const parts = panelsWithElements(design, env, geo);
   if (geo.format === 'tuckBox') return boxMockup(design, env, geo, parts);
+  if (geo.format === 'customDieline') return sheetMockup(design, env, geo, parts);
   const ctx = rc(design, env);
   const view = design.mockup?.view ?? 'front';
   const faces0 = parts.filter((p) => p.panel.role === 'front' || p.panel.role === 'back');

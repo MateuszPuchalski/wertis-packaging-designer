@@ -1,6 +1,6 @@
 // The texts an element shows, as fields on its card in the inspector: each template element
 // names the design.content keys it reads (`edits`), so selecting the label offers its name,
-// code, EAN, QR link and website, selecting "Produced for" offers the address, and so on.
+// code, EAN, QR link and website, selecting the address offers its lines, and so on.
 import { h, clear, syncValue } from './dom.js';
 import { textControl } from './controls.js';
 import { t, msgOf } from '../i18n/index.js';
@@ -27,7 +27,7 @@ function field(store, key) {
     case 'url': return C('url', t('texts.url'));
     case 'tagline': return C('tagline', t('texts.tagline'));
     case 'note1': return C('note1', t('texts.note'));
-    case 'producedFor': return C('producedFor', t('texts.producedFor'));
+    case 'country': return C('country', t('texts.country'));
     case 'company': return C('company', t('texts.company'));
     case 'address': return C('address', t('texts.address'));
     case 'email': return C('email', t('texts.email'));
