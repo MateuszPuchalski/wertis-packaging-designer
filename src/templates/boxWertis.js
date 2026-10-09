@@ -55,26 +55,15 @@ function walls(ctx) {
 }
 
 // Pieces both templates use.
-// The address under the band stays at 6 pt or more (the smallest type for white on a colour): on a wide
-// face it runs in two short columns (company and street, then country and e-mail), on a narrow one it is
-// one block with tight lines.
+// The address under the band is one block of five short lines and stays at 6 pt or more (the smallest
+// type for white on a colour), so the band leaves it 12 mm below it.
 const PT6 = 6 * 25.4 / 72;
 function produced(ctx, id, f, B) {
   const c = ctx.design.content;
   const top = B.bottom + 0.8;
-  const h = f.safe.y + f.safe.h - top;
-  const base = { label: 'Address', type: 'text', layer: 'fg', font: 'regular', align: 'left', valign: 'middle', colors: WHITE };
-  if (f.safe.w >= 80) {
-    const w = f.safe.w * 0.25;
-    return [
-      { ...base, id, edits: ['company', 'address'], lineHeight: 1.2, text: [c.company, addressLines(c.address)].filter(Boolean).join('\n'),
-        box: { x: f.safe.x, y: top, w, h }, size: PT6 * 1.15, minSize: PT6 },
-      { ...base, id: `${id}2`, label: 'Address (country and e-mail)', edits: ['country', 'email'], lineHeight: 1.2, text: [c.country, c.email].filter(Boolean).join('\n'),
-        box: { x: f.safe.x + w, y: top, w, h }, size: PT6 * 1.15, minSize: PT6 },
-    ];
-  }
-  return [{ ...base, id, edits: ADDRESS, lineHeight: 1.15, text: [c.company, addressLines(c.address), c.country, c.email].filter(Boolean).join('\n'),
-    box: { x: f.safe.x, y: top, w: f.safe.w * 0.7, h }, size: PT6 * 1.15, minSize: PT6 }];
+  return [{ id, label: 'Address', edits: ADDRESS, type: 'text', layer: 'fg', font: 'regular', align: 'left', valign: 'middle', lineHeight: 1.1,
+    text: [c.company, addressLines(c.address), c.country, c.email].filter(Boolean).join('\n'),
+    box: { x: f.safe.x, y: top, w: f.safe.w * 0.7, h: f.safe.y + f.safe.h - top }, size: PT6 * 1.1, minSize: PT6, colors: WHITE }];
 }
 
 function marks(ctx, id, box) {
@@ -229,7 +218,7 @@ export function dust(ctx) {
   ];
 }
 
-export const boxProduct = { id: 'boxProduct', label: 'Product box (W09-0414 style)', options: OPTIONS, panels: { boxBody: productBody, boxLid: lid, boxDust: dust } };
+export const boxProduct = { id: 'boxProduct', label: 'Product box (W09-0414 style)', options: withDefaults(OPTIONS, { bandTopPct: 33, bandPct: 36 }), panels: { boxBody: productBody, boxLid: lid, boxDust: dust } };
 // The universal box: the lid is plain pattern (the logo stays on the front), and the black band shades
 // from dark grey at the top to black at the bottom. Both are only the starting look.
 export const boxGeneric = {
