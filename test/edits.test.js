@@ -3,7 +3,6 @@ import assert from 'node:assert/strict';
 import { FORMATS } from '../src/registry.js';
 import { createDesign } from '../src/design.js';
 import { panelsWithElements } from '../src/render/sheet.js';
-import { ADDRESS } from '../src/brand/wertis.js';
 import { env } from './helpers.js';
 
 // Every element that prints words or codes says which texts it shows, so the editor can
@@ -28,7 +27,8 @@ test('the label offers its name, codes and link; Produced for its address', () =
   const els = panelsWithElements(d, env()).flatMap((p) => p.elements);
   const byId = Object.fromEntries(els.map((e) => [e.id, e]));
   assert.deepEqual(byId['back.label'].edits, ['productName', 'sku', 'ean', 'qr', 'url']);
-  assert.deepEqual(byId['back.address'].edits, ADDRESS);
+  assert.deepEqual(byId['back.address'].edits, ['company', 'address', 'email'], 'the pouch’s address has no heading');
+  assert.equal(byId['back.address'].text, [d.content.company, d.content.address, d.content.email].join('\n'));
   // The box drops its barcode when the EAN is empty; its product code still offers the EAN.
   const box = createDesign({ format: 'tuckBox' });
   box.content.ean = '';

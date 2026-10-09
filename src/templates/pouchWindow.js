@@ -8,10 +8,13 @@
 // `edits` names the design.content keys an element shows, so the editor can offer exactly
 // those texts when the element is selected.
 import { clamp } from '../render/svg.js';
-import { LANGS, ADDRESS } from '../brand/wertis.js';
+import { LANGS } from '../brand/wertis.js';
 import { MATERIALS } from '../brand/marks.js';
 import { fitLogo, partBox, taglineUnder } from '../brand/logo.js';
 import { num, choice, toggle } from '../formats/common.js';
+
+// The pouch's address block: the company, the street and the e-mail (no "Produced for" heading).
+const ADDRESS_LINES = ['company', 'address', 'email'];
 
 export const OPTIONS = [
   num('headerPct', 'Header height', 30, 12, 60, 1, { unit: '%' }),
@@ -127,11 +130,15 @@ export function back(ctx) {
   const logo = ctx.box('back.logo', { x: S.x + S.w * 0.15, y: headTop + headH * 0.12, w: S.w * 0.7, h: headH * 0.6 });
   els.push({ id: 'back.logo', label: 'Logo', type: 'logo', layer: 'fg', layout: 'markWord', movable: true, resizable: true, keepAspect: true, box: logo,
     colors: { gear: 'dark', arc: 'white', word: 'dark', line: 'white' } });
-  // The tagline sits under the right end of WERTIS, small, as on the boxes.
+  // The tagline sits under the right end of WERTIS, small, as on the boxes. Its box can be
+  // moved and resized like the logo: its height is the type's, so a taller box is a bigger
+  // tagline, and the text shrinks to fit a narrower one. The template's size sets the start.
   const fit = fitLogo(logo, 'markWord');
   const tag = taglineUnder(partBox(fit, 'word'), { scale: (ctx.options.taglineSize ?? 100) / 100, gap: 0.55 });
-  els.push({ id: 'back.tagline', label: 'Tagline', edits: ['tagline'], type: 'text', layer: 'fg', text: c.tagline, font: 'condSemibold', align: 'right', valign: 'top', spacing: 0.02,
-    box: tag.box, size: tag.size, minSize: 1.4, colors: { fill: 'white' } });
+  const tagBox = ctx.box('back.tagline', tag.box);
+  els.push({ id: 'back.tagline', label: 'Tagline', edits: ['tagline'], type: 'text', layer: 'fg', movable: true, resizable: true, keepAspect: true,
+    text: c.tagline, font: 'condSemibold', align: 'right', valign: 'top', spacing: 0.02,
+    box: tagBox, size: tagBox.h / 0.7, minSize: 1.4, colors: { fill: 'white' } });
 
   els.push({ id: 'back.label', label: 'Label', edits: ['productName', 'sku', 'ean', 'qr', 'url'], type: 'label', layer: 'fg', movable: true, resizable: true,
     box: ctx.box('back.label', { x: S.x + S.w * 0.02, y: headerH + bodyH * 0.38, w: S.w * 0.96, h: bodyH * 0.56 }),
@@ -142,9 +149,10 @@ export function back(ctx) {
     colors: { fill: 'white', text: 'dark', accent: 'boxOrange', bars: 'black' } });
 
   const F = { x: S.x, y: footerTop + 2, w: S.w, h: Math.max(S.y + S.h - footerTop - 2, 6) };
-  els.push({ id: 'back.address', label: 'Produced for', edits: ADDRESS, type: 'text', layer: 'fg', font: 'regular', align: 'left', valign: 'middle', lineHeight: 1.25,
-    text: [c.producedFor, c.company, c.address, c.email].filter(Boolean).join('\n'),
-    box: { x: F.x, y: F.y + F.h * 0.12, w: F.w * 0.46, h: F.h * 0.76 }, size: F.h * 0.1 / 0.7, minSize: 1.4, colors: { fill: 'white' } });
+  // The address without a heading: three lines, so they run larger than the four did.
+  els.push({ id: 'back.address', label: 'Address', edits: ADDRESS_LINES, type: 'text', layer: 'fg', font: 'regular', align: 'left', valign: 'middle', lineHeight: 1.25,
+    text: [c.company, c.address, c.email].filter(Boolean).join('\n'),
+    box: { x: F.x, y: F.y + F.h * 0.12, w: F.w * 0.46, h: F.h * 0.76 }, size: (F.h * 0.1 / 0.7) * 4 / 3, minSize: 1.4, colors: { fill: 'white' } });
   const material = MATERIALS[ctx.options.recycle];
   // Then the disposal marks, then the website at the right.
   const markSize = Math.min(F.h * 0.55, F.w * 0.075);
@@ -156,8 +164,14 @@ export function back(ctx) {
     els.push({ id: 'back.marks', label: 'Recycling marks', type: 'marks', layer: 'fg', marks, material, movable: true, resizable: true, keepAspect: true, box: mb, colors: { fill: 'black' } });
     urlX = Math.max(urlX, mb.x + mb.w + F.w * 0.03);
   }
+  // A QR code at the far right links to the site (the link field, which is the QR's text);
+  // the website line sits beside it.
+  const qrSize = Math.min(F.h * 0.5, F.w * 0.11);
+  const qrBox = ctx.box('back.urlQr', { x: F.x + F.w - qrSize, y: F.y + (F.h - qrSize) / 2, w: qrSize, h: qrSize });
+  els.push({ id: 'back.urlQr', label: 'QR code', edits: ['qr'], type: 'qr', layer: 'fg', text: c.qr, movable: true, resizable: true, keepAspect: true,
+    box: qrBox, colors: { dots: 'black', bg: 'white' } });
   els.push({ id: 'back.url', label: 'Website', edits: ['url'], type: 'text', layer: 'fg', text: c.url, font: 'bold', align: 'right', valign: 'middle',
-    box: { x: urlX, y: F.y + F.h * 0.35, w: F.x + F.w - urlX, h: F.h * 0.3 }, size: F.h * 0.15 / 0.7, minSize: 1.6, colors: { fill: 'white' } });
+    box: { x: urlX, y: F.y + F.h * 0.35, w: Math.max(qrBox.x - F.w * 0.02 - urlX, 4), h: F.h * 0.3 }, size: F.h * 0.15 / 0.7, minSize: 1.6, colors: { fill: 'white' } });
   return els;
 }
 

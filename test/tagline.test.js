@@ -31,3 +31,22 @@ for (const [format, template, ids] of [['flatPouch', 'pouchWindow', ['back.tagli
     assert.notEqual(a, b);
   });
 }
+
+test('the back tagline can be moved and resized: its box sets the type size', () => {
+  const d = design({ format: 'flatPouch', template: 'pouchWindow' });
+  const base = tagline(d, 'back.tagline');
+  assert.ok(base.movable && base.resizable, 'it has the handles and the position fields');
+  assert.ok(Math.abs(base.size - base.box.h / 0.7) < 1e-9, 'the type fills the box height');
+  // The panel the tagline sits on, to store boxes as fractions of it (as the editor does).
+  const panel = panelsWithElements(d, env(), geometry(d)).find(({ elements }) => elements.some((e) => e.id === 'back.tagline')).panel;
+  const stored = (b) => ({ x: b.x / panel.w, y: b.y / panel.h, w: b.w / panel.w, h: b.h / panel.h });
+  // The same box, twice as tall (the top and the right end kept): twice the type.
+  const tall = { x: base.box.x, y: base.box.y, w: base.box.w, h: base.box.h * 2 };
+  const big = tagline({ ...d, layout: { 'back.tagline': stored(tall) } }, 'back.tagline');
+  assert.ok(Math.abs(big.size / base.size - 2) < 1e-9, `size ${big.size.toFixed(2)} mm, default ${base.size.toFixed(2)} mm`);
+  // The artwork follows the box, and taking the position back brings the default.
+  const a = renderSheet(d, env(), { mode: 'print' }).svg;
+  const b = renderSheet({ ...d, layout: { 'back.tagline': stored(tall) } }, env(), { mode: 'print' }).svg;
+  assert.notEqual(a, b);
+  assert.equal(tagline({ ...d, layout: {} }, 'back.tagline').size, base.size);
+});

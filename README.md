@@ -99,7 +99,9 @@ logos, label and recycling marks on the preview. The editor speaks Polish or Eng
 
   **Save PNG** takes a snapshot. Drag to orbit the camera; scroll to zoom.
 
-"Quality You Can Trust" has its own size setting under **Format → Layout & window** (40 to 300 %). It stays right-aligned under the WERTIS word on the pouch back, the box front and the lid.
+"Quality You Can Trust" has its own size setting under **Format → Layout & window** (40 to 300 %). It stays right-aligned under the WERTIS word on the pouch back, the box front and the lid. On the pouch back it can also be moved and resized on the preview, like the logo: pull its corner, or type its height in the card.
+
+The pouch back carries a QR code beside the website line. It links to the link field under Texts, and can be moved and resized too.
 
 The pattern of parts icons comes in two styles: solid silhouettes, or outlines. The recycling
 marks (the triangle with the material code, plus the tidyman) are vector shapes; pick the
@@ -120,9 +122,10 @@ material under **Format → Layout & window**.
 - **Texts are edited on the element that shows them.** Select a text (or double-click it, or
   right-click → Edit the text) and its card offers exactly its words: the label its product
   name (the pack's main language first, the other languages folded under it), product code,
-  EAN-13 (checked as you type), QR link and website; "Produced for" its four lines; the box's
-  technical data its heading and one line per item; and so on. A box drops its barcode when the
-  EAN is empty, so its product code offers the EAN too.
+  EAN-13 (checked as you type), QR link and website; the pouch's address its company, street
+  and e-mail (no heading; the box keeps "Produced for" as its heading); the box's technical data
+  its heading and one line per item; and so on. A box drops its barcode when the EAN is empty,
+  so its product code offers the EAN too.
 
 ### Editing on the preview
 
@@ -187,6 +190,20 @@ that the files are byte-for-byte the same in both languages.
 npm install     # dev tools only (ESLint, Playwright, the libraries' sources)
 npm start       # http://localhost:8000  (PORT=xxxx to change)
 ```
+
+To open the editor from another device on your network (a phone, another computer), start it
+with `HOST=0.0.0.0`:
+
+```bash
+HOST=0.0.0.0 npm start                       # macOS / Linux
+set HOST=0.0.0.0 && npm start                # Windows cmd
+$env:HOST="0.0.0.0"; npm start               # Windows PowerShell
+```
+
+The server prints the address to open, for example `http://192.168.1.23:8000`. If the firewall
+asks, allow it on private networks only. Anyone on that network can open the editor while the
+server runs, so use this on a network you trust, and press Ctrl+C when you're done.
+Each device keeps its own library of projects; **Export file** moves a design between them.
 
 The app is plain ES modules with no build step. It also runs from any static host (for
 example GitHub Pages), because the browser libraries are vendored in `vendor/`. Projects save

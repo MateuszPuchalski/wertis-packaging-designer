@@ -102,6 +102,7 @@ export default {
   'Tagline': 'Hasło',
   'Label': 'Etykieta',
   'Produced for': 'Wyprodukowano dla',
+  'Address': 'Adres',
   'Recycling marks': 'Znaki recyklingu',
   'Website': 'Strona www',
   'Gusset fill': 'Wypełnienie fałdy',
