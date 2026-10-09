@@ -86,10 +86,12 @@ test('a uniform pattern is one layout over the sheet: continuous across the band
   assert.ok(draw(front, 0, false, 'front.body') !== draw(back, 250, false, 'back.body'), 'off: each area lays out its own');
 });
 
-test('new designs have a uniform pattern, projects saved before keep theirs', async () => {
+test('every design has a continuous pattern, also projects saved before the switch existed', async () => {
   const { createDesign, migrate } = await import('../src/design.js');
   assert.equal(createDesign({ format: 'flatPouch' }).pattern.uniform, true);
   const old = JSON.parse(JSON.stringify(createDesign({ format: 'flatPouch' })));
   delete old.pattern.uniform;
-  assert.equal(migrate(old).pattern.uniform, false);
+  assert.equal(migrate(old).pattern.uniform, true, 'the pattern runs on across the folds for them too');
+  old.pattern.uniform = false;
+  assert.equal(migrate(old).pattern.uniform, false, 'unless it was switched off');
 });
