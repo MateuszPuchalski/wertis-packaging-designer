@@ -188,4 +188,8 @@ export function gusset(ctx) {
   return els;
 }
 
-export const pouchWindow = { id: 'pouchWindow', label: 'Window pouch (KEULE style)', options: OPTIONS, panels: { front, back, gusset } };
+// The product's own details: its name, code and label. A new pouch starts with them switched off
+// (hidden), so the default pack is universal; each shows again with its checkbox in the inspector.
+const PRODUCT_ELEMENTS = ['front.sku', 'front.name', 'back.label'];
+
+export const pouchWindow = { id: 'pouchWindow', label: 'Window pouch (KEULE style)', options: OPTIONS, panels: { front, back, gusset }, hiddenByDefault: PRODUCT_ELEMENTS };

@@ -17,6 +17,11 @@ export function defaultsOf(fields) {
   return normalizeDims(fields, {});
 }
 
+// The elements a template starts switched off (hidden), e.g. a pouch's product details.
+export function defaultHidden(templateId) {
+  return Object.fromEntries((TEMPLATES[templateId]?.hiddenByDefault ?? []).map((id) => [id, true]));
+}
+
 export function createDesign({ format = 'flatPouch', template, date = '' } = {}) {
   const f = FORMATS[format] ?? FORMATS.flatPouch;
   const t = TEMPLATES[template] ?? TEMPLATES[f.templates[0]];
@@ -32,12 +37,13 @@ export function createDesign({ format = 'flatPouch', template, date = '' } = {})
     palette: clone(WERTIS_PALETTE),
     colors: {}, // `${elementId}.${slot}` → colour reference (see brand/palette.js)
     layout: {}, // elementId → { x, y, w, h } as fractions of its panel
-    hidden: {}, // elementId → true
+    hidden: defaultHidden(t.id), // elementId → true
     pattern: { ...PATTERN_DEFAULTS },
     content: example.content,
     proof: { version: 'V1', date, author: '', notes: 'Please check all texts, colours, sizes, the window and both codes before approving.' },
-    // product3d: the part the 3D view puts in a pouch (three/products.js).
-    mockup: { photo: null, background: '#e8e4dc', angle: 0, product3d: f.example === 'box' ? 'none' : 'clutchDrum', film3d: 'heavy' },
+    // product3d: the part the 3D view puts in a pouch (three/products.js). Off by default: the
+    // pack starts universal, and the menu offers the kit.
+    mockup: { photo: null, background: '#e8e4dc', angle: 0, product3d: 'none', film3d: 'heavy' },
     export: exportDefaults(f.id),
   };
 }
@@ -97,7 +103,7 @@ export function serialize(design) {
 export function switchFormat(design, format, template) {
   const f = FORMATS[format];
   const t = TEMPLATES[template && f.templates.includes(template) ? template : f.templates[0]];
-  return { ...design, format: f.id, template: t.id, dims: defaultsOf(f.fields), options: { ...defaultsOf(t.options) }, layout: {}, hidden: {} };
+  return { ...design, format: f.id, template: t.id, dims: defaultsOf(f.fields), options: { ...defaultsOf(t.options) }, layout: {}, hidden: defaultHidden(t.id) };
 }
 
 // Immutable update along a path: setIn(d, ['content', 'sku'], 'X') returns a new design

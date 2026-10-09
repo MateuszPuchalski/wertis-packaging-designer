@@ -9,6 +9,9 @@ import { design, env } from './helpers.js';
 
 const kit = PRODUCTS.clutchDrum;
 
+// The pouch with the Stihl clutch kit in it (a new design starts without it).
+const withKit = (d) => ({ ...d, mockup: { ...d.mockup, product3d: 'clutchDrum' } });
+
 test('the clutch kit is built at its real size: the drum is Ø69 mm', () => {
   const size = (id) => {
     const b = new THREE.Box3();
@@ -81,7 +84,7 @@ test('the kit is laid out inside the window with no two parts touching', () => {
 
 test('the parts sit behind the front window, and the pouch is lined', () => {
   const d = design();
-  const p = packFaces(d, env());
+  const p = packFaces(withKit(d), env());
   assert.deepEqual(Object.keys(p.faces).sort(), ['back', 'filmBack', 'filmFront', 'front', 'insideBack', 'insideFront']);
   assert.match(p.faces.filmFront, /<path d="M/, 'the front film covers the window');
   assert.doesNotMatch(p.faces.filmBack, /<path/, 'no back window, no film there');
@@ -97,12 +100,12 @@ test('the parts sit behind the front window, and the pouch is lined', () => {
   assert.equal(empty.product, null);
   assert.equal(empty.thick, empty.size.z);
   // A stand-up pouch holds it too; a box never does.
-  assert.equal(packFaces(design({ format: 'standUpPouch' }), env()).product.id, 'clutchDrum');
+  assert.equal(packFaces(withKit(design({ format: 'standUpPouch' })), env()).product.id, 'clutchDrum');
   assert.equal(packFaces(design({ format: 'tuckBox' }), env()).product, undefined);
   // With no window the parts still lie inside the seals.
   const shut = design();
   shut.options.windowShape = 'none';
-  const closed = packFaces(shut, env());
+  const closed = packFaces(withKit(shut), env());
   assert.doesNotMatch(closed.faces.filmFront, /<path/);
   for (const q of closed.product.parts) assert.ok(q.x > 5 && q.x < 245 && q.y > 31 && q.y < 345);
 });
@@ -118,10 +121,10 @@ test('pouches with a part are spaced by its thickness on the peg and in the stac
   assert.ok(ys[0] >= 38.6 / UNIT / 2, 'resting on the floor');
 });
 
-test('new pouch designs hold the clutch drum; boxes and older projects stay empty', () => {
-  assert.equal(createDesign({ format: 'flatPouch' }).mockup.product3d, 'clutchDrum');
+test('new designs start without the kit, so the pack is universal; a kit saved in a project stays', () => {
+  assert.equal(createDesign({ format: 'flatPouch' }).mockup.product3d, 'none');
   assert.equal(createDesign({ format: 'tuckBox' }).mockup.product3d, 'none');
   assert.equal(migrate({ schema: 'wertis-packaging', version: 1, format: 'flatPouch', mockup: { background: '#ffffff' } }).mockup.product3d, 'none');
-  const d = createDesign({ format: 'flatPouch' });
+  const d = withKit(createDesign({ format: 'flatPouch' }));
   assert.equal(migrate(JSON.parse(JSON.stringify(d))).mockup.product3d, 'clutchDrum');
 });
