@@ -10,7 +10,7 @@ export const MOCKUP_VIEWS = [['front', 'Front'], ['back', 'Back'], ['both', 'Fro
 
 export function rc(design, env) {
   let i = 0;
-  return { design, text: env.text, defs: new Map(), used: new Set(), mode: 'mockup', bleed: 0, uid: (p) => `m${p}${++i}` };
+  return { design, text: env.text.view(design.fonts), defs: new Map(), used: new Set(), mode: 'mockup', bleed: 0, uid: (p) => `m${p}${++i}` };
 }
 
 // The product behind the window: the photo, cover-fitted, then zoomed and moved by the

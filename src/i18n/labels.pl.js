@@ -190,4 +190,6 @@ export default {
   'Green': 'Zielone',
   'White': 'Białe',
   'Black': 'Czarne',
+  "The printer's file (Century Gothic, Myriad Pro)": 'Plik drukarni (Century Gothic, Myriad Pro)',
+  'The app look (Barlow)': 'Wygląd aplikacji (Barlow)',
 };

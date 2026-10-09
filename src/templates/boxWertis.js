@@ -93,7 +93,7 @@ function qr(ctx, id, f, B) {
 }
 
 function url(ctx, id, box) {
-  return { id, label: 'Website', edits: ['url'], type: 'text', layer: 'fg', text: ctx.design.content.url, font: 'regular', align: 'center', valign: 'middle', box, size: box.h / 0.7, minSize: 1.2, colors: WHITE };
+  return { id, label: 'Website', edits: ['url'], type: 'text', layer: 'fg', text: ctx.design.content.url, font: 'web', align: 'center', valign: 'middle', box, size: box.h / 0.7, minSize: 1.2, colors: WHITE };
 }
 
 function sku(ctx, id, f, B) {

@@ -15,15 +15,57 @@ export const FONT_FILES = {
   blackItalic: 'Barlow-BlackItalic.ttf',
   condSemibold: 'BarlowSemiCondensed-SemiBold.ttf',
   condBold: 'BarlowSemiCondensed-Bold.ttf',
+  // The printer's W09-0414 file sets its type in Century Gothic, Myriad Pro and Open Sans. Century Gothic
+  // and Myriad Pro are commercial, so free look-alikes stand in (Jost, PT Sans) until the real
+  // files are loaded in the page; Open Sans is the real thing.
+  cg: 'Jost-Regular.ttf', // Century Gothic Regular
+  myriad: 'PTSans-Regular.ttf', // Myriad Pro Regular
+  myriadBold: 'PTSans-Bold.ttf', // Myriad Pro Bold
+  myriadSemiCond: 'BarlowSemiCondensed-SemiBold.ttf', // Myriad Pro Semibold Condensed
+  digits: 'OpenSans-Regular.ttf', // Open Sans, the barcode's digits
 };
+
+// Which font a role takes. Templates ask for the generic keys (regular, semibold, bold, condSemibold...)
+// plus "web" (the website line and the ® mark) and "digits" (the barcode's numbers); a font set says what
+// each is. "wertis" follows the printer's file, "barlow" is the app's own look.
+export const FONT_SETS = {
+  wertis: { regular: 'cg', semibold: 'cg', bold: 'myriadBold', condSemibold: 'myriadSemiCond', condBold: 'myriadBold', web: 'myriad', digits: 'digits' },
+  barlow: { web: 'regular', digits: 'regular' },
+};
+export const DEFAULT_FONT_SET = 'wertis';
+// The keys a person can supply their own file for, with what the file should be.
+export const OWN_FONT_ROLES = [['cg', 'Century Gothic Regular'], ['myriad', 'Myriad Pro Regular'], ['myriadBold', 'Myriad Pro Bold'], ['myriadSemiCond', 'Myriad Pro Semibold Condensed']];
 
 export class TextEngine {
   constructor(fonts) {
     this.fonts = fonts; // key → opentype Font
+    this.defaults = { ...fonts }; // the bundled ones, to go back to
     this.cache = new Map();
+    this.fontSet = null;
+  }
+
+  // The same engine seen through a font set: the design's keys resolve to its fonts. Cheap, and it
+  // shares the fonts and the cache.
+  view(setName) {
+    const v = Object.create(this);
+    v.fontSet = FONT_SETS[setName] ?? FONT_SETS[DEFAULT_FONT_SET];
+    return v;
+  }
+
+  // A font the person supplied (or the original again with null) takes over a role; text laid out
+  // before is forgotten.
+  setFont(key, font, file) {
+    if (font) this.fonts[key] = font; else this.fonts[key] = this.defaults?.[key] ?? this.fonts[key];
+    this.cache.clear();
+    this.own = { ...(this.own ?? {}), [key]: font ? (file ?? true) : undefined };
+  }
+
+  resolve(key) {
+    return this.fontSet?.[key] ?? key;
   }
 
   font(key) {
+    key = this.resolve(key);
     const f = this.fonts[key] ?? this.fonts.regular ?? Object.values(this.fonts)[0];
     if (!f) throw new Error('no fonts loaded');
     return f;
@@ -36,6 +78,7 @@ export class TextEngine {
 
   // One line at the origin (baseline y = 0): its path data and width, cached.
   line(text, key, size, spacing = 0) {
+    key = this.resolve(key);
     const k = `${key}|${n(size)}|${spacing}|${text}`;
     let hit = this.cache.get(k);
     if (!hit) {

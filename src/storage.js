@@ -4,7 +4,7 @@
 import { migrate } from './design.js';
 
 const DB_NAME = 'wertis-packaging';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 
 let dbPromise = null;
 
@@ -16,6 +16,7 @@ function open() {
         const db = req.result;
         if (!db.objectStoreNames.contains('projects')) db.createObjectStore('projects', { keyPath: 'id' });
         if (!db.objectStoreNames.contains('presets')) db.createObjectStore('presets', { keyPath: 'id' });
+        if (!db.objectStoreNames.contains('fonts')) db.createObjectStore('fonts', { keyPath: 'key' });
       };
       req.onsuccess = () => resolve(req.result);
       req.onerror = () => reject(req.error);
@@ -68,6 +69,20 @@ export async function savePreset(preset) {
 
 export async function deletePreset(id) {
   await tx('presets', 'readwrite', (s) => s.delete(id));
+}
+
+// Font files the person supplied (Century Gothic, Myriad Pro...): licensed, so they are never in the
+// project or the repository, only here in this browser.
+export async function listFonts() {
+  return (await tx('fonts', 'readonly', (s) => s.getAll())) ?? [];
+}
+
+export async function saveFont(key, name, data) {
+  await tx('fonts', 'readwrite', (s) => s.put({ key, name, data }));
+}
+
+export async function deleteFont(key) {
+  await tx('fonts', 'readwrite', (s) => s.delete(key));
 }
 
 // The project open in the editor, remembered between visits.

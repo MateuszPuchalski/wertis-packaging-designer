@@ -266,6 +266,10 @@ npm run vendor    # copy the browser libraries from node_modules into vendor/
 ## Licences
 
 - **Fonts:** Barlow and Barlow Semi Condensed, SIL Open Font License (`assets/fonts/OFL.txt`).
+  The printer's W09-0414 file is set in Century Gothic, Myriad Pro and Open Sans. Open Sans is bundled; Century Gothic and Myriad Pro are
+  commercial, so free look-alikes stand in (Jost, PT Sans; licences `OFL-*.txt` in `assets/fonts/`). **Colours → Fonts** picks the font set
+  per project (the printer's file or the app's Barlow look) and lets you load your own Century Gothic / Myriad Pro files (.ttf/.otf). Those stay
+  in this browser's IndexedDB only; they never enter the project file or the repository.
 - **Libraries:** jsPDF, svg2pdf.js, opentype.js, qrcode-generator, three.js and cannon-es,
   all MIT. Their licence files are in `vendor/`. three.js loads through the import map in
   `index.html`, and only when the 3D tab opens.
