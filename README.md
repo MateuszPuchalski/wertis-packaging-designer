@@ -188,6 +188,20 @@ npm install     # dev tools only (ESLint, Playwright, the libraries' sources)
 npm start       # http://localhost:8000  (PORT=xxxx to change)
 ```
 
+To open the editor from another device on your network (a phone, another computer), start it
+with `HOST=0.0.0.0`:
+
+```bash
+HOST=0.0.0.0 npm start                       # macOS / Linux
+set HOST=0.0.0.0 && npm start                # Windows cmd
+$env:HOST="0.0.0.0"; npm start               # Windows PowerShell
+```
+
+The server prints the address to open, for example `http://192.168.1.23:8000`. If the firewall
+asks, allow it on private networks only. Anyone on that network can open the editor while the
+server runs, so use this on a network you trust, and press Ctrl+C when you're done.
+Each device keeps its own library of projects; **Export file** moves a design between them.
+
 The app is plain ES modules with no build step. It also runs from any static host (for
 example GitHub Pages), because the browser libraries are vendored in `vendor/`. Projects save
 themselves in the browser (IndexedDB). **Export file** writes a `.wertis.json` file that you
