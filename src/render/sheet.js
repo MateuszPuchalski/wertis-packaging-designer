@@ -26,8 +26,17 @@ export function panelsWithElements(design, env, geo = geometry(design)) {
         return o ? { x: o.x * panel.w, y: o.y * panel.h, w: o.w * panel.w, h: o.h * panel.h } : def;
       },
     };
-    return { panel, elements: make ? make(ctx) : [] };
+    return { panel, elements: make ? make(ctx).map((e) => freeText(e, ctx)) : [] };
   });
+}
+
+// Text a template left fixed (the boxes' own lines) can be moved and resized like the rest:
+// the stored box applies and the type grows or shrinks with its height. Turned text keeps its pivot.
+function freeText(e, ctx) {
+  if (e.type !== 'text' || e.movable || e.rotate) return e;
+  const box = ctx.box(e.id, e.box);
+  const k = box === e.box || !e.box.h ? 1 : box.h / e.box.h;
+  return { ...e, movable: true, resizable: true, box, size: e.size * k, minSize: e.minSize && e.minSize * k };
 }
 
 function renderContext(design, env, mode, labelOf) {
