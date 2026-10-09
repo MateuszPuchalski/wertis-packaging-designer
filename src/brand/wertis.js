@@ -46,13 +46,13 @@ export const LOGO_ROLES = [['gear', 'Gear'], ['arc', 'Arc'], ['word', 'WERTIS'],
 
 export const LANGS = [['pl', 'PL'], ['cz', 'CZ'], ['sk', 'SK'], ['en', 'EN'], ['hu', 'HU'], ['ro', 'RO']];
 
-// Example content a new design starts with. The pouch is universal by default: the example
-// names a Stihl clutch drum kit (the parts the 3D view puts in the pouch), with no SKU and no
-// EAN, so no product code is printed until one is typed in. Boxes start with the real W09-0414
-// carburettor from its box artwork.
+// Example content a new design starts with. The pouch is universal by default, and so is the
+// project's name. The hidden example text names a Stihl clutch drum kit (the parts the 3D view puts
+// in the pouch), with no SKU and no EAN, so no product code is printed until one is typed in. The
+// product box (W09-0414 style) brings the real W09-0414 carburettor text from its box artwork.
 const EXAMPLES = {
   pouch: {
-    name: 'Bęben sprzęgła Stihl – torebka z okienkiem',
+    name: 'Torebka z okienkiem',
     productName: {
       pl: 'Bęben sprzęgła do pilarki Stihl MS170 MS180 MS230 MS250',
       cz: 'Buben spojky pro motorovou pilu Stihl MS170 MS180 MS230 MS250',
@@ -67,7 +67,7 @@ const EXAMPLES = {
     specs: ['Średnica bębna: 69 mm', 'Koronka 3/8" P, 7 zębów', 'W zestawie: sprzęgło, łożysko igiełkowe, podkładka, zabezpieczenie', 'Pasuje do: MS170, MS180, MS210, MS230, MS250, MS181, MS190, MS211, MS231'],
   },
   box: {
-    name: 'W09-0414 gaźnik – pudełko',
+    name: 'Pudełko uniwersalne',
     productName: {
       pl: 'Gaźnik do kosy spalinowej 15mm',
       cz: 'Karburátor pro křovinořez 15 mm',
