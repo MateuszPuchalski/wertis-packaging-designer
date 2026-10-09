@@ -103,3 +103,18 @@ test('the universal box looks like the standard one: plain lid, the black band s
   // Shading the band does not add inks beyond mixes of its two swatches.
   assert.ok(r.svg.length > renderSheet({ ...d, gradients: {} }, env(), { mode: 'print' }).svg.length);
 });
+
+test('the ® after WERTIS is a setting: on for the box, off for the pouch, and it follows the logo', async () => {
+  const { renderSheet, panelsWithElements } = await import('../src/render/sheet.js');
+  const logos = (d) => panelsWithElements(d, env()).flatMap((p) => p.elements).filter((e) => e.type === 'logo' && /logo/.test(e.id) && e.layout !== 'mark');
+  const box = design({ format: 'tuckBox' });
+  assert.equal(box.options.registered, true);
+  assert.ok(logos(box).length >= 2 && logos(box).every((e) => e.registered), 'the front and lid logos carry it');
+  const off = { ...box, options: { ...box.options, registered: false } };
+  assert.ok(logos(off).every((e) => !e.registered));
+  const on = renderSheet(box, env(), { mode: 'print' }).svg, none = renderSheet(off, env(), { mode: 'print' }).svg;
+  assert.ok(on.length > none.length, 'the mark is drawn when it is on');
+  const pouch = design({ format: 'flatPouch' });
+  assert.equal(pouch.options.registered, false, 'pouches start without it');
+  assert.ok(logos({ ...pouch, options: { ...pouch.options, registered: true } }).every((e) => e.registered));
+});

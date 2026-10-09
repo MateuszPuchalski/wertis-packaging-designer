@@ -6,7 +6,7 @@
 import { el, n, rectPath, ellipsePath, gearPath, clamp } from './svg.js';
 import { patternSvg, scaledPattern } from './pattern.js';
 import { FORMATS } from '../registry.js';
-import { logoSvg } from '../brand/logo.js';
+import { logoSvg, fitLogo, partBox, LOGO_LAYOUTS } from '../brand/logo.js';
 import { resolveColor, refSwatchId, findSwatch, mix, cmykFromHex } from '../brand/palette.js';
 import { ean13Svg } from '../codes/ean13.js';
 import { qrSvg } from '../codes/qr.js';
@@ -270,7 +270,16 @@ function elementSvg(rc, e, panel) {
     case 'logo': {
       const colors = {};
       for (const role of ['gear', 'arc', 'word', 'line']) colors[role] = colorOf(rc, e, role);
-      return logoSvg({ box: e.box, layout: e.layout, colors, align: e.align ?? 'center', valign: e.valign ?? 'middle' });
+      const align = e.align ?? 'center', valign = e.valign ?? 'middle';
+      const logo = logoSvg({ box: e.box, layout: e.layout, colors, align, valign });
+      // The registered mark ®, a small raised one just after the WERTIS word, in the word's colour.
+      if (e.registered && colors.word !== 'none' && LOGO_LAYOUTS[e.layout ?? 'full']?.parts.includes('word')) {
+        const word = partBox(fitLogo(e.box, e.layout, align, valign), 'word');
+        const size = word.h * 0.62;
+        const reg = rc.text.layout({ text: '®', x: word.x + word.w + word.h * 0.05, y: word.y - word.h * 0.02, font: 'regular', size, align: 'left', valign: 'top' });
+        logo.svg += el('g', { fill: colors.word }, reg.svg);
+      }
+      return logo;
     }
     case 'text': return textSvg(rc, e, colorOf(rc, e, 'fill'));
     case 'label': return labelSvg(rc, e);

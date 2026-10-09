@@ -29,6 +29,7 @@ export const OPTIONS = [
   toggle('otherLangs', 'Other languages on the label', true),
   choice('recycle', 'Recycling mark', 'ldpe4', Object.entries(MATERIALS).map(([k, m]) => [k, m.label])),
   toggle('tidyman', 'Tidyman (bin) mark', true),
+  toggle('registered', 'Registered mark ® after WERTIS', false),
 ];
 
 // Band heights are shares of the visible face: on a stand-up pouch the lowest part folds
@@ -87,7 +88,7 @@ export function front(ctx) {
   // The same logo box and tagline as on the back, so both sides match.
   const frontLogo = ctx.box('front.logo', { x: S.x + S.w * 0.15, y: headTop + headH * 0.12, w: S.w * 0.7, h: headH * 0.6 });
   els.push({
-    id: 'front.logo', label: 'Logo', type: 'logo', layer: 'fg', layout: 'markWord', movable: true, resizable: true, keepAspect: true,
+    id: 'front.logo', label: 'Logo', type: 'logo', layer: 'fg', layout: 'markWord', registered: !!ctx.options.registered, movable: true, resizable: true, keepAspect: true,
     box: frontLogo,
     colors: { gear: 'dark', arc: 'white', word: 'dark', line: 'white' },
   });
@@ -139,7 +140,7 @@ export function back(ctx) {
   const headTop = S.y;
   const headH = Math.max(headerH - headTop, 8);
   const logo = ctx.box('back.logo', { x: S.x + S.w * 0.15, y: headTop + headH * 0.12, w: S.w * 0.7, h: headH * 0.6 });
-  els.push({ id: 'back.logo', label: 'Logo', type: 'logo', layer: 'fg', layout: 'markWord', movable: true, resizable: true, keepAspect: true, box: logo,
+  els.push({ id: 'back.logo', label: 'Logo', type: 'logo', layer: 'fg', layout: 'markWord', registered: !!ctx.options.registered, movable: true, resizable: true, keepAspect: true, box: logo,
     colors: { gear: 'dark', arc: clear ? { none: true } : 'white', word: 'dark', line: ink } });
   // The tagline sits under the right end of WERTIS, small, as on the boxes. Its box can be
   // moved and resized like the logo: its height is the type's, so a taller box is a bigger
