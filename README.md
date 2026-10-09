@@ -166,7 +166,7 @@ that the files are byte-for-byte the same in both languages.
   barcode, and the 3D pack starts empty (choose the Stihl clutch kit in the 3D toolbar).
   Preflight notes the missing EAN-13 until you type in the real one. The texts keep the
   example Stihl name, so a shown element has words to start from.
-- **Boxes** start with the W09-0414 carburettor from its box artwork.
+- **Boxes** start universal too: the generic "CZĘŚCI ZAMIENNE / SPARE PARTS" box at L95 × W65 × H50 mm, with no technical data, product name or PAP mark. The product box (W09-0414 style) is the other template and brings the carburettor, its technical data and its codes.
 
 ## Formats
 

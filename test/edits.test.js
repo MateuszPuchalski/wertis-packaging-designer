@@ -30,7 +30,7 @@ test('the label offers its name, codes and link; Produced for its address', () =
   assert.deepEqual(byId['back.address'].edits, ['company', 'address', 'email'], 'the pouch’s address has no heading');
   assert.equal(byId['back.address'].text, 'WERTIS Sp. z o.o.\nSienkiewicze 4\n16-070 Sienkiewicze\nbiuro@wertis.com.pl', 'the postcode and town run under the street');
   // The box drops its barcode when the EAN is empty; its product code still offers the EAN.
-  const box = createDesign({ format: 'tuckBox' });
+  const box = createDesign({ format: 'tuckBox', template: 'boxProduct' });
   box.content.ean = '';
   const boxEls = panelsWithElements(box, env()).flatMap((p) => p.elements);
   assert.ok(!boxEls.some((e) => e.type === 'ean'));

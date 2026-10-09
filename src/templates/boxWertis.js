@@ -19,7 +19,7 @@ export const OPTIONS = [
   num('bandPct', 'Band height', 38, 15, 80, 1, { unit: '%' }),
   toggle('silverEdges', 'Silver edges on the band', true),
   num('taglineSize', '“Quality You Can Trust” size', 100, 40, 300, 5, { unit: '%' }),
-  choice('recycle', 'Recycling mark', 'pap21', Object.entries(MATERIALS).map(([k, m]) => [k, m.label])),
+  choice('recycle', 'Recycling mark', 'none', Object.entries(MATERIALS).map(([k, m]) => [k, m.label])),
   toggle('tidyman', 'Tidyman (bin) mark', true),
   toggle('lidPhoto', 'Product photo on the lid (from Mockup)', false),
 ];
