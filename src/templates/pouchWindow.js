@@ -21,9 +21,10 @@ export const OPTIONS = [
   num('footerPct', 'Footer height', 17, 8, 40, 1, { unit: '%' }),
   choice('windowShape', 'Window shape', 'rect', [['rect', 'Rounded rectangle'], ['oval', 'Oval'], ['none', 'No window']]),
   num('windowRadius', 'Window corner radius', 10, 0, 100, 0.5, { whenNot: ['windowShape', 'oval'] }),
-  toggle('backWindow', 'Matching window on the back', false),
+  choice('backStyle', 'Back side', 'printed', [['printed', 'Printed'], ['clear', 'Clear film (unprinted)']]),
+  toggle('backWindow', 'Matching window on the back', false, { whenNot: ['backStyle', 'clear'] }),
   toggle('silverEdges', 'Silver edges on the black band', true),
-  toggle('backGear', 'Big gear on the back', true),
+  toggle('backGear', 'Big gear on the back', true, { whenNot: ['backStyle', 'clear'] }),
   num('taglineSize', '“Quality You Can Trust” size', 100, 40, 300, 5, { unit: '%' }),
   toggle('otherLangs', 'Other languages on the label', true),
   choice('recycle', 'Recycling mark', 'ldpe4', Object.entries(MATERIALS).map(([k, m]) => [k, m.label])),
@@ -112,17 +113,24 @@ export function back(ctx) {
   const { W, headerH, footerTop } = B;
   const S = ctx.panel.info.safe;
   const c = ctx.design.content;
-  const els = background(ctx, 'back', B);
+  // A clear back is bare film, as on the pouches you see the product through from both sides: no
+  // bands, pattern or gear, one window over the whole face, and the small print in dark ink.
+  const clear = ctx.options.backStyle === 'clear';
+  const ink = clear ? 'black' : 'white';
+  const els = clear ? [] : background(ctx, 'back', B);
   const bodyH = footerTop - headerH;
 
-  if (ctx.options.backGear) {
+  if (clear) {
+    els.push({ id: 'back.window', label: 'Window', type: 'window', layer: 'window', box: { x: 0, y: 0, w: ctx.panel.w, h: ctx.panel.h }, shape: 'rect', r: ctx.design.dims.corner ?? 0, colors: {} });
+  }
+  if (ctx.options.backGear && !clear) {
     const r2 = Math.min(W * 0.36, bodyH * 0.42);
     const cx = W * 0.8, cy = headerH + bodyH * 0.25;
     els.push({ id: 'back.gear', label: 'Big gear', type: 'gear', layer: 'bg', metallic: true, clip: { x: 0, y: headerH, w: W, h: bodyH },
       cx, cy, r1: r2 * 0.86, r2, teeth: 14, hole: r2 * 0.3,
       box: { x: cx - r2, y: Math.max(cy - r2, headerH), w: Math.min(2 * r2, W - cx + r2), h: Math.min(2 * r2, cy + r2 - headerH) }, colors: { fill: 'silver' } });
   }
-  if (ctx.options.backWindow) {
+  if (ctx.options.backWindow && !clear) {
     const f = windowBox(ctx, B);
     els.push(...windowEl(ctx, 'back.window', { x: W - f.x - f.w, y: f.y, w: f.w, h: f.h }));
   }
@@ -131,7 +139,7 @@ export function back(ctx) {
   const headH = Math.max(headerH - headTop, 8);
   const logo = ctx.box('back.logo', { x: S.x + S.w * 0.15, y: headTop + headH * 0.12, w: S.w * 0.7, h: headH * 0.6 });
   els.push({ id: 'back.logo', label: 'Logo', type: 'logo', layer: 'fg', layout: 'markWord', movable: true, resizable: true, keepAspect: true, box: logo,
-    colors: { gear: 'dark', arc: 'white', word: 'dark', line: 'white' } });
+    colors: { gear: 'dark', arc: clear ? { none: true } : 'white', word: 'dark', line: ink } });
   // The tagline sits under the right end of WERTIS, small, as on the boxes. Its box can be
   // moved and resized like the logo: its height is the type's, so a taller box is a bigger
   // tagline, and the text shrinks to fit a narrower one. The template's size sets the start.
@@ -140,7 +148,7 @@ export function back(ctx) {
   const tagBox = ctx.box('back.tagline', tag.box);
   els.push({ id: 'back.tagline', label: 'Tagline', edits: ['tagline'], type: 'text', layer: 'fg', movable: true, resizable: true, keepAspect: true,
     text: c.tagline, font: 'condSemibold', align: 'right', valign: 'top', spacing: 0.02,
-    box: tagBox, size: tagBox.h / 0.7, minSize: 1.4, colors: { fill: 'white' } });
+    box: tagBox, size: tagBox.h / 0.7, minSize: 1.4, colors: { fill: ink } });
 
   els.push({ id: 'back.label', label: 'Label', edits: ['productName', 'sku', 'ean', 'qr', 'url'], type: 'label', layer: 'fg', movable: true, resizable: true,
     box: ctx.box('back.label', { x: S.x + S.w * 0.02, y: headerH + bodyH * 0.38, w: S.w * 0.96, h: bodyH * 0.56 }),
@@ -155,7 +163,7 @@ export function back(ctx) {
   const addrBox = ctx.box('back.address', { x: F.x, y: F.y + F.h * 0.12, w: F.w * 0.46, h: F.h * 0.76 });
   els.push({ id: 'back.address', label: 'Address', edits: ADDRESS_LINES, type: 'text', layer: 'fg', movable: true, resizable: true, font: 'regular', align: 'left', valign: 'middle', lineHeight: 1.25,
     text: [c.company, addressLines(c.address), c.email].filter(Boolean).join('\n'),
-    box: addrBox, size: (F.h * 0.1 / 0.7) * Math.sqrt((addrBox.w * addrBox.h) / (F.w * 0.46 * F.h * 0.76)), minSize: 1.4, colors: { fill: 'white' } });
+    box: addrBox, size: (F.h * 0.1 / 0.7) * Math.sqrt((addrBox.w * addrBox.h) / (F.w * 0.46 * F.h * 0.76)), minSize: 1.4, colors: { fill: ink } });
   const material = MATERIALS[ctx.options.recycle];
   // The disposal marks in the middle of the footer.
   const markSize = Math.min(F.h * 0.55, F.w * 0.075);
@@ -175,7 +183,7 @@ export function back(ctx) {
     box: qrBox, colors: { dots: 'black', bg: 'white' } });
   const urlBox = ctx.box('back.url', { x: right - colW, y: qrBox.y + qrBox.h + gap, w: colW, h: webH });
   els.push({ id: 'back.url', label: 'Website', edits: ['url'], type: 'text', layer: 'fg', movable: true, resizable: true, text: c.url, font: 'bold', align: 'right', valign: 'middle',
-    box: urlBox, size: (F.h * 0.19 / 0.7) * (urlBox.h / webH), minSize: 1.6, colors: { fill: 'white' } });
+    box: urlBox, size: (F.h * 0.19 / 0.7) * (urlBox.h / webH), minSize: 1.6, colors: { fill: ink } });
   return els;
 }
 
