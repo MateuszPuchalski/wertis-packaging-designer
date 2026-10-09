@@ -21,6 +21,7 @@ export const OPTIONS = [
   num('taglineSize', '“Quality You Can Trust” size', 100, 40, 300, 5, { unit: '%' }),
   choice('recycle', 'Recycling mark', 'none', Object.entries(MATERIALS).map(([k, m]) => [k, m.label])),
   toggle('tidyman', 'Tidyman (bin) mark', true),
+  toggle('registered', 'Registered mark ® after WERTIS', true),
   toggle('lidPhoto', 'Product photo on the lid (from Mockup)', false),
 ];
 
@@ -158,7 +159,7 @@ export function genericBody(ctx) {
   // Front: the white WERTIS on the band, the dark gear on the band's top edge, the tagline.
   const logoBox = ctx.box('front.logo', { x: front.safe.x + front.safe.w * 0.1, y: B.top + B.h * 0.18, w: front.safe.w * 0.8, h: B.h * 0.5 });
   const fit = fitLogo(logoBox, 'word');
-  els.push({ id: 'front.logo', label: 'Logo', type: 'logo', layer: 'fg', layout: 'word', movable: true, resizable: true, keepAspect: true, box: logoBox,
+  els.push({ id: 'front.logo', label: 'Logo', type: 'logo', layer: 'fg', layout: 'word', registered: !!ctx.options.registered, movable: true, resizable: true, keepAspect: true, box: logoBox,
     colors: { gear: 'white', arc: 'white', word: 'white', line: 'white' } });
   const markW = fit.w * 0.5;
   els.push({ id: 'front.gear', label: 'Gear', type: 'logo', layer: 'fg', layout: 'mark', align: 'center', valign: 'bottom',
@@ -189,7 +190,7 @@ export function lid(ctx) {
       box: { x: S.x + S.w * 0.1, y: S.y + S.h * 0.02, w: S.w * 0.8, h: S.h * 0.5 }, colors: {} });
   }
   const fit = fitLogo(logoBox, 'markWord');
-  els.push({ id: 'lid.logo', label: 'Lid logo', type: 'logo', layer: 'fg', layout: 'markWord', rotate: 180, pivot, box: logoBox,
+  els.push({ id: 'lid.logo', label: 'Lid logo', type: 'logo', layer: 'fg', layout: 'markWord', registered: !!ctx.options.registered, rotate: 180, pivot, box: logoBox,
     colors: { gear: 'dark', arc: { none: true }, word: 'white', line: 'white' } });
   const tag = taglineUnder(partBox(fit, 'word'), { scale: (ctx.options.taglineSize ?? 100) / 100 });
   els.push({ id: 'lid.tagline', label: 'Lid tagline', edits: ['tagline'], type: 'text', layer: 'fg', rotate: 180, pivot, text: c.tagline, font: 'condSemibold', align: 'right', valign: 'top', spacing: 0.02,
@@ -206,4 +207,10 @@ export function dust(ctx) {
 }
 
 export const boxProduct = { id: 'boxProduct', label: 'Product box (W09-0414 style)', options: OPTIONS, panels: { boxBody: productBody, boxLid: lid, boxDust: dust } };
-export const boxGeneric = { id: 'boxGeneric', label: 'Generic box: CZĘŚCI ZAMIENNE / SPARE PARTS', options: OPTIONS, panels: { boxBody: genericBody, boxLid: lid, boxDust: dust } };
+// The universal box: the lid is plain pattern (the logo stays on the front), and the black band shades
+// from dark grey at the top to black at the bottom. Both are only the starting look.
+export const boxGeneric = {
+  id: 'boxGeneric', label: 'Generic box: CZĘŚCI ZAMIENNE / SPARE PARTS', options: OPTIONS, panels: { boxBody: genericBody, boxLid: lid, boxDust: dust },
+  hiddenByDefault: ['lid.logo', 'lid.tagline'],
+  gradientsByDefault: { 'body.band': { to: 'patternGrey', dir: 'up' } },
+};

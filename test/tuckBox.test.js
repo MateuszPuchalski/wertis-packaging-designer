@@ -74,7 +74,8 @@ test('both box templates render to print, proof and mockup', () => {
     const svg = printSvg(d, env());
     assert.ok(!/<filter|<pattern|<mask|NaN/.test(svg), template);
     assert.ok(svg.includes('stroke="#00aff0"') && svg.includes('stroke="#eb3540"'), 'cyan cuts and red folds');
-    assert.ok(svg.includes('rotate(180'), 'the lid is turned');
+    // The product box turns its lid logo; the universal box leaves the lid plain.
+    assert.equal(svg.includes('rotate(180'), template === 'boxProduct', 'the lid is turned');
     const ids = panelsWithElements(d, env()).flatMap((p) => p.elements.map((e) => e.id));
     assert.equal(new Set(ids).size, ids.length, `${template}: ids are unique`);
     assert.ok(renderProof(d, env()).svg.includes('<svg'));
@@ -88,4 +89,32 @@ test('the box EAN keeps at least 80 % width', () => {
   d.dims = { ...d.dims, height: 30 };
   const hit = renderSheet(d, env()).hits.find((h) => h.id === 'front.ean');
   assert.ok(hit.box.w >= 113 * 0.264 - 1e-6, `EAN is ${hit.box.w} mm wide`);
+});
+
+test('the universal box looks like the standard one: plain lid, the black band shaded, no white field', async () => {
+  const { renderSheet } = await import('../src/render/sheet.js');
+  const d = design({ format: 'tuckBox' });
+  assert.deepEqual(d.hidden, { 'lid.logo': true, 'lid.tagline': true }, 'no logo on the lid');
+  assert.deepEqual(d.gradients, { 'body.band': { to: 'patternGrey', dir: 'up' } }, 'the band runs from black into dark grey');
+  const r = renderSheet(d, env(), { mode: 'print' });
+  assert.ok(r.hits.every((h) => !/window/.test(h.type ?? '')), 'no clear window or white field on the lid');
+  const product = design({ format: 'tuckBox', template: 'boxProduct' });
+  assert.deepEqual([product.hidden, product.gradients], [{}, {}], 'the product box keeps its own look');
+  // Shading the band does not add inks beyond mixes of its two swatches.
+  assert.ok(r.svg.length > renderSheet({ ...d, gradients: {} }, env(), { mode: 'print' }).svg.length);
+});
+
+test('the ® after WERTIS is a setting: on for the box, off for the pouch, and it follows the logo', async () => {
+  const { renderSheet, panelsWithElements } = await import('../src/render/sheet.js');
+  const logos = (d) => panelsWithElements(d, env()).flatMap((p) => p.elements).filter((e) => e.type === 'logo' && /logo/.test(e.id) && e.layout !== 'mark');
+  const box = design({ format: 'tuckBox' });
+  assert.equal(box.options.registered, true);
+  assert.ok(logos(box).length >= 2 && logos(box).every((e) => e.registered), 'the front and lid logos carry it');
+  const off = { ...box, options: { ...box.options, registered: false } };
+  assert.ok(logos(off).every((e) => !e.registered));
+  const on = renderSheet(box, env(), { mode: 'print' }).svg, none = renderSheet(off, env(), { mode: 'print' }).svg;
+  assert.ok(on.length > none.length, 'the mark is drawn when it is on');
+  const pouch = design({ format: 'flatPouch' });
+  assert.equal(pouch.options.registered, false, 'pouches start without it');
+  assert.ok(logos({ ...pouch, options: { ...pouch.options, registered: true } }).every((e) => e.registered));
 });
