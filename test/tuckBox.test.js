@@ -118,3 +118,28 @@ test('the ® after WERTIS is a setting: on for the box, off for the pouch, and i
   assert.equal(pouch.options.registered, false, 'pouches start without it');
   assert.ok(logos({ ...pouch, options: { ...pouch.options, registered: true } }).every((e) => e.registered));
 });
+
+test('the box follows print practice: safe margin 3 mm, the barcode at 100 %, nothing under 6 pt, marks over 7 mm', async () => {
+  const { preflight } = await import('../src/preflight.js');
+  const d = design({ format: 'tuckBox', template: 'boxProduct' });
+  assert.equal(d.dims.safe, 3);
+  const r = renderSheet(d, env());
+  for (const id of ['front.ean', 'back.ean']) {
+    const h = r.hits.find((x) => x.id === id);
+    assert.ok(Math.abs(h.box.w - 113 * 0.33) < 0.01, `${id} is ${h.box.w.toFixed(2)} mm wide (100 % = 37.29)`);
+  }
+  const names = r.hits.filter((h) => /name|subtitle/.test(h.id)), ean = r.hits.find((h) => h.id === 'front.ean');
+  for (const n of names) assert.ok(n.box.x + n.box.w <= ean.box.x + 0.01, `${n.id} stops short of the barcode`);
+  const pf = preflight(d, env());
+  assert.ok(!pf.items.some((i) => ['Text', 'Barcode'].includes(i.topic) && i.level !== 'ok'), 'a clean box has no type or barcode warnings');
+  for (const t of ['boxGeneric', 'boxProduct']) {
+    const marks = renderSheet(design({ format: 'tuckBox', template: t, ...(t === 'boxProduct' ? {} : {}) }), env()).hits.filter((h) => h.type === 'marks');
+    assert.ok(marks.every((m) => m.box.h >= 7 - 1e-6), `${t}: marks at least 7 mm`);
+  }
+  // A smaller barcode and tiny type are flagged.
+  const small = { ...d, layout: { 'front.ean': { x: 0.7, y: 0.5, w: 0.2, h: 0.12 } } };
+  const warns = preflight(small, env()).items.filter((i) => i.level !== 'ok').map((i) => i.i18n?.key);
+  assert.ok(warns.some((k) => /pf\.ean\.(notNominal|small)/.test(k)), 'the barcode below 100 % is flagged');
+  const tiny = { ...d, layout: { 'front.subtitle': { x: 0.62, y: 0.4, w: 0.2, h: 0.03 } } };
+  assert.ok(preflight(tiny, env()).items.some((i) => i.i18n?.key === 'pf.text.small'), 'type under 6 pt is flagged');
+});

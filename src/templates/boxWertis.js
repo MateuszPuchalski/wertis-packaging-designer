@@ -12,7 +12,10 @@ import { clamp } from '../render/svg.js';
 import { MATERIALS } from '../brand/marks.js';
 import { ADDRESS, addressLines } from '../brand/wertis.js';
 import { fitLogo, partBox, taglineUnder } from '../brand/logo.js';
+import { EAN_MODULE } from '../codes/ean13.js';
 import { num, choice, toggle } from '../formats/common.js';
+
+const withDefaults = (fields, over) => fields.map((f) => (f.key in over ? { ...f, default: over[f.key] } : f));
 
 export const OPTIONS = [
   num('bandTopPct', 'Band starts at', 35, 5, 80, 1, { unit: '%' }),
@@ -52,12 +55,26 @@ function walls(ctx) {
 }
 
 // Pieces both templates use.
+// The address under the band stays at 6 pt or more (the smallest type for white on a colour): on a wide
+// face it runs in two short columns (company and street, then country and e-mail), on a narrow one it is
+// one block with tight lines.
+const PT6 = 6 * 25.4 / 72;
 function produced(ctx, id, f, B) {
   const c = ctx.design.content;
-  const top = B.bottom + 1;
-  return { id, label: 'Address', edits: ADDRESS, type: 'text', layer: 'fg', font: 'regular', align: 'left', valign: 'middle', lineHeight: 1.22,
-    text: [c.company, addressLines(c.address), c.country, c.email].filter(Boolean).join('\n'),
-    box: { x: f.safe.x, y: top, w: f.safe.w * 0.5, h: f.safe.y + f.safe.h - top }, size: (ctx.panel.h * 0.045) / 0.7, minSize: 1.1, colors: WHITE };
+  const top = B.bottom + 0.8;
+  const h = f.safe.y + f.safe.h - top;
+  const base = { label: 'Address', type: 'text', layer: 'fg', font: 'regular', align: 'left', valign: 'middle', colors: WHITE };
+  if (f.safe.w >= 80) {
+    const w = f.safe.w * 0.25;
+    return [
+      { ...base, id, edits: ['company', 'address'], lineHeight: 1.2, text: [c.company, addressLines(c.address)].filter(Boolean).join('\n'),
+        box: { x: f.safe.x, y: top, w, h }, size: PT6 * 1.15, minSize: PT6 },
+      { ...base, id: `${id}2`, label: 'Address (country and e-mail)', edits: ['country', 'email'], lineHeight: 1.2, text: [c.country, c.email].filter(Boolean).join('\n'),
+        box: { x: f.safe.x + w, y: top, w, h }, size: PT6 * 1.15, minSize: PT6 },
+    ];
+  }
+  return [{ ...base, id, edits: ADDRESS, lineHeight: 1.15, text: [c.company, addressLines(c.address), c.country, c.email].filter(Boolean).join('\n'),
+    box: { x: f.safe.x, y: top, w: f.safe.w * 0.7, h }, size: PT6 * 1.15, minSize: PT6 }];
 }
 
 function marks(ctx, id, box) {
@@ -72,9 +89,11 @@ function marks(ctx, id, box) {
 function ean(ctx, id, f, B) {
   const c = ctx.design.content;
   if (!c.ean) return [];
-  const h = Math.min(ctx.panel.h * 0.36, f.safe.y + f.safe.h - B.top - B.h * 0.6);
-  return [{ id, label: 'EAN barcode', edits: ['ean'], type: 'ean', layer: 'fg', code: c.ean, bars: 0.72, movable: true, resizable: true, keepAspect: true,
-    box: ctx.box(id, { x: f.safe.x + f.safe.w * 0.48, y: f.safe.y + f.safe.h - h, w: f.safe.w * 0.52, h }), align: 'right', valign: 'bottom',
+  // At the nominal size, 100 % (GS1 allows 80 to 200 %, and 100 % reads most reliably): 37.29 mm wide
+  // with its quiet zones, the full bar height. It may overlap the band; the symbol has its own white.
+  const w = Math.min(113 * EAN_MODULE, f.safe.w * 0.6), h = (69.24 + 11.3) * (w / 113);
+  return [{ id, label: 'EAN barcode', edits: ['ean'], type: 'ean', layer: 'fg', code: c.ean, bars: 1, movable: true, resizable: true, keepAspect: true,
+    box: ctx.box(id, { x: f.safe.x + f.safe.w - w, y: f.safe.y + f.safe.h - h, w, h }), align: 'right', valign: 'bottom',
     colors: { bars: 'black', bg: 'white' } }];
 }
 
@@ -108,17 +127,17 @@ export function productBody(ctx) {
   // Back: technical data on the band.
   els.push(sku(ctx, 'back.sku', back, B));
   const specs = (Array.isArray(c.specs) ? c.specs : String(c.specs ?? '').split('\n')).filter((x) => String(x).trim());
-  const titleH = B.h * 0.17;
+  const titleH = B.h * 0.15;
   els.push({ id: 'back.specsTitle', label: 'Technical data heading', edits: ['specsTitle', 'specs'], type: 'text', layer: 'fg', text: c.specsTitle, font: 'semibold', align: 'left', valign: 'top',
     box: { x: back.safe.x, y: B.top + pad, w: back.safe.w, h: titleH }, size: titleH / 0.7, minSize: 1.3, colors: WHITE });
   if (specs.length) {
-    const top = B.top + pad + titleH * 1.5;
-    els.push({ id: 'back.specs', label: 'Technical data', edits: ['specs', 'specsTitle'], type: 'text', layer: 'fg', text: specs.map((x) => `•  ${x}`).join('\n'), font: 'regular', align: 'left', valign: 'top', lineHeight: 1.3,
-      box: { x: back.safe.x + back.safe.w * 0.04, y: top, w: back.safe.w * 0.94, h: B.bottom - pad - top }, size: (B.h * 0.12) / 0.7, minSize: 1.1, colors: WHITE });
+    const top = B.top + pad + titleH * 1.4;
+    els.push({ id: 'back.specs', label: 'Technical data', edits: ['specs', 'specsTitle'], type: 'text', layer: 'fg', text: specs.map((x) => `•  ${x}`).join('\n'), font: 'regular', align: 'left', valign: 'top', lineHeight: 1.25,
+      box: { x: back.safe.x + back.safe.w * 0.04, y: top, w: back.safe.w * 0.94, h: B.bottom - pad - top }, size: (B.h * 0.12) / 0.7, minSize: PT6, colors: WHITE });
   }
-  els.push(produced(ctx, 'back.address', back, B));
+  els.push(...produced(ctx, 'back.address', back, B));
   els.push(...marks(ctx, 'back.marks', { x: back.safe.x + back.safe.w * 0.5, y: below.y, w: back.safe.w * 0.2, h: Math.min(below.h, back.safe.w * 0.1) }));
-  els.push(...ean(ctx, 'back.ean', back, B).map((e) => ({ ...e, box: ctx.box('back.ean', { ...e.box, x: back.safe.x + back.safe.w * 0.72, w: back.safe.w * 0.28 }) })));
+  els.push(...ean(ctx, 'back.ean', back, B));
 
   // Sides: QR code on the band, the website under it (the right side also has the marks).
   const urlH = Math.min(below.h * 0.32, s1.safe.w * 0.07);
@@ -131,12 +150,14 @@ export function productBody(ctx) {
 
   // Front: product name and subtitle on the band, code above, EAN below.
   els.push(sku(ctx, 'front.sku', front, B));
+  // The name and subtitle stop short of the barcode, which stands at its full size at the right.
+  const textW = front.safe.w - Math.min(113 * EAN_MODULE, front.safe.w * 0.6) - 3;
   els.push({ id: 'front.name', label: 'Product name', edits: ['productName'], type: 'text', layer: 'fg', text: c.productName?.[c.lang] ?? '', font: 'bold', align: 'left', valign: 'top', wrap: true, maxLines: 2, lineHeight: 1.1,
-    box: { x: front.safe.x, y: B.top + B.h * 0.18, w: front.safe.w, h: B.h * 0.4 }, size: (B.h * 0.24) / 0.7, minSize: 1.8, colors: WHITE });
+    box: { x: front.safe.x, y: B.top + B.h * 0.1, w: textW, h: B.h * 0.52 }, size: (B.h * 0.24) / 0.7, minSize: 1.8, colors: WHITE });
   els.push({ id: 'front.subtitle', label: 'Subtitle', edits: ['subtitle'], type: 'text', layer: 'fg', text: c.subtitle, font: 'regular', align: 'left', valign: 'top',
-    box: { x: front.safe.x, y: B.top + B.h * 0.62, w: front.safe.w, h: B.h * 0.18 }, size: (B.h * 0.18) / 0.7, minSize: 1.4, colors: WHITE });
-  els.push(produced(ctx, 'front.address', front, B));
-  els.push(...ean(ctx, 'front.ean', front, B).map((e) => ({ ...e, box: ctx.box('front.ean', { ...e.box, x: front.safe.x + front.safe.w * 0.72, w: front.safe.w * 0.28 }) })));
+    box: { x: front.safe.x, y: B.top + B.h * 0.66, w: textW, h: B.h * 0.2 }, size: (B.h * 0.18) / 0.7, minSize: 1.4, colors: WHITE });
+  els.push(...produced(ctx, 'front.address', front, B));
+  els.push(...ean(ctx, 'front.ean', front, B));
   return els;
 }
 
@@ -150,11 +171,11 @@ export function genericBody(ctx) {
     box: { x: back.safe.x, y: B.top + B.h * 0.16, w: back.safe.w, h: B.h * 0.3 }, size: (B.h * 0.3) / 0.7, minSize: 1.6, colors: WHITE });
   els.push({ id: 'back.categoryEn', label: 'Category (English)', edits: ['categoryEn'], type: 'text', layer: 'fg', text: c.categoryEn, font: 'bold', align: 'center', valign: 'middle',
     box: { x: back.safe.x, y: B.top + B.h * 0.56, w: back.safe.w, h: B.h * 0.24 }, size: (B.h * 0.24) / 0.7, minSize: 1.4, colors: WHITE });
-  els.push(produced(ctx, 'back.address', back, B));
+  els.push(...produced(ctx, 'back.address', back, B));
 
   els.push(qr(ctx, 'side1.qr', s1, B));
   els.push(url(ctx, 'side1.url', { x: s1.safe.x, y: below.y + below.h * 0.12, w: s1.safe.w, h: Math.min(below.h * 0.3, s1.safe.w * 0.07) }));
-  els.push(...marks(ctx, 'side1.marks', { x: s1.safe.x, y: below.y + below.h * 0.5, w: s1.safe.w * 0.4, h: below.h * 0.5 }));
+  els.push(...marks(ctx, 'side1.marks', { x: s1.safe.x, y: below.y + below.h * 0.1, w: s1.safe.w * 0.4, h: below.h * 0.8 }));
 
   // Front: the white WERTIS on the band, the dark gear on the band's top edge, the tagline.
   const logoBox = ctx.box('front.logo', { x: front.safe.x + front.safe.w * 0.1, y: B.top + B.h * 0.18, w: front.safe.w * 0.8, h: B.h * 0.5 });
@@ -169,7 +190,7 @@ export function genericBody(ctx) {
   const tag = taglineUnder(partBox(fit, 'word'), { scale: (ctx.options.taglineSize ?? 100) / 100, ratio: 0.22 });
   els.push({ id: 'front.tagline', label: 'Tagline', edits: ['tagline'], type: 'text', layer: 'fg', text: c.tagline, font: 'condSemibold', align: 'right', valign: 'top', spacing: 0.02,
     box: tag.box, size: tag.size, minSize: 1.2, colors: WHITE });
-  els.push(produced(ctx, 'side2.address', s2, B));
+  els.push(...produced(ctx, 'side2.address', s2, B));
   return els;
 }
 
@@ -212,7 +233,7 @@ export const boxProduct = { id: 'boxProduct', label: 'Product box (W09-0414 styl
 // The universal box: the lid is plain pattern (the logo stays on the front), and the black band shades
 // from dark grey at the top to black at the bottom. Both are only the starting look.
 export const boxGeneric = {
-  id: 'boxGeneric', label: 'Generic box: CZĘŚCI ZAMIENNE / SPARE PARTS', options: OPTIONS, panels: { boxBody: genericBody, boxLid: lid, boxDust: dust },
+  id: 'boxGeneric', label: 'Generic box: CZĘŚCI ZAMIENNE / SPARE PARTS', options: withDefaults(OPTIONS, { bandTopPct: 33, bandPct: 34 }), panels: { boxBody: genericBody, boxLid: lid, boxDust: dust },
   hiddenByDefault: ['lid.logo', 'lid.tagline'],
   gradientsByDefault: { 'body.band': { to: 'patternGrey', dir: 'up' } },
 };
