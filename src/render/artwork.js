@@ -91,7 +91,7 @@ function metalSvg(rc, base, box, shape, rule = 'nonzero') {
 // wraps over the width of the two panels.
 function patternSheet(rc, panel) {
   if (!rc.patternSheet) {
-    const geo = FORMATS[rc.design.format].layout(rc.design.dims);
+    const geo = FORMATS[rc.design.format].layout(rc.design.dims, rc.design);
     const x0 = Math.min(...geo.panels.map((p) => p.x)), y0 = Math.min(...geo.panels.map((p) => p.y));
     const x1 = Math.max(...geo.panels.map((p) => p.x + p.w)), y1 = Math.max(...geo.panels.map((p) => p.y + p.h));
     const pad = geo.bleed ?? 3;

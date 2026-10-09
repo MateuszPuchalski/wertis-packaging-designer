@@ -9,6 +9,7 @@ import { LOGO_PRESETS } from '../brand/wertis.js';
 import { GRADIENT_DIRS } from '../render/artwork.js';
 import { TRANSPARENT } from '../brand/palette.js';
 import { showAll, resetColors, hasOwnColors, hiddenCount } from '../edit/actions.js';
+import { removePicture, movePicture, panelIds } from '../edit/pictures.js';
 import { textFields } from './textFields.js';
 
 const r1 = (v) => Math.round(v * 10) / 10;
@@ -188,6 +189,15 @@ export function inspector(store, { getParts, getHit, select, getSelected, showSe
       syncs.push(pr.sync);
       card.append(pr.el);
     }
+    // A placed picture can go to another panel or be removed.
+    if (/^pic\./.test(id)) {
+      const pid = id.slice(4);
+      const panelSel = h('select', { id: 'insp-picture-panel', onchange: () => { store.commit(movePicture(store.get(), pid, panelSel.value)); store.settle(); } },
+        panelIds(store.get()).map((p) => h('option', { value: p.id }, label(p.label))));
+      const remove = h('button', { class: 'secondary', id: 'insp-picture-remove', onclick: () => { select(null); store.commit(removePicture(store.get(), pid)); store.settle(); } }, icon('trash', 14), t('insp.removePicture'));
+      card.append(h('div', { class: 'insp-block' }, h('label', { class: 'row' }, h('span', { class: 'lbl' }, t('insp.picturePanel')), h('span', { class: 'ctl' }, panelSel)), remove));
+      syncs.push((d) => syncValue(panelSel, d.pictures?.[pid]?.panel ?? ''));
+    }
     const vis = h('input', { type: 'checkbox', id: 'insp-visible', onchange: () => { store.set(['hidden', id], vis.checked ? undefined : true); store.settle(); } });
     card.append(h('div', { class: 'insp-block' }, h('label', { class: 'row check' }, vis, h('span', {}, t('insp.show')))));
     syncs.push((d) => syncValue(vis, !d.hidden[id]));
@@ -262,7 +272,7 @@ export function inspector(store, { getParts, getHit, select, getSelected, showSe
     sync(design) {
       const id = getSelected();
       // The panel sizes and the options move elements, so they rebuild the card too.
-      const shape = `${design.format}|${design.template}|${JSON.stringify(design.options)}|${JSON.stringify(design.dims)}`;
+      const shape = `${design.format}|${design.template}|${JSON.stringify(design.options)}|${JSON.stringify(design.dims)}|${Object.entries(design.pictures ?? {}).map(([k, v]) => `${k}:${v.panel}`).join()}|${design.custom ? design.custom.w : ''}`;
       const sig = `${id}|${shape}`;
       if (!built || built.sig !== sig) built = { sig, syncs: buildCard(id) };
       if (shape !== listSig) {
