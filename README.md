@@ -160,9 +160,11 @@ that the files are byte-for-byte the same in both languages.
 
 ## Example products
 
-- **Pouches** start universal: the example names the Stihl MS170 / MS180 clutch drum kit
-  ("Bęben sprzęgła Stihl"), with no product code and no barcode. Preflight then notes that
-  there is no EAN-13 until you type in the real one.
+- **Pouches** start universal. The product's own details are hidden: its name, its product
+  code and its label (the card's *Show this element* checkbox brings each back). There is no
+  barcode, and the 3D pack starts empty (choose the Stihl clutch kit in the 3D toolbar).
+  Preflight notes the missing EAN-13 until you type in the real one. The texts keep the
+  example Stihl name, so a shown element has words to start from.
 - **Boxes** start with the W09-0414 carburettor from its box artwork.
 
 ## Formats

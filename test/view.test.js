@@ -51,7 +51,7 @@ test('ruler ticks: a round step, numbered ticks far enough apart, finer ones bet
 });
 
 test('quick actions: hide, show all, reset the position or the colours', () => {
-  const d = { ...design(), layout: { win: { x: 0.1, y: 0.1, w: 0.5, h: 0.5 } }, colors: { 'win.fill': { swatch: 'x' }, 'winter.fill': { swatch: 'y' }, 'win.edge': { none: true } } };
+  const d = { ...design(), hidden: {}, layout: { win: { x: 0.1, y: 0.1, w: 0.5, h: 0.5 } }, colors: { 'win.fill': { swatch: 'x' }, 'winter.fill': { swatch: 'y' }, 'win.edge': { none: true } } };
   const h1 = hide(d, 'logo');
   assert.equal(h1.hidden.logo, true);
   assert.equal(hiddenCount(hide(h1, 'win')), 2);

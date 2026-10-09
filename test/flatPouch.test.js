@@ -2,7 +2,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { layout, FIELDS } from '../src/formats/flatPouch.js';
 import { normalizeDims } from '../src/formats/common.js';
-import { geometry, panelsWithElements } from '../src/render/sheet.js';
+import { geometry, panelsWithElements, renderSheet } from '../src/render/sheet.js';
+import { createDesign, switchFormat } from '../src/design.js';
 import { design, env } from './helpers.js';
 
 const defaults = normalizeDims(FIELDS, {});
@@ -67,4 +68,18 @@ test('a QR code on the back links to the website: above the website line, at the
   const moved = panelsWithElements({ ...d, layout: { 'back.urlQr': { x: 0.2, y: 0.5, w: 0.1, h: 0.1 } } }, env(), geometry(d));
   const q2 = moved.flatMap((p) => p.elements).find((e) => e.id === 'back.urlQr');
   assert.ok(q2.box.x < qr.box.x, 'the box is where it was put');
+});
+
+test('a new pouch is universal: its product name, code and label start hidden, and show again on request', () => {
+  const PRODUCT = { 'front.sku': true, 'front.name': true, 'back.label': true };
+  for (const format of ['flatPouch', 'standUpPouch']) assert.deepEqual(createDesign({ format }).hidden, PRODUCT, format);
+  assert.deepEqual(createDesign({ format: 'tuckBox' }).hidden, {}, 'the box keeps its own product text');
+  // Switching a box to a pouch starts universal too.
+  assert.deepEqual(switchFormat(createDesign({ format: 'tuckBox' }), 'flatPouch').hidden, PRODUCT);
+  // Hidden elements are not drawn; taking the hiding off draws them.
+  const d = createDesign({ format: 'flatPouch' });
+  const drawn = (x) => renderSheet(x, env(), { mode: 'design' }).hits.map((h) => h.id);
+  assert.ok(!drawn(d).includes('front.name') && !drawn(d).includes('back.label'));
+  const shown = { ...d, hidden: {} };
+  assert.ok(drawn(shown).includes('front.name') && drawn(shown).includes('back.label'));
 });

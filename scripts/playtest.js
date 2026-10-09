@@ -337,6 +337,9 @@ export async function playtest() {
     await page.click('[data-tab="3d"]');
     await page.waitForSelector('.view3d[data-ready="1"]', { timeout: 90000 });
     assert.equal(await page.evaluate(() => window.wertis.stage.view3d.sceneName), 'shop', 'pouches start on the shop hooks');
+    // A new pack starts without the kit: choose it, then check it.
+    await page.selectOption('#product3d', 'clutchDrum');
+    await page.waitForFunction(() => window.wertis.stage.view3d.pack.product?.parts.length === 6 && window.wertis.stage.view3d.items.every((i) => i.partMeshes.length === 6), null, { timeout: 90000 });
     // The clutch kit lies in every pouch and sags to the bottom of the hanging bags;
     // "Nothing" empties them, and back; the film can be changed.
     const kit = await page.evaluate(async () => {
