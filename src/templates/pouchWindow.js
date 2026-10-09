@@ -160,28 +160,32 @@ export function back(ctx) {
 
   const F = { x: S.x, y: footerTop + 2, w: S.w, h: Math.max(S.y + S.h - footerTop - 2, 6) };
   // The address without a heading: four lines, with the postcode under the street.
-  const addrBox = ctx.box('back.address', { x: F.x, y: F.y + F.h * 0.12, w: F.w * 0.46, h: F.h * 0.76 });
+  // The three footer groups (address, marks, QR and website) share one band, so their tops and
+  // bottoms line up: the address and the QR start at its top, the website ends at its bottom, and
+  // the marks sit on its middle.
+  const band = { y: F.y + F.h * 0.08, h: F.h * 0.84 };
+  const addrBox = ctx.box('back.address', { x: F.x, y: band.y, w: F.w * 0.46, h: band.h });
   els.push({ id: 'back.address', label: 'Address', edits: ADDRESS_LINES, type: 'text', layer: 'fg', movable: true, resizable: true, font: 'regular', align: 'left', valign: 'middle', lineHeight: 1.25,
     text: [c.company, addressLines(c.address), c.email].filter(Boolean).join('\n'),
-    box: addrBox, size: (F.h * 0.1 / 0.7) * Math.sqrt((addrBox.w * addrBox.h) / (F.w * 0.46 * F.h * 0.76)), minSize: 1.4, colors: { fill: ink } });
+    box: addrBox, size: (F.h * 0.115 / 0.7) * Math.sqrt((addrBox.w * addrBox.h) / (F.w * 0.46 * band.h)), minSize: 1.4, colors: { fill: ink } });
   const material = MATERIALS[ctx.options.recycle];
   // The disposal marks in the middle of the footer.
   const markSize = Math.min(F.h * 0.55, F.w * 0.075);
   const marks = [material?.code ? 'recycle' : null, ctx.options.tidyman ? 'tidyman' : null].filter(Boolean);
   if (marks.length) {
     const mw = marks.length * markSize + (marks.length - 1) * markSize * 0.25;
-    const mb = ctx.box('back.marks', { x: F.x + F.w * 0.49, y: F.y + (F.h - markSize) / 2, w: mw, h: markSize });
+    const mb = ctx.box('back.marks', { x: F.x + F.w * 0.49, y: band.y + (band.h - markSize) / 2, w: mw, h: markSize });
     els.push({ id: 'back.marks', label: 'Recycling marks', type: 'marks', layer: 'fg', marks, material, movable: true, resizable: true, keepAspect: true, box: mb, colors: { fill: 'black' } });
   }
   // At the right: a QR code, bigger than before, with the website line under it. Both end at the
   // footer's right edge. The QR links to the site (the link field, which is the code's text).
   const right = F.x + F.w - F.w * 0.025, colW = F.w * 0.26;
-  const qrSize = Math.min(F.h * 0.66, F.w * 0.15), gap = F.h * 0.02, webH = F.h * 0.28;
-  const top = F.y + Math.max(0, (F.h - (qrSize + gap + webH)) / 2);
-  const qrBox = ctx.box('back.urlQr', { x: right - qrSize, y: top, w: qrSize, h: qrSize });
+  const gap = F.h * 0.02, webH = F.h * 0.2;
+  const qrSize = Math.min(band.h - gap - webH, F.w * 0.15);
+  const qrBox = ctx.box('back.urlQr', { x: right - qrSize, y: band.y, w: qrSize, h: qrSize });
   els.push({ id: 'back.urlQr', label: 'QR code', edits: ['qr'], type: 'qr', layer: 'fg', text: c.qr, movable: true, resizable: true, keepAspect: true,
     box: qrBox, colors: { dots: 'black', bg: 'white' } });
-  const urlBox = ctx.box('back.url', { x: right - colW, y: qrBox.y + qrBox.h + gap, w: colW, h: webH });
+  const urlBox = ctx.box('back.url', { x: right - colW, y: band.y + band.h - webH, w: colW, h: webH });
   els.push({ id: 'back.url', label: 'Website', edits: ['url'], type: 'text', layer: 'fg', movable: true, resizable: true, text: c.url, font: 'bold', align: 'right', valign: 'middle',
     box: urlBox, size: (F.h * 0.19 / 0.7) * (urlBox.h / webH), minSize: 1.6, colors: { fill: ink } });
   return els;
