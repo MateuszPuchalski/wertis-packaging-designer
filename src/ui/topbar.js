@@ -10,8 +10,11 @@ import { printSvg, printDocument, proofSvg } from '../export/documents.js';
 import { mockupSvg } from '../render/mockup.js';
 import { download, svgBlob, pngBlob, pdfBlob, slug } from '../export/files.js';
 import { dielineDxf } from '../export/dxf.js';
+import { zip } from '../export/zip.js';
+import { bundlePlan, bundleName } from '../export/bundle.js';
 import { preflight } from '../preflight.js';
 import { saveProject } from '../storage.js';
+import { serialize } from '../design.js';
 
 export function topbar(root, { store, env, getId, project, today, select }) {
   const d0 = () => store.get();
@@ -35,7 +38,37 @@ export function topbar(root, { store, env, getId, project, today, select }) {
     document.body.classList.add('busy');
     try { await fn(); toast(t('export.ready', { label })); } catch (err) { console.error(err); toast(t('export.failed', { label, error: msgOf(err) }), 'error'); } finally { document.body.classList.remove('busy'); }
   };
+  // Everything for every size the pack comes in, in one zip: a folder per size with the print PDF,
+  // dieline, print SVG, proof (PDF and PNG) and mockup, and the project file at the top.
+  const exportAll = async () => {
+    const plan = bundlePlan(d0());
+    for (const entry of plan) {
+      const pf = preflight(entry.design, env);
+      if (pf.errors && !(await showPreflight(pf, true))) return;
+    }
+    busy(t('export.all'), async () => {
+      const files = [];
+      const bytes = async (blob) => new Uint8Array(await blob.arrayBuffer());
+      const text = (s) => new TextEncoder().encode(s);
+      const add = (entry, file, data) => files.push({ name: bundleName(entry, name(), file), data });
+      for (const entry of plan) {
+        const d = entry.design;
+        const dpi = Number(document.getElementById('mockup-dpi')?.value) || 150;
+        const page = d.proof.page ?? 'a3';
+        const doc = printDocument(d, env, { date: today() });
+        add(entry, 'print.pdf', await bytes(await pdfBlob(doc.pages, doc)));
+        add(entry, 'dieline.dxf', text(dielineDxf(d, env)));
+        add(entry, 'print.svg', text(printSvg(d, env)));
+        add(entry, 'proof.pdf', await bytes(await pdfBlob(proofSvg(d, env, page), { title: `${d.name} proof` })));
+        add(entry, 'proof.png', await bytes(await pngBlob(proofSvg(d, env, page), { dpi: 200 })));
+        add(entry, 'mockup.png', await bytes(await pngBlob(mockupSvg(d, env).svg, { dpi })));
+      }
+      files.push({ name: `${name()}.wertis.json`, data: text(serialize(d0())) });
+      download(new Blob([zip(files)], { type: 'application/zip' }), `${name()}-all-files.zip`);
+    });
+  };
   const EXPORTS = {
+    'all-zip': { label: t('export.all'), hint: t('export.allHint'), run: exportAll },
     'print-pdf': {
       label: t('export.printPdf'), hint: t('export.printPdfHint'),
       run: async () => {
@@ -59,6 +92,7 @@ export function topbar(root, { store, env, getId, project, today, select }) {
     h('span', { class: 'mi-label' }, EXPORTS[key].label), h('span', { class: 'mi-hint' }, EXPORTS[key].hint));
   const group = (title, keys) => h('div', { class: 'menu-group', role: 'group', 'aria-label': title }, h('div', { class: 'menu-heading' }, title), keys.map(item));
   const menu = h('div', { id: 'export-menu', class: 'menu', role: 'menu', 'aria-label': t('top.export'), hidden: true },
+    group(t('export.everything'), ['all-zip']),
     group(t('export.forPrinter'), ['print-pdf', 'dieline-dxf', 'print-svg']),
     group(t('export.forApproval'), ['proof-pdf', 'proof-png']),
     group(t('export.presentation'), ['mockup-png']));

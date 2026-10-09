@@ -27,6 +27,9 @@ export default {
   'top.preflightTip': 'Sprawdź plik do druku tak, jak robi to przygotowalnia drukarni',
   'top.export': 'Eksport',
 
+  'export.all': 'Wszystkie pliki, wszystkie rozmiary (ZIP)',
+  'export.allHint': 'PDF do druku, formatka, SVG, proof i makieta dla każdego rozmiaru oraz plik projektu',
+  'export.everything': 'Wszystko',
   'export.forPrinter': 'Dla drukarni',
   'export.forApproval': 'Do akceptacji',
   'export.presentation': 'Prezentacja',
