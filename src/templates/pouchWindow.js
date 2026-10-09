@@ -24,7 +24,7 @@ export const OPTIONS = [
   choice('backStyle', 'Back side', 'printed', [['printed', 'Printed'], ['clear', 'Clear film (unprinted)']]),
   toggle('backWindow', 'Matching window on the back', false, { whenNot: ['backStyle', 'clear'] }),
   toggle('silverEdges', 'Silver edges on the black band', true),
-  toggle('backGear', 'Big gear on the back', true, { whenNot: ['backStyle', 'clear'] }),
+  toggle('backGear', 'Big gear on the back', true, { whenNot: ['backWindow', true] }),
   num('taglineSize', '“Quality You Can Trust” size', 100, 40, 300, 5, { unit: '%' }),
   toggle('otherLangs', 'Other languages on the label', true),
   choice('recycle', 'Recycling mark', 'ldpe4', Object.entries(MATERIALS).map(([k, m]) => [k, m.label])),
@@ -123,7 +123,8 @@ export function back(ctx) {
   if (clear) {
     els.push({ id: 'back.window', label: 'Window', type: 'window', layer: 'window', box: { x: 0, y: 0, w: ctx.panel.w, h: ctx.panel.h }, shape: 'rect', r: ctx.design.dims.corner ?? 0, colors: {} });
   }
-  if (ctx.options.backGear && !clear) {
+  // The gear and a back window both want the middle of the face, so a window on the back replaces it.
+  if (ctx.options.backGear && !clear && !ctx.options.backWindow) {
     const r2 = Math.min(W * 0.36, bodyH * 0.42);
     const cx = W * 0.8, cy = headerH + bodyH * 0.25;
     els.push({ id: 'back.gear', label: 'Big gear', type: 'gear', layer: 'bg', metallic: true, clip: { x: 0, y: headerH, w: W, h: bodyH },

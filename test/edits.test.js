@@ -102,3 +102,10 @@ test('a clear back is bare film: one window over the whole face, no bands, small
   const printed = panelsWithElements(createDesign({ format: 'flatPouch' }), env()).find((p) => p.panel.role === 'back');
   assert.ok(printed.elements.some((e) => e.id === 'back.header') && !printed.elements.some((e) => e.id === 'back.window'), 'printed stays the default');
 });
+
+test('a window on the back replaces the big gear, so both sides are clear windows', () => {
+  const back = (o) => { const d = createDesign({ format: 'flatPouch' }); d.options = { ...d.options, ...o }; return panelsWithElements(d, env()).find((p) => p.panel.role === 'back').elements.map((e) => e.id); };
+  assert.ok(back({}).includes('back.gear'), 'the gear stays by default');
+  const both = back({ backWindow: true });
+  assert.ok(both.includes('back.window') && !both.includes('back.gear'), 'window on the back, no gear');
+});

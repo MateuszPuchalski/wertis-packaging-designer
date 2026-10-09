@@ -102,6 +102,7 @@ export function sidebar(store, { getParts, project }) {
   add(pat, fieldControl(store, ['pattern'], { key: 'style', text: t('pattern.style'), type: 'select', default: 'solid', options: PATTERN_STYLES }),
     fieldControl(store, ['pattern'], { key: 'outline', text: t('pattern.outline'), type: 'number', default: 3, min: 0.5, max: 10, step: 0.5, unit: '', whenNot: ['style', 'solid'] }),
     fieldControl(store, ['pattern'], { key: 'scaling', text: t('pattern.scaling'), type: 'select', default: 'auto', options: PATTERN_SCALING }),
+    fieldControl(store, ['pattern'], { key: 'uniform', text: t('pattern.uniform'), type: 'checkbox', default: true }),
     P('size', t('pattern.size'), 18, 3, 120, 0.5), P('spacing', t('pattern.spacing'), 30, 6, 200, 0.5), P('rotation', t('pattern.rotation'), 180, 0, 180, 5, '°'),
     P('jitter', t('pattern.jitter'), 0.35, 0, 1, 0.05, ''), P('sizeJitter', t('pattern.sizeJitter'), 0.2, 0, 0.6, 0.05, ''), P('seed', t('pattern.seed'), 1, 0, 99999, 1, ''));
   pat.body.append(h('button', { class: 'secondary', onclick: () => { store.set(['pattern', 'seed'], Math.floor(Math.random() * 99999)); store.settle(); } }, t('pattern.shuffle')));
