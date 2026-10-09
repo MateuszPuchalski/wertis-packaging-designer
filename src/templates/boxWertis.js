@@ -3,7 +3,7 @@
 // silver edges running round all four walls, and the lid with the white WERTIS word.
 //
 // Two templates share this file:
-//   boxProduct  the product box. Back: technical data on the band, "Produced for", the
+//   boxProduct  the product box. Back: technical data on the band, the address, the
 //               recycling marks and the EAN. Sides: the QR code and the website. Front: the
 //               product name and subtitle on the band, the code above it, the EAN below.
 //   boxGeneric  the generic box. Back: "CZĘŚCI ZAMIENNE / SPARE PARTS". Front: the white
@@ -54,8 +54,8 @@ function walls(ctx) {
 function produced(ctx, id, f, B) {
   const c = ctx.design.content;
   const top = B.bottom + 1;
-  return { id, label: 'Produced for', edits: ADDRESS, type: 'text', layer: 'fg', font: 'regular', align: 'left', valign: 'middle', lineHeight: 1.22,
-    text: [c.producedFor, c.company, addressLines(c.address), c.email].filter(Boolean).join('\n'),
+  return { id, label: 'Address', edits: ADDRESS, type: 'text', layer: 'fg', font: 'regular', align: 'left', valign: 'middle', lineHeight: 1.22,
+    text: [c.company, addressLines(c.address), c.country, c.email].filter(Boolean).join('\n'),
     box: { x: f.safe.x, y: top, w: f.safe.w * 0.5, h: f.safe.y + f.safe.h - top }, size: (ctx.panel.h * 0.045) / 0.7, minSize: 1.1, colors: WHITE };
 }
 

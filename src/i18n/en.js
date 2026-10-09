@@ -127,7 +127,7 @@ export default {
   'texts.url': 'Website line',
   'texts.tagline': 'Tagline',
   'texts.note': 'Front note',
-  'texts.producedFor': '“Produced for” heading',
+  'texts.country': 'Country',
   'texts.company': 'Company',
   'texts.address': 'Address',
   'texts.email': 'E-mail',

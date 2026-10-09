@@ -134,3 +134,13 @@ test('a band can run into another swatch: flat strips, each an exact CMYK mix, s
   const missing = renderSheet({ ...d, gradients: { 'front.header': { to: 'nope', dir: 'down' } } }, env(), { mode: 'print' });
   assert.equal(missing.svg.length, flat.svg.length, 'a swatch that was deleted falls back to the flat colour');
 });
+
+test('the box address block starts with the company and ends with the country, no "Produced for" heading', () => {
+  const box = createDesign({ format: 'tuckBox' });
+  const addr = panelsWithElements(box, env()).flatMap((p) => p.elements).filter((e) => e.id.endsWith('.address'));
+  assert.ok(addr.length >= 2, 'the box repeats it on its panels');
+  for (const e of addr) {
+    assert.deepEqual(e.edits, ['company', 'address', 'country', 'email']);
+    assert.equal(e.text, 'WERTIS Sp. z o.o.\nSienkiewicze 4\n16-070 Sienkiewicze\nPoland\nbiuro@wertis.com.pl');
+  }
+});

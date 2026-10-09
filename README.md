@@ -124,7 +124,7 @@ material under **Format → Layout & window**.
   right-click → Edit the text) and its card offers exactly its words: the label its product
   name (the pack's main language first, the other languages folded under it), product code,
   EAN-13 (checked as you type), QR link and website; the pouch's address its company, street
-  and e-mail (no heading; the box keeps "Produced for" as its heading); the box's technical data
+  and e-mail (no heading); the box's address block the same, plus the country (Poland); the box's technical data
   its heading and one line per item; and so on. A box drops its barcode when the EAN is empty,
   so its product code offers the EAN too.
 

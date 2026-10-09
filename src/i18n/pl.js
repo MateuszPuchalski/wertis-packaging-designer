@@ -124,7 +124,7 @@ export default {
   'texts.url': 'Linia ze stroną www',
   'texts.tagline': 'Hasło',
   'texts.note': 'Notka z przodu',
-  'texts.producedFor': 'Nagłówek „Wyprodukowano dla”',
+  'texts.country': 'Kraj',
   'texts.company': 'Firma',
   'texts.address': 'Adres',
   'texts.email': 'E-mail',
