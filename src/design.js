@@ -24,6 +24,11 @@ export function defaultHidden(templateId) {
   return Object.fromEntries((TEMPLATES[templateId]?.hiddenByDefault ?? []).map((id) => [id, true]));
 }
 
+// The gradients a template starts with (a copy, so a project can change its own).
+export function defaultGradients(templateId) {
+  return JSON.parse(JSON.stringify(TEMPLATES[templateId]?.gradientsByDefault ?? {}));
+}
+
 export function createDesign({ format = 'flatPouch', template, date = '' } = {}) {
   const f = FORMATS[format] ?? FORMATS.flatPouch;
   const t = TEMPLATES[template] ?? TEMPLATES[f.templates[0]];
@@ -41,7 +46,7 @@ export function createDesign({ format = 'flatPouch', template, date = '' } = {})
     layout: {}, // elementId → { x, y, w, h } as fractions of its panel
     custom: null, // an imported dieline (formats/customDieline.js): { name, w, h, cut, fold, outline } in mm
     pictures: {}, // id → { panel, src, name, ratio }: images and .ai pages placed on a panel
-    gradients: {}, // band elementId → { to: swatch id, dir: 'down' | 'up' | 'right' | 'left' }: the fill runs into that swatch
+    gradients: defaultGradients(t.id), // band elementId → { to: swatch id, dir: 'down' | 'up' | 'right' | 'left' }: the fill runs into that swatch
     hidden: defaultHidden(t.id), // elementId → true
     pattern: { ...PATTERN_DEFAULTS },
     content: example.content,
@@ -112,7 +117,7 @@ export function serialize(design) {
 export function switchFormat(design, format, template) {
   const f = FORMATS[format];
   const t = TEMPLATES[template && f.templates.includes(template) ? template : f.templates[0]];
-  const next = { ...design, format: f.id, template: t.id, dims: defaultsOf(f.fields), options: { ...defaultsOf(t.options) }, layout: {}, hidden: defaultHidden(t.id) };
+  const next = { ...design, format: f.id, template: t.id, dims: defaultsOf(f.fields), options: { ...defaultsOf(t.options) }, layout: {}, hidden: defaultHidden(t.id), gradients: defaultGradients(t.id) };
   // Pictures follow to the new format's first panel (their old panels do not exist there).
   const ids = Object.keys(next.pictures ?? {});
   if (ids.length) {

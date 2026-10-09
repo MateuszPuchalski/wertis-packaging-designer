@@ -73,7 +73,7 @@ test('a QR code on the back links to the website: above the website line, at the
 test('a new pouch is universal: its product name, code and label start hidden, and show again on request', () => {
   const PRODUCT = { 'front.sku': true, 'front.name': true, 'back.label': true };
   for (const format of ['flatPouch', 'standUpPouch']) assert.deepEqual(createDesign({ format }).hidden, PRODUCT, format);
-  assert.deepEqual(createDesign({ format: 'tuckBox' }).hidden, {}, 'the box keeps its own product text');
+  assert.deepEqual(createDesign({ format: 'tuckBox', template: 'boxProduct' }).hidden, {}, 'the product box keeps its own product text');
   // Switching a box to a pouch starts universal too.
   assert.deepEqual(switchFormat(createDesign({ format: 'tuckBox' }), 'flatPouch').hidden, PRODUCT);
   // Hidden elements are not drawn; taking the hiding off draws them.

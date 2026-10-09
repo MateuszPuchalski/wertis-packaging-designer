@@ -206,4 +206,10 @@ export function dust(ctx) {
 }
 
 export const boxProduct = { id: 'boxProduct', label: 'Product box (W09-0414 style)', options: OPTIONS, panels: { boxBody: productBody, boxLid: lid, boxDust: dust } };
-export const boxGeneric = { id: 'boxGeneric', label: 'Generic box: CZĘŚCI ZAMIENNE / SPARE PARTS', options: OPTIONS, panels: { boxBody: genericBody, boxLid: lid, boxDust: dust } };
+// The universal box: the lid is plain pattern (the logo stays on the front), and the black band shades
+// from dark grey at the top to black at the bottom. Both are only the starting look.
+export const boxGeneric = {
+  id: 'boxGeneric', label: 'Generic box: CZĘŚCI ZAMIENNE / SPARE PARTS', options: OPTIONS, panels: { boxBody: genericBody, boxLid: lid, boxDust: dust },
+  hiddenByDefault: ['lid.logo', 'lid.tagline'],
+  gradientsByDefault: { 'body.band': { to: 'patternGrey', dir: 'up' } },
+};
