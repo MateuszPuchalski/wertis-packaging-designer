@@ -45,11 +45,10 @@ export const LOGO_ROLES = [['gear', 'Gear'], ['arc', 'Arc'], ['word', 'WERTIS'],
 
 export const LANGS = [['pl', 'PL'], ['cz', 'CZ'], ['sk', 'SK'], ['en', 'EN'], ['hu', 'HU'], ['ro', 'RO']];
 
-// Example content a new design starts with. Window pouches hold small parts; the example
-// is a Stihl clutch drum kit (the parts the 3D view puts in the pouch) with placeholder codes
-// (SKU W00-0000, and an EAN from GS1's 200 range, which is for in-store use only, so it can
-// never clash with a real product). Boxes start with the real W09-0414 carburettor from its
-// box artwork.
+// Example content a new design starts with. The pouch is universal by default: the example
+// names a Stihl clutch drum kit (the parts the 3D view puts in the pouch), with no SKU and no
+// EAN, so no product code is printed until one is typed in. Boxes start with the real W09-0414
+// carburettor from its box artwork.
 const EXAMPLES = {
   pouch: {
     name: 'Bęben sprzęgła Stihl – torebka z okienkiem',
@@ -62,8 +61,8 @@ const EXAMPLES = {
       ro: 'Tambur ambreiaj pentru drujba Stihl MS170 MS180 MS230 MS250',
     },
     subtitle: 'Do pilarek łańcuchowych Stihl',
-    sku: 'W00-0000',
-    ean: '2000000000008',
+    sku: '',
+    ean: '',
     specs: ['Średnica bębna: 69 mm', 'Koronka 3/8" P, 7 zębów', 'W zestawie: sprzęgło, łożysko igiełkowe, podkładka, zabezpieczenie', 'Pasuje do: MS170, MS180, MS210, MS230, MS250, MS181, MS190, MS211, MS231'],
   },
   box: {

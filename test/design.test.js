@@ -11,8 +11,8 @@ test('a new design has the WERTIS defaults', () => {
   assert.equal(d.format, 'flatPouch');
   assert.equal(d.dims.width, 250);
   assert.equal(d.dims.height, 350);
-  assert.equal(d.content.ean, '2000000000008', 'a placeholder EAN that cannot clash with a real product');
-  assert.equal(d.content.sku, 'W00-0000');
+  assert.equal(d.content.ean, '', 'universal by default: no barcode until one is typed in');
+  assert.equal(d.content.sku, '', 'and no product code');
   assert.ok(d.palette.some((s) => s.role === 'transparent'));
 });
 
@@ -38,7 +38,7 @@ test('setIn shares untouched branches', () => {
   const d = design();
   const n = setIn(d, ['content', 'sku'], 'X');
   assert.equal(n.content.sku, 'X');
-  assert.equal(d.content.sku, 'W00-0000');
+  assert.equal(d.content.sku, '');
   assert.equal(n.palette, d.palette);
   assert.equal(setIn(n, ['colors', 'a'], undefined).colors.a, undefined);
 });
@@ -87,7 +87,7 @@ test('the store undoes, redoes and coalesces bursts', () => {
   s.undo();
   assert.equal(s.get().content.sku, 'AB');
   s.undo();
-  assert.equal(s.get().content.sku, 'W00-0000');
+  assert.equal(s.get().content.sku, '');
   s.redo();
   assert.equal(s.get().content.sku, 'AB');
   s.set(['name'], 'x');
