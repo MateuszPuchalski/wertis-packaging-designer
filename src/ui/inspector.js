@@ -6,6 +6,8 @@ import { icon } from './icons.js';
 import { t, label } from '../i18n/index.js';
 import { resolveColor, refSwatchId, findSwatch, normalizeHex } from '../brand/palette.js';
 import { LOGO_PRESETS } from '../brand/wertis.js';
+import { GRADIENT_DIRS } from '../render/artwork.js';
+import { TRANSPARENT } from '../brand/palette.js';
 import { showAll, resetColors, hasOwnColors, hiddenCount } from '../edit/actions.js';
 import { textFields } from './textFields.js';
 
@@ -138,6 +140,32 @@ export function inspector(store, { getParts, getHit, select, getSelected, showSe
         const r = slotRow(elem, s);
         syncs.push(r.sync);
         block.append(r.el);
+      }
+      if (elem.type === 'rect') {
+        const toSel = h('select', { id: 'insp-gradient-to', onchange: () => {
+          const to = toSel.value;
+          store.set(['gradients', id], to ? { to, dir: store.get().gradients?.[id]?.dir ?? 'down' } : undefined);
+          store.settle();
+        } });
+        const dirSel = h('select', { id: 'insp-gradient-dir', onchange: () => {
+          const g = store.get().gradients?.[id];
+          if (g) { store.set(['gradients', id], { ...g, dir: dirSel.value }); store.settle(); }
+        } }, GRADIENT_DIRS.map(([v, l]) => h('option', { value: v }, label(l))));
+        const dirRow = h('label', { class: 'row' }, h('span', { class: 'lbl' }, t('insp.gradientDir')), h('span', { class: 'ctl' }, dirSel));
+        block.append(h('label', { class: 'row' }, h('span', { class: 'lbl' }, t('insp.gradient')), h('span', { class: 'ctl' }, toSel)), dirRow);
+        let sig = '';
+        syncs.push((d) => {
+          const s2 = d.palette.map((sw) => sw.id).join();
+          if (s2 !== sig) {
+            sig = s2;
+            clear(toSel);
+            toSel.append(h('option', { value: '' }, t('insp.gradientNone')), ...d.palette.filter((sw) => sw.role !== TRANSPARENT).map((sw) => h('option', { value: sw.id }, sw.name)));
+          }
+          const g = d.gradients?.[id];
+          syncValue(toSel, g?.to ?? '');
+          syncValue(dirSel, g?.dir ?? 'down');
+          dirRow.hidden = !g;
+        });
       }
       if (elem.type === 'logo') {
         block.append(h('div', { class: 'logo-presets' }, h('span', { class: 'lbl' }, t('insp.logoColours')),

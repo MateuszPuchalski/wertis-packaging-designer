@@ -109,3 +109,28 @@ test('a window on the back replaces the big gear, so both sides are clear window
   const both = back({ backWindow: true });
   assert.ok(both.includes('back.window') && !both.includes('back.gear'), 'window on the back, no gear');
 });
+
+test('a band can run into another swatch: flat strips, each an exact CMYK mix, saved with the project', async () => {
+  const { renderSheet } = await import('../src/render/sheet.js');
+  const { migrate } = await import('../src/design.js');
+  const { resetColors, hasOwnColors } = await import('../src/edit/actions.js');
+  const d = createDesign({ format: 'flatPouch' });
+  assert.deepEqual(d.gradients, {});
+  const flat = renderSheet(d, env(), { mode: 'print' });
+  const g = { ...d, gradients: { 'front.header': { to: 'black', dir: 'down' } } };
+  const run = renderSheet(g, env(), { mode: 'print' });
+  assert.ok(run.svg.length > flat.svg.length, 'strips instead of one fill');
+  assert.ok(!/linearGradient/.test(run.svg), 'no gradient objects in the print file');
+  const from = d.palette.find((s) => s.id === 'boxOrange').cmyk, to = d.palette.find((s) => s.id === 'black').cmyk;
+  const mixes = [...run.cmyk.values()].filter((v) => Array.isArray(v) && v[3] > from[3] && v[3] < to[3]);
+  assert.ok(mixes.length > 8, 'steps between the two swatches, each with its own CMYK');
+  for (const v of mixes) assert.ok(v.length === 4 && v.every(Number.isFinite));
+  assert.ok(run.used.has('black'), 'the target swatch counts as used');
+  for (const dir of ['up', 'left', 'right']) assert.ok(renderSheet({ ...g, gradients: { 'front.header': { to: 'black', dir } } }, env(), { mode: 'print' }).svg.length > flat.svg.length, dir);
+  assert.deepEqual(migrate(JSON.parse(JSON.stringify(g))).gradients, g.gradients, 'saved and loaded back');
+  assert.deepEqual(migrate(JSON.parse(JSON.stringify(d))).gradients, {}, 'older projects have none');
+  assert.ok(hasOwnColors(g, 'front.header'));
+  assert.deepEqual(resetColors(g, 'front.header').gradients, {}, 'reset colours drops it');
+  const missing = renderSheet({ ...d, gradients: { 'front.header': { to: 'nope', dir: 'down' } } }, env(), { mode: 'print' });
+  assert.equal(missing.svg.length, flat.svg.length, 'a swatch that was deleted falls back to the flat colour');
+});

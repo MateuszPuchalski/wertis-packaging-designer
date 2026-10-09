@@ -37,6 +37,7 @@ export function createDesign({ format = 'flatPouch', template, date = '' } = {})
     palette: clone(WERTIS_PALETTE),
     colors: {}, // `${elementId}.${slot}` → colour reference (see brand/palette.js)
     layout: {}, // elementId → { x, y, w, h } as fractions of its panel
+    gradients: {}, // band elementId → { to: swatch id, dir: 'down' | 'up' | 'right' | 'left' }: the fill runs into that swatch
     hidden: defaultHidden(t.id), // elementId → true
     pattern: { ...PATTERN_DEFAULTS },
     content: example.content,
@@ -68,6 +69,7 @@ export function migrate(input) {
     palette: Array.isArray(json.palette) && json.palette.length ? json.palette.map((s) => makeSwatch(s)) : base.palette,
     colors: { ...(json.colors ?? {}) },
     layout: { ...(json.layout ?? {}) },
+    gradients: { ...(json.gradients ?? {}) },
     hidden: { ...(json.hidden ?? {}) },
     // Projects saved before the scaling and uniform choices keep their pattern as it was drawn.
     pattern: { ...base.pattern, ...(json.pattern ? { scaling: 'fixed', uniform: false, ...json.pattern } : {}) },

@@ -27,11 +27,14 @@ export function resetLayout(design, id) {
 // Every colour the user gave this element goes back to the template's.
 export function resetColors(design, id) {
   const keys = Object.keys(design.colors ?? {}).filter((k) => k.startsWith(`${id}.`));
-  if (!keys.length) return design;
+  const hasGradient = !!design.gradients?.[id];
+  if (!keys.length && !hasGradient) return design;
   const colors = { ...design.colors };
   for (const k of keys) delete colors[k];
-  return { ...design, colors };
+  const gradients = { ...design.gradients };
+  delete gradients[id];
+  return { ...design, colors, gradients };
 }
 
-export const hasOwnColors = (design, id) => Object.keys(design.colors ?? {}).some((k) => k.startsWith(`${id}.`));
+export const hasOwnColors = (design, id) => !!design.gradients?.[id] || Object.keys(design.colors ?? {}).some((k) => k.startsWith(`${id}.`));
 export const hiddenCount = (design) => Object.keys(design.hidden ?? {}).length;

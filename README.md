@@ -15,7 +15,8 @@ logos, label and recycling marks on the preview. The editor speaks Polish or Eng
     GRACoL 2013).
   - **Dieline:** in its own spot inks, "Dieline" (cuts) and "Crease" (folds), set to
     overprint.
-  - **Marks:** crop marks in registration colour, and a slug line with the file's details.
+  - **Gradients:** any band (header, black band, footer) can run into another swatch, top to bottom, bottom to top or sideways: pick the band, then "Gradient to" on its card. The print file draws it as thin flat strips, each an exact CMYK mix of the two swatches, so there are no gradient objects and every ink stays a plain process mix.
+- **Marks:** crop marks in registration colour, and a slug line with the file's details.
   - **Pages:** page 2 is the dieline alone. For clear film, page 3 is the white underprint
     plate (spot "White"), which covers everything except the windows and holes.
   - **Text and transparency:** all text is outlines and nothing is transparent. A placed
