@@ -23,7 +23,7 @@ export const FIELDS = [
   toggle('thumb', 'Thumb notch', true),
   num('board', 'Board allowance', 0.4, 0, 3, 0.1),
   num('bleed', 'Bleed', 3, 0, 10, 0.5),
-  num('safe', 'Safe margin', 2.5, 0, 15, 0.5),
+  num('safe', 'Safe margin', 3, 0, 15, 0.5),
 ];
 
 export const BOX_COLORS = { cut: '#00aff0', fold: '#eb3540' };

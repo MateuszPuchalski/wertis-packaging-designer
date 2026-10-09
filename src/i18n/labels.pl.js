@@ -158,6 +158,7 @@ export default {
   'Sheet': 'Arkusz',
   'Picture': 'Obraz',
   'Registered mark ® after WERTIS': 'Znak ® po napisie WERTIS',
+  'Address (country and e-mail)': 'Adres (kraj i e-mail)',
   'Solid silhouettes': 'Pełne sylwetki',
   'Scale with the pack (partly)': 'Skaluj z opakowaniem (częściowo)',
   'Fixed size': 'Stały rozmiar',

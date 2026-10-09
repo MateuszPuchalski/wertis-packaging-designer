@@ -9,7 +9,7 @@ import { luminance } from './brand/palette.js';
 import { OUTPUT_INTENTS } from './export/documents.js';
 import { exportDefaults } from './design.js';
 
-const MIN_TEXT_MM = 1.76; // 5 pt: the smallest type that holds up on film and board
+const MIN_TEXT_MM = 2.1; // 6 pt: the smallest type that holds up on film and board, and for reversed type on a colour
 const MIN_EAN_MODULE = 0.264; // 80 % of nominal, GS1's minimum
 
 function inside(b, s, tol = 0.2) {
@@ -36,6 +36,7 @@ export function preflight(design, env) {
   for (const h of r.hits.filter((x) => x.type === 'ean')) {
     const pct = (h.box.w / 113 / 0.33 * 100).toFixed(0);
     if (h.box.w / 113 < MIN_EAN_MODULE - 1e-6) add('error', 'Barcode', `The barcode is ${pct} % of nominal size; GS1 asks for at least 80 %.`, h.id, 'pf.ean.small', { pct });
+    else if (h.box.w / 113 < 0.33 * 0.97) add('warn', 'Barcode', `The barcode is at ${pct} % of nominal size: allowed (80 to 200 %), but 100 % reads most reliably.`, h.id, 'pf.ean.notNominal', { pct });
   }
   if (ex.bwr > 0) add('ok', 'Barcode', `Bars are thinned by ${ex.bwr} mm for ink spread (bar width reduction).`, undefined, 'pf.ean.bwr', { bwr: ex.bwr });
 
@@ -65,7 +66,7 @@ export function preflight(design, env) {
       if (design.hidden?.[e.id] || e.type !== 'text' || !e.text) continue;
       const laid = env.text.layout({ ...e.box, text: e.text, font: e.font, size: e.size, minSize: e.minSize, upper: e.upper, wrap: e.wrap, spacing: e.spacing, lineHeight: e.lineHeight, maxLines: e.maxLines });
       const pt = (laid.size / 0.3528).toFixed(1);
-      if (laid.size < MIN_TEXT_MM) add('warn', 'Text', `“${e.label}” is ${pt} pt; under 5 pt may not print cleanly.`, e.id, 'pf.text.small', { el: L(e.label), pt });
+      if (laid.size < MIN_TEXT_MM) add('warn', 'Text', `“${e.label}” is ${pt} pt; under 6 pt may not print cleanly.`, e.id, 'pf.text.small', { el: L(e.label), pt });
     }
     const faces = panel.info?.faces ?? (panel.info?.safe ? [{ ...panel.info.safe, safe: panel.info.safe, x0: 0 }] : []);
     for (const h of r.hits.filter((x) => x.panel === panel.id && ['text', 'label', 'ean', 'qr', 'logo', 'marks'].includes(x.type))) {
