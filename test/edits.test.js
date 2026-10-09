@@ -65,3 +65,21 @@ test('the tagline prints on the front and the back of the pouch, under the logo'
     }
   }
 });
+
+test('the pouches offer the four sizes, and each one builds and prints', async () => {
+  const { renderSheet } = await import('../src/render/sheet.js');
+  assert.deepEqual(FORMATS.flatPouch.sizes, [[100, 150], [140, 200], [200, 280], [250, 350]]);
+  assert.deepEqual(FORMATS.standUpPouch.sizes, FORMATS.flatPouch.sizes);
+  assert.equal(FORMATS.tuckBox.sizes, undefined);
+  for (const format of ['flatPouch', 'standUpPouch']) {
+    for (const [w, h] of FORMATS[format].sizes) {
+      const d = createDesign({ format });
+      d.dims = { ...d.dims, width: w, height: h };
+      const r = renderSheet(d, env());
+      assert.ok(r.svg.length > 1000, `${format} ${w}×${h} renders`);
+      for (const { elements } of panelsWithElements(d, env())) {
+        for (const e of elements) assert.ok(Number.isFinite(e.box.x + e.box.y + e.box.w + e.box.h) && e.box.w > 0 && e.box.h > 0, `${format} ${w}×${h} ${e.id}`);
+      }
+    }
+  }
+});
