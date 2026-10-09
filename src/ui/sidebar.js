@@ -8,7 +8,7 @@ import { icon } from './icons.js';
 import { getPref, setPref } from './prefs.js';
 import { t, label, msgOf } from '../i18n/index.js';
 import { FORMATS, TEMPLATES } from '../registry.js';
-import { switchFormat } from '../design.js';
+import { switchFormat, setIn } from '../design.js';
 import { PATTERN_ICONS } from '../brand/patternIcons.js';
 import { PATTERN_STYLES } from '../render/pattern.js';
 import { PROOF_PAGES } from '../render/proof.js';
@@ -32,11 +32,19 @@ export function sidebar(store, { getParts, project }) {
   const formatSel = h('select', { id: 'format', onchange: () => { store.commit(switchFormat(store.get(), formatSel.value)); store.settle(); } },
     Object.values(FORMATS).map((f) => h('option', { value: f.id }, label(f.label))));
   const templateSel = h('select', { id: 'template', onchange: () => { store.commit(switchFormat(store.get(), store.get().format, templateSel.value)); store.settle(); } });
+  // The sizes the pack is made in: one pick sets width and height; any other numbers read "Custom".
+  const sizeSel = h('select', { id: 'size', onchange: () => {
+    const [w, hh] = sizeSel.value.split('x').map(Number);
+    if (!w) return;
+    store.commit(setIn(setIn(store.get(), ['dims', 'width'], w), ['dims', 'height'], hh));
+    store.settle();
+  } });
+  const sizeRow = h('label', { class: 'row' }, h('span', { class: 'lbl' }, t('side.size')), h('span', { class: 'ctl' }, sizeSel));
   const dimsBox = h('div', { class: 'fields' });
   let dimsSig = '';
   let dimSyncs = [];
   fmt.body.append(h('label', { class: 'row' }, h('span', { class: 'lbl' }, t('side.format')), h('span', { class: 'ctl' }, formatSel)),
-    h('label', { class: 'row' }, h('span', { class: 'lbl' }, t('side.template')), h('span', { class: 'ctl' }, templateSel)), dimsBox);
+    h('label', { class: 'row' }, h('span', { class: 'lbl' }, t('side.template')), h('span', { class: 'ctl' }, templateSel)), sizeRow, dimsBox);
 
   // --- Layout (template options) ---
   const lay = section(t('side.layoutSection'), { id: 'sec-layout' });
@@ -51,12 +59,18 @@ export function sidebar(store, { getParts, project }) {
       dimsSig = sig;
       clear(templateSel);
       for (const tp of f.templates) templateSel.append(h('option', { value: tp }, label(TEMPLATES[tp].label)));
+      clear(sizeSel);
+      sizeRow.hidden = !f.sizes;
+      for (const [w, hh] of f.sizes ?? []) sizeSel.append(h('option', { value: `${w}x${hh}` }, t('side.sizeOption', { w: w / 10, h: hh / 10 })));
+      sizeSel.append(h('option', { value: 'custom' }, t('side.sizeCustom')));
       clear(dimsBox);
       dimSyncs = f.fields.map((field) => { const c = fieldControl(store, ['dims'], field); dimsBox.append(c.el); return c.sync; });
       clear(layoutBox);
       layoutSyncs = TEMPLATES[d.template].options.map((field) => { const c = fieldControl(store, ['options'], field); layoutBox.append(c.el); return c.sync; });
     }
     syncValue(templateSel, d.template);
+    const key = `${d.dims.width}x${d.dims.height}`;
+    syncValue(sizeSel, (f.sizes ?? []).some(([w, hh]) => `${w}x${hh}` === key) ? key : 'custom');
     for (const s of dimSyncs) s(d);
     for (const s of layoutSyncs) s(d);
   });

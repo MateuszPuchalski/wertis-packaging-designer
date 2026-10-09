@@ -3,6 +3,9 @@
 import { rectPath, slotPath, sombreroPath, ellipsePath, polyPath } from '../render/svg.js';
 import { num, choice, toggle, normalizeDims, dim } from './common.js';
 
+// The sizes the pouches are made in, width × height in mm (10 × 15, 14 × 20, 20 × 28 and 25 × 35 cm).
+export const POUCH_SIZES = [[100, 150], [140, 200], [200, 280], [250, 350]];
+
 export const HOLES = [['euro', 'Euro slot'], ['sombrero', 'Sombrero (euro hole)'], ['round', 'Round'], ['none', 'None']];
 
 export const FIELDS = [
@@ -91,4 +94,4 @@ function fmt(v) {
   return String(Math.round(v * 10) / 10);
 }
 
-export const flatPouch = { id: 'flatPouch', label: 'Flat zip pouch', example: 'pouch', fields: FIELDS, layout, templates: ['pouchWindow'] };
+export const flatPouch = { id: 'flatPouch', label: 'Flat zip pouch', example: 'pouch', fields: FIELDS, sizes: POUCH_SIZES, layout, templates: ['pouchWindow'] };

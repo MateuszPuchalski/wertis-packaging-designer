@@ -4,7 +4,7 @@
 // curves under, so text keeps above it.
 import { rectPath, polyPath } from '../render/svg.js';
 import { num, choice, toggle, normalizeDims, dim } from './common.js';
-import { HOLES, pouchFace } from './flatPouch.js';
+import { HOLES, POUCH_SIZES, pouchFace } from './flatPouch.js';
 
 export const BOTTOMS = [['k', 'K-seal'], ['round', 'Round bottom'], ['plow', 'Plain (plough) bottom']];
 
@@ -100,4 +100,4 @@ export function layout(input) {
   };
 }
 
-export const standUpPouch = { id: 'standUpPouch', label: 'Stand-up pouch (doypack)', example: 'pouch', fields: FIELDS, layout, templates: ['pouchWindow'] };
+export const standUpPouch = { id: 'standUpPouch', label: 'Stand-up pouch (doypack)', example: 'pouch', fields: FIELDS, sizes: POUCH_SIZES, layout, templates: ['pouchWindow'] };
