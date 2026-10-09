@@ -83,17 +83,15 @@ export function front(ctx) {
 
   const headTop = S.y;
   const headH = Math.max(headerH - headTop, 8);
-  // The logo leaves a strip under it for the tagline, which sits under the right end of WERTIS as on the back.
-  const frontLogo = ctx.box('front.logo', { x: S.x + S.w * 0.08, y: headTop + headH * 0.07, w: S.w * 0.84, h: headH * 0.68 });
+  // The same logo box and tagline as on the back, so both sides match.
+  const frontLogo = ctx.box('front.logo', { x: S.x + S.w * 0.15, y: headTop + headH * 0.12, w: S.w * 0.7, h: headH * 0.6 });
   els.push({
-    id: 'front.logo', label: 'Logo', type: 'logo', layer: 'fg', layout: 'full', movable: true, resizable: true, keepAspect: true,
+    id: 'front.logo', label: 'Logo', type: 'logo', layer: 'fg', layout: 'markWord', movable: true, resizable: true, keepAspect: true,
     box: frontLogo,
     colors: { gear: 'dark', arc: 'white', word: 'dark', line: 'white' },
   });
-  const frontFit = fitLogo(frontLogo, 'full');
-  const frontWord = partBox(frontFit, 'word');
-  const frontTagH = frontWord.h * 0.2 * (ctx.options.taglineSize ?? 100) / 100;
-  const frontTag = ctx.box('front.tagline', { x: frontWord.x, y: frontFit.y + frontFit.h + frontTagH * 0.5, w: frontWord.w, h: frontTagH });
+  const frontTagDefault = taglineUnder(partBox(fitLogo(frontLogo, 'markWord'), 'word'), { scale: (ctx.options.taglineSize ?? 100) / 100, gap: 0.55 });
+  const frontTag = ctx.box('front.tagline', frontTagDefault.box);
   els.push({ id: 'front.tagline', label: 'Tagline', edits: ['tagline'], type: 'text', layer: 'fg', movable: true, resizable: true, keepAspect: true,
     text: c.tagline, font: 'condSemibold', align: 'right', valign: 'top', spacing: 0.02,
     box: frontTag, size: frontTag.h / 0.7, minSize: 1.4, colors: { fill: 'white' } });
