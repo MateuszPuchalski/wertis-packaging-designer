@@ -39,7 +39,7 @@ export default {
   'Tuck flap': 'Klapka wsuwana',
   'Dust flap depth': 'Głębokość klapek bocznych',
   'Glue flap': 'Klapka klejowa',
-  'Thumb notch': 'Wycięcie na palec',
+  'Thumb tab and lock slot': 'Języczek na palec i szczelina zamka',
   'Board allowance': 'Naddatek na grubość kartonu',
 
   // Templates and their options.

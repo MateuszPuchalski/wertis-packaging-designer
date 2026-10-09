@@ -168,7 +168,7 @@ that the files are byte-for-byte the same in both languages.
   barcode, and the 3D pack starts empty (choose the Stihl clutch kit in the 3D toolbar).
   Preflight notes the missing EAN-13 until you type in the real one. The texts keep the
   example Stihl name, so a shown element has words to start from.
-- **Boxes** start universal too: the generic "CZĘŚCI ZAMIENNE / SPARE PARTS" box at L95 × W65 × H50 mm, with no technical data, product name or PAP mark. The product box (W09-0414 style) is the other template and brings the carburettor, its technical data and its codes.
+- **Boxes** start universal too: the generic "CZĘŚCI ZAMIENNE / SPARE PARTS" box at L95 × W75 × H50 mm (the printer's die), with no technical data, product name or PAP mark. The product box (W09-0414 style) is the other template and brings the carburettor, its technical data and its codes.
 
 ## Formats
 
@@ -179,15 +179,16 @@ that the files are byte-for-byte the same in both languages.
   face that folds under.
 - **Folding box (L × W × H).** Laid out like the WERTIS boxes:
   - Pieces: glue flap, back, side, front, side. The lid with its tuck flap hangs on the back,
-    the dust flaps sit on the sides, and the thumb notch is cut into the front.
+    the dust flaps sit on the sides, a lock slot and a half-round notch break the lid's fold, and a thumb tab stands up from the front's top edge (switch "Thumb tab and lock slot").
   - Bottom: a snap-lock (1-2-3) bottom as on W09-0414, or a tuck end (reverse tuck end).
   - Cut lines are cyan and folds red, as in the printer's files. The tuck and bottom flaps
     stay unprinted.
   - Two templates: the product box (W09-0414 style) and the generic "CZĘŚCI ZAMIENNE /
     SPARE PARTS" box.
-  - The flap shapes are scaled from the W09-0414 dieline. Note that this file is named
-    "L95 W65 H50", but its walls measure about 95 × 75 × 49 mm. The generic box proof
-    matches 95 × 65 × 50, which is the default.
+  - The dieline follows the printer's W09-0414 .ai/PDF, checked line by line against it (the sheet is
+    355.5 × 202.5 mm against the file's 355.5 × 202.3): glue flap 17, tuck flap 20, dust flaps 32.5 deep,
+    board allowance 1.5, and the sides 75 mm wide. The file is named "L95 W65 H50", but its side walls are
+    75 mm, so the default is L95 × W75 × H50; the W field changes it.
 
 ## Run it
 
