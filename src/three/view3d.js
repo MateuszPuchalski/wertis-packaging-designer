@@ -107,7 +107,7 @@ function signTexture(THREE, w, h) {
   c.width = px;
   c.height = ph;
   const g = c.getContext('2d');
-  g.fillStyle = '#f68c1e';
+  g.fillStyle = '#f8992c';
   g.fillRect(0, 0, px, ph);
   const t = new THREE.CanvasTexture(c);
   t.colorSpace = THREE.SRGBColorSpace;
@@ -126,7 +126,7 @@ function hookLabelTexture(THREE) {
   const g = c.getContext('2d');
   g.fillStyle = '#ffffff';
   g.fillRect(0, 0, 256, 128);
-  g.fillStyle = '#f68c1e';
+  g.fillStyle = '#f8992c';
   g.fillRect(0, 0, 256, 20);
   g.fillStyle = '#222222';
   const rnd = mulberry32(3);

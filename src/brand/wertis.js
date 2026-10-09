@@ -7,7 +7,7 @@ import { makeSwatch, TRANSPARENT } from './palette.js';
 // W09-0414 box artwork (box orange, band black) and the foil mailer (pattern grey).
 // The spot names are left for the printer's numbers.
 export const WERTIS_PALETTE = [
-  { id: 'boxOrange', name: 'Box Orange', hex: '#f68c1e', cmyk: [0, 55, 95, 0], spot: '' },
+  { id: 'boxOrange', name: 'Box Orange', hex: '#f8992c', cmyk: [0, 55, 95, 0], spot: '' },
   { id: 'orangeTone', name: 'Orange Tone', hex: '#e27814', cmyk: [5, 62, 100, 0], spot: '' },
   { id: 'orange', name: 'WERTIS Orange', hex: '#ff9100', cmyk: [0, 50, 100, 0], spot: '' },
   { id: 'black', name: 'Band Black', hex: '#231f20', cmyk: [0, 0, 0, 100], spot: '' },
@@ -105,3 +105,6 @@ export function exampleContent(kind = 'pouch') {
   const { name, ...content } = EXAMPLES[kind] ?? EXAMPLES.pouch;
   return { name, content: JSON.parse(JSON.stringify({ ...COMMON_CONTENT, ...content })) };
 }
+
+// "Sienkiewicze 4, 16-070 Sienkiewicze" prints on two lines: the street, then the postcode and town.
+export const addressLines = (address) => String(address ?? '').replace(/,\s*/, '\n');

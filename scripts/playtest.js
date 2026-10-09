@@ -203,7 +203,7 @@ export async function playtest() {
     await page.locator('.canvas').click({ position: { x: 5, y: 5 } });
     await page.keyboard.press('Control+z');
     await page.waitForTimeout(100);
-    assert.equal(await page.evaluate(() => window.wertis.store.get().palette.find((s) => s.id === 'boxOrange').hex), '#f68c1e');
+    assert.equal(await page.evaluate(() => window.wertis.store.get().palette.find((s) => s.id === 'boxOrange').hex), '#f8992c');
     step('undo restores the swatch');
 
     // Exports.

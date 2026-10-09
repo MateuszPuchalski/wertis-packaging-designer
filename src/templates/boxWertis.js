@@ -10,7 +10,7 @@
 //               logo on the band with the gear sitting on its top edge.
 import { clamp } from '../render/svg.js';
 import { MATERIALS } from '../brand/marks.js';
-import { ADDRESS } from '../brand/wertis.js';
+import { ADDRESS, addressLines } from '../brand/wertis.js';
 import { fitLogo, partBox, taglineUnder } from '../brand/logo.js';
 import { num, choice, toggle } from '../formats/common.js';
 
@@ -55,7 +55,7 @@ function produced(ctx, id, f, B) {
   const c = ctx.design.content;
   const top = B.bottom + 1;
   return { id, label: 'Produced for', edits: ADDRESS, type: 'text', layer: 'fg', font: 'regular', align: 'left', valign: 'middle', lineHeight: 1.22,
-    text: [c.producedFor, c.company, c.address, c.email].filter(Boolean).join('\n'),
+    text: [c.producedFor, c.company, addressLines(c.address), c.email].filter(Boolean).join('\n'),
     box: { x: f.safe.x, y: top, w: f.safe.w * 0.5, h: f.safe.y + f.safe.h - top }, size: (ctx.panel.h * 0.045) / 0.7, minSize: 1.1, colors: WHITE };
 }
 

@@ -19,7 +19,7 @@ test('swatches print with their own CMYK numbers, not a conversion', () => {
   const d = design({ format: 'tuckBox' });
   d.palette = updateSwatch(d.palette, 'boxOrange', { cmyk: [0, 57, 98, 0] });
   const doc = printDocument(d, env());
-  assert.deepEqual(doc.cmyk.get('#f68c1e'), [0, 57, 98, 0]);
+  assert.deepEqual(doc.cmyk.get('#f8992c'), [0, 57, 98, 0]);
   assert.deepEqual(doc.cmyk.get('#231f20'), [0, 0, 0, 100], 'band black is pure K');
   assert.deepEqual(doc.colors.get('#00aff0'), { spot: 'Dieline', tint: 1, overprint: true }, 'cut lines are the Dieline spot ink, overprinting');
   assert.deepEqual(doc.colors.get('#eb3540'), { spot: 'Crease', tint: 1, overprint: true }, 'folds are the Crease spot ink');
