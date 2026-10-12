@@ -163,11 +163,11 @@ export function back(ctx) {
   const F = { x: S.x, y: footerTop + 2, w: S.w, h: Math.max(S.y + S.h - footerTop - 2, 6) };
   // The address without a heading: five lines, with the postcode under the street and the country under it.
   // The three footer groups (address, marks, QR and website) share one band, so their tops and
-  // bottoms line up: the address and the QR start at its top, the website ends at its bottom, and
-  // the marks sit on its middle.
-  const band = { y: F.y + F.h * 0.08, h: F.h * 0.84 };
+  // bottoms line up: the QR starts at its top, and the address, the marks and the website all end on its
+  // bottom line, which is the safe area's bottom edge.
+  const band = { y: F.y + F.h * 0.08, h: F.h * 0.92 };
   const addrBox = ctx.box('back.address', { x: F.x, y: band.y, w: F.w * 0.46, h: band.h });
-  els.push({ id: 'back.address', label: 'Address', edits: ADDRESS_LINES, type: 'text', layer: 'fg', movable: true, resizable: true, font: 'regular', align: 'left', valign: 'middle', lineHeight: 1.25,
+  els.push({ id: 'back.address', label: 'Address', edits: ADDRESS_LINES, type: 'text', layer: 'fg', movable: true, resizable: true, font: 'regular', align: 'left', valign: 'bottom', lineHeight: 1.25,
     text: [c.company, addressLines(c.address), c.country, c.email].filter(Boolean).join('\n'),
     box: addrBox, size: (F.h * 0.115 / 0.7) * Math.sqrt((addrBox.w * addrBox.h) / (F.w * 0.46 * band.h)), minSize: 1.4, colors: { fill: ink } });
   const material = MATERIALS[ctx.options.recycle];
@@ -176,7 +176,7 @@ export function back(ctx) {
   const marks = [material?.code ? 'recycle' : null, ctx.options.tidyman ? 'tidyman' : null].filter(Boolean);
   if (marks.length) {
     const mw = marks.length * markSize + (marks.length - 1) * markSize * 0.25;
-    const mb = ctx.box('back.marks', { x: F.x + F.w * 0.49, y: band.y + (band.h - markSize) / 2, w: mw, h: markSize });
+    const mb = ctx.box('back.marks', { x: F.x + F.w * 0.49, y: band.y + band.h - markSize, w: mw, h: markSize });
     els.push({ id: 'back.marks', label: 'Recycling marks', type: 'marks', layer: 'fg', marks, material, movable: true, resizable: true, keepAspect: true, box: mb, colors: { fill: 'black' } });
   }
   // At the right: a QR code, bigger than before, with the website line under it. Both end at the
