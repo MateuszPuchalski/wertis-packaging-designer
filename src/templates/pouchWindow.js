@@ -14,7 +14,7 @@ import { fitLogo, partBox, taglineUnder } from '../brand/logo.js';
 import { num, choice, toggle } from '../formats/common.js';
 
 // The pouch's address block: the company, the street and the e-mail (no "Produced for" heading).
-const ADDRESS_LINES = ['company', 'address', 'email'];
+const ADDRESS_LINES = ['company', 'address', 'country', 'email'];
 
 export const OPTIONS = [
   num('headerPct', 'Header height', 30, 12, 60, 1, { unit: '%' }),
@@ -161,14 +161,14 @@ export function back(ctx) {
     colors: { fill: 'white', text: 'dark', accent: 'boxOrange', bars: 'black' } });
 
   const F = { x: S.x, y: footerTop + 2, w: S.w, h: Math.max(S.y + S.h - footerTop - 2, 6) };
-  // The address without a heading: four lines, with the postcode under the street.
+  // The address without a heading: five lines, with the postcode under the street and the country under it.
   // The three footer groups (address, marks, QR and website) share one band, so their tops and
   // bottoms line up: the address and the QR start at its top, the website ends at its bottom, and
   // the marks sit on its middle.
   const band = { y: F.y + F.h * 0.08, h: F.h * 0.84 };
   const addrBox = ctx.box('back.address', { x: F.x, y: band.y, w: F.w * 0.46, h: band.h });
   els.push({ id: 'back.address', label: 'Address', edits: ADDRESS_LINES, type: 'text', layer: 'fg', movable: true, resizable: true, font: 'regular', align: 'left', valign: 'middle', lineHeight: 1.25,
-    text: [c.company, addressLines(c.address), c.email].filter(Boolean).join('\n'),
+    text: [c.company, addressLines(c.address), c.country, c.email].filter(Boolean).join('\n'),
     box: addrBox, size: (F.h * 0.115 / 0.7) * Math.sqrt((addrBox.w * addrBox.h) / (F.w * 0.46 * band.h)), minSize: 1.4, colors: { fill: ink } });
   const material = MATERIALS[ctx.options.recycle];
   // The disposal marks in the middle of the footer.

@@ -27,8 +27,8 @@ test('the label offers its name, codes and link; Produced for its address', () =
   const els = panelsWithElements(d, env()).flatMap((p) => p.elements);
   const byId = Object.fromEntries(els.map((e) => [e.id, e]));
   assert.deepEqual(byId['back.label'].edits, ['productName', 'sku', 'ean', 'qr', 'url']);
-  assert.deepEqual(byId['back.address'].edits, ['company', 'address', 'email'], 'the pouch’s address has no heading');
-  assert.equal(byId['back.address'].text, 'WERTIS Sp. z o.o.\nSienkiewicze 4\n16-070 Sienkiewicze\nbiuro@wertis.com.pl', 'the postcode and town run under the street');
+  assert.deepEqual(byId['back.address'].edits, ['company', 'address', 'country', 'email'], 'the pouch’s address has no heading');
+  assert.equal(byId['back.address'].text, 'WERTIS Sp. z o.o.\nSienkiewicze 4\n16-070 Sienkiewicze\nPoland\nbiuro@wertis.com.pl', 'the postcode and town run under the street, the country under them');
   // The box drops its barcode when the EAN is empty; its product code still offers the EAN.
   const box = createDesign({ format: 'tuckBox', template: 'boxProduct' });
   box.content.ean = '';
