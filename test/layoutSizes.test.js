@@ -39,3 +39,13 @@ test('a project saved with one set of moves keeps them for the size it was saved
   assert.equal(layoutOf(at(m, 250, 350), 'back.url'), undefined);
   assert.deepEqual(migrate(JSON.parse(JSON.stringify(m))).layout, m.layout, 'loading a new file changes nothing');
 });
+
+test('the pouch address grows with its box height; stretching it sideways leaves the type alone', () => {
+  const d = design({ format: 'flatPouch' });
+  const a = find(d, 'back.address');
+  const store = (box) => ({ ...d, layout: { [layoutKey(d, 'back.address')]: { x: box.x / 250, y: box.y / 350, w: box.w / 250, h: box.h / 350 } } });
+  const wide = find(store({ ...a.box, w: a.box.w * 1.5 }), 'back.address');
+  assert.ok(Math.abs(wide.size - a.size) < 1e-9, 'wider: same size');
+  const tall = find(store({ ...a.box, h: a.box.h * 1.5, y: a.box.y - a.box.h * 0.5 }), 'back.address');
+  assert.ok(Math.abs(tall.size / a.size - 1.5) < 1e-9, 'taller by half: type bigger by half');
+});

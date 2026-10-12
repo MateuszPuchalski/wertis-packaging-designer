@@ -37,6 +37,8 @@ export default {
   'export.dielineDxf': 'Dieline DXF',
   'export.dielineDxfHint': 'For the die maker: CUT and CREASE layers in mm',
   'export.printSvg': 'Print SVG',
+  'export.printSvgPx': 'SVG for Photopea (300 dpi)',
+  'export.printSvgPxHint': 'The same layers, sized in pixels so Photopea opens it sharp',
   'export.printSvgHint': 'The same artwork as an editable vector file',
   'export.proofPdf': 'Proof PDF',
   'export.proofPdfHint': 'The approval sheet: artwork, sizes, colours and codes',
