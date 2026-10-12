@@ -4,7 +4,7 @@
 //
 // Sizes are em sizes in millimetres. The engine takes parsed fonts, so it runs in Node (the
 // tests read the TTFs from disk) and in the browser (fonts.js fetches them).
-import { el, n } from '../render/svg.js';
+import { el, n, esc } from '../render/svg.js';
 
 export const FONT_FILES = {
   regular: 'Barlow-Regular.ttf',
@@ -33,6 +33,16 @@ export const FONT_SETS = {
   barlow: { web: 'regular', digits: 'regular' },
 };
 export const DEFAULT_FONT_SET = 'wertis';
+
+// What each font file stands for when text is written as live text (an editing export): the family a person
+// has installed (or the look-alike, as a fallback) with its weight.
+export const LIVE_FONTS = {
+  regular: ['Barlow', 400], semibold: ['Barlow SemiBold', 600], bold: ['Barlow', 700], extrabold: ['Barlow ExtraBold', 800],
+  extraboldItalic: ['Barlow ExtraBold', 800, 'italic'], blackItalic: ['Barlow Black', 900, 'italic'],
+  condSemibold: ['Barlow Semi Condensed', 600], condBold: ['Barlow Semi Condensed', 700],
+  cg: ["Century Gothic', 'Jost", 400], myriad: ["Myriad Pro', 'PT Sans", 400], myriadBold: ["Myriad Pro', 'PT Sans", 700],
+  myriadSemiCond: ["Myriad Pro', 'Barlow Semi Condensed", 600], digits: ['Open Sans', 400],
+};
 // The keys a person can supply their own file for, with what the file should be.
 export const OWN_FONT_ROLES = [['cg', 'Century Gothic Regular'], ['myriad', 'Myriad Pro Regular'], ['myriadBold', 'Myriad Pro Bold'], ['myriadSemiCond', 'Myriad Pro Semibold Condensed']];
 
@@ -46,8 +56,9 @@ export class TextEngine {
 
   // The same engine seen through a font set: the design's keys resolve to its fonts. Cheap, and it
   // shares the fonts and the cache.
-  view(setName) {
+  view(setName, { live = false } = {}) {
     const v = Object.create(this);
+    v.live = live;
     v.fontSet = FONT_SETS[setName] ?? FONT_SETS[DEFAULT_FONT_SET];
     return v;
   }
@@ -161,7 +172,15 @@ export class TextEngine {
       widest = Math.max(widest, width);
       const lx = align === 'center' && w ? x + (w - width) / 2 : align === 'right' && w ? x + w - width : align === 'center' ? x - width / 2 : align === 'right' ? x - width : x;
       left = Math.min(left, lx);
-      if (d) svg += el('path', { d, transform: `translate(${n(lx)} ${n(base + i * lineHeight * size)})` });
+      if (this.live && !spec.outline) {
+        // Live text: the editing exports keep each line as a <text> anchored where the outlined line starts, ends or centres.
+        if (ln.trim()) {
+          const [family, weight, style] = LIVE_FONTS[this.resolve(font)] ?? ['Barlow', 400];
+          const anchor = align === 'center' ? 'middle' : align === 'right' ? 'end' : 'start';
+          const ax = anchor === 'middle' ? lx + width / 2 : anchor === 'end' ? lx + width : lx;
+          svg += el('text', { x: n(ax), y: n(base + i * lineHeight * size), 'text-anchor': anchor, 'font-family': `'${family}'`, 'font-size': n(size), 'font-weight': weight, 'font-style': style, 'letter-spacing': spacing ? n(spacing * size) : null, 'xml:space': 'preserve' }, esc(ln));
+        }
+      } else if (d) svg += el('path', { d, transform: `translate(${n(lx)} ${n(base + i * lineHeight * size)})` });
     });
     const top = base - cap * size;
     return { svg, size, lines, width: widest, height: total, box: { x: left === Infinity ? x : left, y: top, w: widest, h: total }, baseline: base, lastBaseline: base + (lines.length - 1) * lineHeight * size };

@@ -57,6 +57,22 @@ export async function pngBlob(svg, { dpi = 150, maxPx = 12000, background = null
   }
 }
 
+// The layers of a print page, found in its DOM: the artwork's panels (each a group of element groups, under
+// its background/content groups) and the other top-level groups (dieline, marks, white underprint).
+function findLayers(svg) {
+  const kids = (node) => [...node.children].filter((c) => c.localName === 'g' && c.id);
+  const groups = [], leaves = [];
+  for (const top of kids(svg)) {
+    if (top.id === 'artwork') {
+      for (const panel of kids(top)) {
+        const items = kids(panel).flatMap(kids);
+        if (items.length) { groups.push({ label: panel.id, items }); leaves.push(...items); }
+      }
+    } else { groups.push({ label: null, items: [top] }); leaves.push(top); }
+  }
+  return { groups, leaves };
+}
+
 // A vector PDF, one page per SVG, each page the SVG's size in mm.
 //   colors   hex → [c, m, y, k] in %, or { spot, tint, overprint }: every fill and stroke is
 //            written in that colour instead of RGB (missing colours get the simple CMYK
@@ -65,7 +81,7 @@ export async function pngBlob(svg, { dpi = 150, maxPx = 12000, background = null
 //   boxes    { trim, bleed } in mm from the page's top left: the TrimBox and BleedBox
 //   pdfx     { version, intent, info }: the PDF/X keys and the output intent (a printing
 //            condition from the ICC registry, so no profile needs embedding)
-export async function pdfBlob(svgs, { title = 'WERTIS packaging', cmyk = null, colors = cmyk, spots = [], boxes = null, pdfx = null, compress = true } = {}) {
+export async function pdfBlob(svgs, { title = 'WERTIS packaging', cmyk = null, colors = cmyk, spots = [], boxes = null, pdfx = null, compress = true, layers = false } = {}) {
   const { jsPDF, GState } = window.jspdf ?? {};
   if (!jsPDF || !window.svg2pdf) throw new Error(t('export.noPdfLib'));
   const pages = Array.isArray(svgs) ? svgs : [svgs];
@@ -75,7 +91,26 @@ export async function pdfBlob(svgs, { title = 'WERTIS packaging', cmyk = null, c
   const write = (str) => doc.internal.write(str);
   const ev = doc.internal.events;
   let gsOp = 0, intent = 0;
-  if (spots.length || pdfx) {
+  // Layers (optional content): each named group of the artwork is drawn on its own inside a marked-content
+  // sequence tied to a layer, so Illustrator, Photopea and Acrobat list them. PDF/X-1a forbids layers, so a
+  // layered file is the editing copy, not the one for the printer.
+  const ocgs = []; // layer names, in the order they are drawn
+  const tree = []; // the layers panel: { label, items: [ocg index] } per panel, or { items: [one] }
+  if (layers) {
+    ev.subscribe('putResources', () => {
+      ocgs.forEach((o) => {
+        o.obj = doc.internal.newObject();
+        write(`<< /Type /OCG /Name (${pdfString(o.name)}) >>`);
+        write('endobj');
+      });
+    });
+    ev.subscribe('putCatalog', () => {
+      const ref = (i) => `${ocgs[i].obj} 0 R`;
+      const order = tree.map((g) => (g.label ? `(${pdfString(g.label)}) [${g.items.map(ref).join(' ')}]` : ref(g.items[0]))).join(' ');
+      write(`/OCProperties << /OCGs [${ocgs.map((_, i) => ref(i)).join(' ')}] /D << /Order [${order}] /ON [${ocgs.map((_, i) => ref(i)).join(' ')}] >> >>`);
+    });
+  }
+  if (spots.length || pdfx || layers) {
     // Our own objects: the overprint graphics state and the output intent.
     doc.addGState('WPgsDefault', new GState({ opacity: 1 })); // so jsPDF writes an ExtGState dict at all
     ev.subscribe('putResources', () => {
@@ -91,12 +126,15 @@ export async function pdfBlob(svgs, { title = 'WERTIS packaging', cmyk = null, c
     ev.subscribe('putGStateDict', () => write(`/WPgsOP ${gsOp} 0 R`));
     // jsPDF's resource dictionary has no colour-space hook: close its XObject dictionary,
     // add ours, and open a dummy one for jsPDF's closing ">>".
-    if (spots.length) {
+    if (spots.length || layers) {
       ev.subscribe('putXobjectDict', () => {
         write('>>');
-        write('/ColorSpace <<');
-        spots.forEach((sp, i) => write(`/WPcs${i} [/Separation /${pdfName(sp.name)} /DeviceCMYK << /FunctionType 2 /Domain [0 1] /C0 [0 0 0 0] /C1 [${sp.cmyk.map((v) => Math.round(v * 10) / 1000).join(' ')}] /N 1 >>]`));
-        write('>>');
+        if (spots.length) {
+          write('/ColorSpace <<');
+          spots.forEach((sp, i) => write(`/WPcs${i} [/Separation /${pdfName(sp.name)} /DeviceCMYK << /FunctionType 2 /Domain [0 1] /C0 [0 0 0 0] /C1 [${sp.cmyk.map((v) => Math.round(v * 10) / 1000).join(' ')}] /N 1 >>]`));
+          write('>>');
+        }
+        if (layers) write(`/Properties << ${ocgs.map((o, i) => `/WPoc${i} ${o.obj} 0 R`).join(' ')} >>`);
         write('/WPunused <<');
       });
     }
@@ -131,7 +169,26 @@ export async function pdfBlob(svgs, { title = 'WERTIS packaging', cmyk = null, c
       const size = svgSizeMm(pages[i]);
       if (i > 0) doc.addPage([size.w, size.h], size.w >= size.h ? 'landscape' : 'portrait');
       holder.innerHTML = pages[i];
-      await doc.svg(holder.firstElementChild, { x: 0, y: 0, width: size.w, height: size.h });
+      const svgEl = holder.firstElementChild;
+      const found = layers ? findLayers(svgEl) : null;
+      if (found?.leaves.length) {
+        // One pass per layer: every other layer is hidden for that pass.
+        for (const { label, items } of found.groups) {
+          const entry = { label, items: [] };
+          for (const leaf of items) {
+            const idx = ocgs.push({ name: leaf.id }) - 1;
+            entry.items.push(idx);
+            for (const other of found.leaves) other.setAttribute('display', other === leaf ? 'inline' : 'none');
+            write(`/OC /WPoc${idx} BDC`);
+            await doc.svg(svgEl, { x: 0, y: 0, width: size.w, height: size.h });
+            write('EMC');
+          }
+          tree.push(label ? entry : { items: entry.items });
+        }
+        for (const l of found.leaves) l.removeAttribute('display');
+      } else {
+        await doc.svg(svgEl, { x: 0, y: 0, width: size.w, height: size.h });
+      }
       if (boxes) {
         const k = 72 / 25.4;
         const box = (b) => ({ bottomLeftX: b.x * k, bottomLeftY: (size.h - b.y - b.h) * k, topRightX: (b.x + b.w) * k, topRightY: (size.h - b.y) * k });

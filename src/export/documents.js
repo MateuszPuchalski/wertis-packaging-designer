@@ -41,6 +41,13 @@ export function printSvg(design, env) {
   return printRender(design, env).svg;
 }
 
+// The editing file: every text stays live text (a <text> per line, named font families), for Illustrator,
+// Inkscape or Photopea. Install the fonts (Century Gothic, Myriad Pro, Open Sans) to see it as designed; the
+// codes' digits and the disposal marks stay outlines. The printer's files keep outlines.
+export function printSvgLive(design, env) {
+  return printRender(design, env, { liveText: true }).svg;
+}
+
 // The same file sized in pixels for programs that rasterise an SVG at its stated size (Photopea opens a
 // size in mm at about 96 dpi, which looks blurry): 300 dpi by default. The drawing itself stays vector.
 export function printSvgPixels(design, env, dpi = 300) {

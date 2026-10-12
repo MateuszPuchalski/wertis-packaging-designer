@@ -108,3 +108,16 @@ test('the pixel-sized print SVG keeps the artwork and its layers, at 300 dpi', a
   assert.equal(px.slice(px.indexOf('viewBox')), mm.slice(mm.indexOf('viewBox')), 'same drawing');
   assert.ok(px.includes('id="Front_Logo"'));
 });
+
+test('the editing SVG keeps text as live text; the printer\'s SVG keeps it as outlines', async () => {
+  const { printSvgLive } = await import('../src/export/documents.js');
+  const d = design({ format: 'flatPouch' });
+  const live = printSvgLive(d, env()), plain = printSvg(d, env());
+  assert.ok(!/<text/.test(plain), 'outlines for the printer');
+  const texts = [...live.matchAll(/<text [^>]*>([^<]*)<\/text>/g)].map((m) => m[1]);
+  for (const s of ['WERTIS Sp. z o.o.', 'Sienkiewicze 4', 'Poland', 'biuro@wertis.com.pl']) assert.ok(texts.includes(s), `live text "${s}"`);
+  assert.ok(/font-family="'Century Gothic', 'Jost'"/.test(live), 'the file\'s family, the look-alike behind it');
+  assert.ok(/text-anchor="(start|middle|end)"/.test(live));
+  assert.ok(live.includes('id="Back_Address"'), 'layers stay');
+  assert.ok(!texts.some((s) => /^\d{1,13}$/.test(s)), 'barcode digits stay outlines');
+});
