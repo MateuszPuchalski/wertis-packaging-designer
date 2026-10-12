@@ -279,8 +279,8 @@ function elementSvg(rc, e, panel) {
       // The registered mark ®, a small raised one just after the WERTIS word, in the word's colour.
       if (e.registered && colors.word !== 'none' && LOGO_LAYOUTS[e.layout ?? 'full']?.parts.includes('word')) {
         const word = partBox(fitLogo(e.box, e.layout, align, valign), 'word');
-        const size = word.h * 0.62;
-        const reg = rc.text.layout({ text: '®', x: word.x + word.w + word.h * 0.05, y: word.y - word.h * 0.02, font: 'web', size, align: 'left', valign: 'top' });
+        const size = word.h * 0.9;
+        const reg = rc.text.layout({ text: '®', x: word.x + word.w + word.h * 0.04, y: word.y - word.h * 0.08, font: 'web', size, align: 'left', valign: 'top' });
         logo.svg += el('g', { fill: colors.word }, reg.svg);
       }
       return logo;
