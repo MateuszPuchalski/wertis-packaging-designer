@@ -135,18 +135,16 @@ test('a band can run into another swatch: flat strips, each an exact CMYK mix, s
   assert.equal(missing.svg.length, flat.svg.length, 'a swatch that was deleted falls back to the flat colour');
 });
 
-test('the box address: company and street, then country and e-mail, at 6 pt or more, no "Produced for" heading', () => {
-  const box = createDesign({ format: 'tuckBox' });
-  const els = panelsWithElements(box, env()).flatMap((p) => p.elements);
-  const back = els.find((e) => e.id === 'back.address'), backRight = els.find((e) => e.id === 'back.address2');
-  assert.deepEqual([back.edits, backRight.edits], [['company', 'address'], ['country', 'email']], 'two short columns on the wide back face');
-  assert.equal(back.text, 'WERTIS Sp. z o.o.\nSienkiewicze 4\n16-070 Sienkiewicze');
-  assert.equal(backRight.text, 'Poland\nbiuro@wertis.com.pl');
-  const side = els.find((e) => e.id === 'side2.address');
-  assert.deepEqual(side.edits, ['company', 'address', 'country', 'email'], 'one block on the narrow side');
-  assert.equal(side.text, 'WERTIS Sp. z o.o.\nSienkiewicze 4\n16-070 Sienkiewicze\nPoland\nbiuro@wertis.com.pl');
-  for (const e of [back, backRight, side]) {
-    const laid = env().text.layout({ ...e.box, text: e.text, font: e.font, size: e.size, minSize: e.minSize, align: e.align, valign: e.valign, lineHeight: e.lineHeight });
-    assert.ok(laid.size / 0.3528 >= 5.95, `${e.id} is ${(laid.size / 0.3528).toFixed(1)} pt`);
+test('the box address is one block of five lines at 6 pt or more, no "Produced for" heading', () => {
+  for (const template of ['boxGeneric', 'boxProduct']) {
+    const els = panelsWithElements(createDesign({ format: 'tuckBox', template }), env()).flatMap((p) => p.elements);
+    const blocks = els.filter((e) => /\.address\d?$/.test(e.id));
+    assert.ok(blocks.length >= 2, `${template} repeats the address on its faces`);
+    for (const e of blocks) {
+      assert.deepEqual(e.edits, ['company', 'address', 'country', 'email'], e.id);
+      assert.equal(e.text, 'WERTIS Sp. z o.o.\nSienkiewicze 4\n16-070 Sienkiewicze\nPoland\nbiuro@wertis.com.pl', e.id);
+      const laid = env().text.layout({ ...e.box, text: e.text, font: e.font, size: e.size, minSize: e.minSize, align: e.align, valign: e.valign, lineHeight: e.lineHeight });
+      assert.ok(laid.size / 0.3528 >= 5.95, `${template} ${e.id} is ${(laid.size / 0.3528).toFixed(1)} pt`);
+    }
   }
 });

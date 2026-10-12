@@ -22,7 +22,7 @@ export function customSheet(ctx) {
   els.push({ id: 'sheet.tagline', label: 'Tagline', edits: ['tagline'], type: 'text', layer: 'fg', movable: true, resizable: true, keepAspect: true,
     text: c.tagline, font: 'condSemibold', align: 'right', valign: 'top', spacing: 0.02, box: tagBox, size: tagBox.h / 0.7, minSize: 1.4, colors: { fill: 'white' } });
   const urlBox = ctx.box('sheet.url', { x: S.x + (S.w - lw) / 2, y: S.y + S.h * 0.4 + lw / 3.2 + tagBox.h * 3, w: lw, h: Math.max(lw / 3.2 * 0.22, 2) });
-  els.push({ id: 'sheet.url', label: 'Website', edits: ['url'], type: 'text', layer: 'fg', movable: true, resizable: true, text: c.url, font: 'regular', align: 'center', valign: 'middle',
+  els.push({ id: 'sheet.url', label: 'Website', edits: ['url'], type: 'text', layer: 'fg', movable: true, resizable: true, text: c.url, font: 'web', align: 'center', valign: 'middle',
     box: urlBox, size: urlBox.h / 0.7, minSize: 1.2, colors: { fill: 'white' } });
   return els;
 }

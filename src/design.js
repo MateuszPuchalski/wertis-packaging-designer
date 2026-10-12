@@ -6,6 +6,7 @@ import { makeSwatch, refSwatchId, findSwatch, canDeleteSwatch } from './brand/pa
 import { PATTERN_DEFAULTS } from './render/pattern.js';
 import { normalizeDims } from './formats/common.js';
 import { cleanCustom } from './formats/customDieline.js';
+import { FONT_SETS, DEFAULT_FONT_SET } from './text/textEngine.js';
 import { cleanPictures, defaultPanelId } from './edit/pictures.js';
 
 export const SCHEMA = 'wertis-packaging';
@@ -44,6 +45,7 @@ export function createDesign({ format = 'flatPouch', template, date = '' } = {})
     palette: clone(WERTIS_PALETTE),
     colors: {}, // `${elementId}.${slot}` → colour reference (see brand/palette.js)
     layout: {}, // elementId → { x, y, w, h } as fractions of its panel
+    fonts: DEFAULT_FONT_SET, // 'wertis' (the printer's file: Century Gothic, Myriad Pro, Open Sans) or 'barlow'
     custom: null, // an imported dieline (formats/customDieline.js): { name, w, h, cut, fold, outline } in mm
     pictures: {}, // id → { panel, src, name, ratio }: images and .ai pages placed on a panel
     gradients: defaultGradients(t.id), // band elementId → { to: swatch id, dir: 'down' | 'up' | 'right' | 'left' }: the fill runs into that swatch
@@ -79,6 +81,7 @@ export function migrate(input) {
     colors: { ...(json.colors ?? {}) },
     layout: { ...(json.layout ?? {}) },
     gradients: { ...(json.gradients ?? {}) },
+    fonts: FONT_SETS[json.fonts] ? json.fonts : DEFAULT_FONT_SET,
     custom: cleanCustom(json.custom),
     pictures: cleanPictures(json.pictures),
     hidden: { ...(json.hidden ?? {}) },

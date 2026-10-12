@@ -10,3 +10,16 @@ export async function loadTextEngine(base = 'assets/fonts/') {
   }));
   return new TextEngine(Object.fromEntries(entries));
 }
+
+// Puts the font files kept in this browser over the bundled look-alikes. A file that does not parse is skipped.
+export async function applyStoredFonts(engine, records) {
+  const done = [];
+  for (const r of records) {
+    try { engine.setFont(r.key, parse(r.data), r.name); done.push(r.key); } catch { /* damaged file: keep the look-alike */ }
+  }
+  return done;
+}
+
+export function parseFont(buffer) {
+  return parse(buffer);
+}

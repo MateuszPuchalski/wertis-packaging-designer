@@ -20,7 +20,7 @@ export function panelsWithElements(design, env, geo = geometry(design)) {
   return geo.panels.map((panel) => {
     const make = t.panels[panel.role];
     const ctx = {
-      panel, geo, design, text: env.text, options: design.options,
+      panel, geo, design, text: env.text.view(design.fonts), options: design.options,
       box(id, def) {
         const o = design.layout?.[id];
         return o ? { x: o.x * panel.w, y: o.y * panel.h, w: o.w * panel.w, h: o.h * panel.h } : def;
@@ -55,7 +55,7 @@ function freeText(e, ctx) {
 
 function renderContext(design, env, mode, labelOf) {
   let i = 0;
-  return { design, text: env.text, defs: new Map(), used: new Set(), cmyk: new Map(), mode, labelOf, bleed: geometryBleed(design), uid: (p) => `${p}${++i}` };
+  return { design, text: env.text.view(design.fonts), defs: new Map(), used: new Set(), cmyk: new Map(), mode, labelOf, bleed: geometryBleed(design), uid: (p) => `${p}${++i}` };
 }
 
 function geometryBleed(design) {

@@ -51,6 +51,12 @@ export class Store {
     this.coalesceKey = null;
   }
 
+  // Same design, but something the drawing depends on changed (a font file): listeners redraw, no undo step.
+  refresh() {
+    this.design = { ...this.design };
+    this.emit('refresh');
+  }
+
   // A different project: history starts over.
   replace(design) {
     this.design = design;

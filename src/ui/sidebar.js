@@ -17,8 +17,13 @@ import { PATTERN_STYLES, PATTERN_SCALING } from '../render/pattern.js';
 import { PROOF_PAGES } from '../render/proof.js';
 import { MOCKUP_VIEWS } from '../render/mockup.js';
 import { OUTPUT_INTENTS } from '../export/documents.js';
+import { OWN_FONT_ROLES } from '../text/textEngine.js';
+import { parseFont } from '../text/browserFonts.js';
+import { saveFont, deleteFont } from '../storage.js';
 
-export function sidebar(store, { getParts, project, select }) {
+const FONT_SET_OPTIONS = [['wertis', "The printer's file (Century Gothic, Myriad Pro)"], ['barlow', 'The app look (Barlow)']];
+
+export function sidebar(store, { getParts, project, select, env }) {
   const syncs = [];
   const add = (sec, ...ctrls) => {
     for (const c of ctrls) { sec.body.append(c.el); syncs.push(c.sync); }
@@ -146,6 +151,46 @@ export function sidebar(store, { getParts, project, select }) {
     P('jitter', t('pattern.jitter'), 0.35, 0, 1, 0.05, ''), P('sizeJitter', t('pattern.sizeJitter'), 0.2, 0, 0.6, 0.05, ''), P('seed', t('pattern.seed'), 1, 0, 99999, 1, ''));
   pat.body.append(h('button', { class: 'secondary', onclick: () => { store.set(['pattern', 'seed'], Math.floor(Math.random() * 99999)); store.settle(); } }, t('pattern.shuffle')));
 
+  // --- Fonts ---
+  // The set follows the printer's file (Century Gothic, Myriad Pro, Open Sans) or the app's own Barlow. The two
+  // licensed families are free look-alikes until the person loads their own files, kept in this browser only.
+  const fnt = section(t('side.fontsSection'), { id: 'sec-fonts' });
+  add(fnt, fieldControl(store, [], { key: 'fonts', text: t('fonts.set'), type: 'select', default: 'wertis', options: FONT_SET_OPTIONS }));
+  fnt.body.append(h('p', { class: 'help' }, t('fonts.help')));
+  const ownRows = OWN_FONT_ROLES.map(([key, name]) => {
+    const state = h('span', { class: 'help' });
+    const input = h('input', { type: 'file', accept: '.ttf,.otf', hidden: true, onchange: async () => {
+      const file = input.files?.[0];
+      input.value = '';
+      if (!file) return;
+      try {
+        const data = await file.arrayBuffer();
+        env.text.setFont(key, parseFont(data), file.name);
+        await saveFont(key, file.name, data);
+        store.refresh();
+        toast(t('fonts.loaded', { name: file.name }));
+      } catch (err) { console.error(err); toast(t('fonts.bad', { name: file.name }), 'error'); }
+      showOwn();
+    } });
+    const use = h('button', { class: 'secondary', onclick: () => input.click() }, icon('upload'), name);
+    const drop = h('button', { class: 'ghost', title: t('fonts.removeTip'), onclick: async () => {
+      env.text.setFont(key, null);
+      await deleteFont(key);
+      store.refresh();
+      showOwn();
+    } }, t('common.delete'));
+    return { key, state, drop, el: h('div', { class: 'row' }, use, input, state, drop) };
+  });
+  function showOwn() {
+    for (const r of ownRows) {
+      const file = env.text.own?.[r.key];
+      r.state.textContent = file ? (typeof file === 'string' ? file : t('fonts.yours')) : t('fonts.lookAlike');
+      r.drop.hidden = !file;
+    }
+  }
+  for (const r of ownRows) fnt.body.append(r.el);
+  showOwn();
+
   // --- Print & export (prepress) ---
   const px = section(t('side.printSection'), { id: 'sec-print' });
   px.body.append(h('p', { class: 'help' }, t('print.help')));
@@ -208,7 +253,7 @@ export function sidebar(store, { getParts, project, select }) {
   const TABS = [
     { id: 'project', text: t('side.project'), icon: 'folder', sections: [proj] },
     { id: 'format', text: t('side.format'), icon: 'ruler', sections: [fmt, lay] },
-    { id: 'colours', text: t('side.colours'), icon: 'palette', sections: [col, pat] },
+    { id: 'colours', text: t('side.colours'), icon: 'palette', sections: [col, pat, fnt] },
     { id: 'print', text: t('side.print'), icon: 'printer', sections: [px, pr] },
     { id: 'mockup', text: t('side.mockup'), icon: 'image', sections: [mk] },
   ];

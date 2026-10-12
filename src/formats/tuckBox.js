@@ -14,14 +14,14 @@ export const BOTTOMS = [['snap', 'Snap-lock bottom (1-2-3)'], ['tuck', 'Tuck end
 
 export const FIELDS = [
   num('length', 'Length L (front)', 95, 20, 600),
-  num('width', 'Width W (side)', 65, 15, 400),
+  num('width', 'Width W (side)', 75, 15, 400),
   num('height', 'Height H', 50, 15, 600),
   choice('bottom', 'Bottom', 'snap', BOTTOMS),
-  num('tuck', 'Tuck flap', 18, 8, 60, 0.5),
-  num('dust', 'Dust flap depth', 29, 8, 200, 0.5),
-  num('glue', 'Glue flap', 15, 8, 40, 0.5),
-  toggle('thumb', 'Thumb notch', true),
-  num('board', 'Board allowance', 0.4, 0, 3, 0.1),
+  num('tuck', 'Tuck flap', 20, 8, 60, 0.5),
+  num('dust', 'Dust flap depth', 32.5, 8, 200, 0.5),
+  num('glue', 'Glue flap', 17, 8, 40, 0.5),
+  toggle('thumb', 'Thumb tab and lock slot', true),
+  num('board', 'Board allowance', 1.5, 0, 3, 0.1),
   num('bleed', 'Bleed', 3, 0, 10, 0.5),
   num('safe', 'Safe margin', 3, 0, 15, 0.5),
 ];
@@ -41,7 +41,7 @@ function dustFlap(x, W, y, D, slantRight) {
 
 // The three snap-lock bottom flaps, from the W09-0414 proportions.
 function snapFlaps(xs, L, W, y, c) {
-  const dA = 0.757 * W, d1 = 0.49 * W, dB = 0.441 * W, xa = 0.25;
+  const dA = 0.767 * W, d1 = 0.49 * W, dB = 0.441 * W, xa = 0.25;
   const A = [[0, 0], [0, dA], [xa * L - c, dA], [xa * L, dA - c], [xa * L, d1], [(1 - xa) * L, d1], [(1 - xa) * L, dA - c], [(1 - xa) * L + c, dA], [L, dA], [L, 0]]
     .map(([u, v]) => [xs[0] + u, y + v]);
   const C = [[0.015, 0], [0.258, d1 / L], [0.258, (dA - c) / L], [0.258 + c / L, dA / L], [0.742 - c / L, dA / L], [0.742, (dA - c) / L], [0.742, d1 / L], [0.985, 0]]
@@ -74,9 +74,19 @@ export function layout(input) {
   trims.push(polyPath([[xs[0], y0], [xs[4], y0], [xs[4], y1], [xs[0], y1]]));
 
   // Lid and tuck on the back panel.
-  fold.push(line(xs[0], y0, xs[1], y0), line(xs[0] + 1, yL, xs[1] - 1, yL));
+  fold.push(line(xs[0], y0, xs[1], y0));
   const tuck = [[xs[0] + 1, yL], [xs[0] + 1, yL - T + ch], [xs[0] + 1 + ch, yL - T], [xs[1] - 1 - ch, yL - T], [xs[1] - 1, yL - T + ch], [xs[1] - 1, yL]];
-  cut.push(line(xs[0], y0, xs[0], yL), line(xs[1], y0, xs[1], yL), line(xs[0], yL, xs[0] + 1, yL), line(xs[1] - 1, yL, xs[1], yL), P(tuck));
+  // The tuck has rounded corners; with the thumb notch on, the lid fold is broken by a half-round notch
+  // and a lock slot sits in the tuck above it (as on the printer's W09-0414 die).
+  const lx = (xs[0] + xs[1]) / 2, nrL = d.thumb ? Math.min(L * 0.085, 8) : 0;
+  const slotW = Math.min(L * 0.27, 25.8), slotH = 4;
+  const round = `M${r(xs[0] + 1)} ${r(yL)}V${r(yL - T + ch)}A${r(ch)} ${r(ch)} 0 0 1 ${r(xs[0] + 1 + ch)} ${r(yL - T)}H${r(xs[1] - 1 - ch)}A${r(ch)} ${r(ch)} 0 0 1 ${r(xs[1] - 1)} ${r(yL - T + ch)}V${r(yL)}`;
+  cut.push(line(xs[0], y0, xs[0], yL), line(xs[1], y0, xs[1], yL), line(xs[0], yL, xs[0] + 1, yL), line(xs[1] - 1, yL, xs[1], yL), round);
+  if (nrL) {
+    fold.push(line(xs[0] + 1, yL, lx - nrL, yL), line(lx + nrL, yL, xs[1] - 1, yL));
+    cut.push(`M${r(lx - nrL)} ${r(yL)}A${r(nrL)} ${r(nrL)} 0 0 0 ${r(lx + nrL)} ${r(yL)}`,
+      `M${r(lx - slotW / 2 + slotH / 2)} ${r(yL - slotH)}H${r(lx + slotW / 2 - slotH / 2)}A${r(slotH / 2)} ${r(slotH / 2)} 0 0 1 ${r(lx + slotW / 2 - slotH / 2)} ${r(yL)}H${r(lx - slotW / 2 + slotH / 2)}A${r(slotH / 2)} ${r(slotH / 2)} 0 0 1 ${r(lx - slotW / 2 + slotH / 2)} ${r(yL - slotH)}Z`);
+  } else fold.push(line(xs[0] + 1, yL, xs[1] - 1, yL));
   trims.push(polyPath([[xs[0], y0], [xs[0], yL], ...tuck, [xs[1], yL], [xs[1], y0]]));
 
   // Top dust flaps on both sides, slanting towards the front panel.
@@ -90,9 +100,15 @@ export function layout(input) {
     trims.push(polyPath(flap));
   }
   // Front panel top edge, with the thumb notch.
-  const nr = d.thumb ? Math.min(L * 0.1, 9) : 0;
+  // With the thumb tab on, a tab stands up from the front panel's top edge and is cut down into it, hinged
+  // at its foot, so a thumb can lift the lid's lock (as on the printer's die).
   const cx = (xs[2] + xs[3]) / 2;
-  cut.push(nr ? `M${r(xs[2])} ${r(y0)}H${r(cx - nr)}A${r(nr)} ${r(nr)} 0 0 0 ${r(cx + nr)} ${r(y0)}H${r(xs[3])}` : line(xs[2], y0, xs[3], y0));
+  if (d.thumb) {
+    const tw = Math.min(L * 0.25, 24), tu = Math.min(T, 20), tb = 20, tr = Math.min(tw / 2, 3.5);
+    cut.push(line(xs[2], y0, cx - tw / 2, y0), line(cx + tw / 2, y0, xs[3], y0),
+      `M${r(cx - tw / 2)} ${r(y0 + tb)}V${r(y0 - tu + tr)}A${r(tr)} ${r(tr)} 0 0 1 ${r(cx - tw / 2 + tr)} ${r(y0 - tu)}H${r(cx + tw / 2 - tr)}A${r(tr)} ${r(tr)} 0 0 1 ${r(cx + tw / 2)} ${r(y0 - tu + tr)}V${r(y0 + tb)}`);
+    fold.push(line(cx - tw / 2, y0 + tb, cx + tw / 2, y0 + tb));
+  } else cut.push(line(xs[2], y0, xs[3], y0));
 
   // Bottom.
   let bottomDepth;

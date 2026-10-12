@@ -2,7 +2,7 @@
 // preview, autosave and keyboard shortcuts.
 import './ui/lang.js'; // first: everything below speaks the chosen language
 import { t, msgOf, misses } from './i18n/index.js';
-import { loadTextEngine } from './text/browserFonts.js';
+import { loadTextEngine, applyStoredFonts } from './text/browserFonts.js';
 import { createDesign } from './design.js';
 import { Store } from './store.js';
 import { panelsWithElements } from './render/sheet.js';
@@ -11,7 +11,7 @@ import { mockupSvg } from './render/mockup.js';
 import { download, pngBlob, pdfBlob, slug } from './export/files.js';
 import { dielineDxf } from './export/dxf.js';
 import { preflight } from './preflight.js';
-import { currentId, rememberCurrent, loadProject, newId } from './storage.js';
+import { currentId, rememberCurrent, loadProject, newId, listFonts } from './storage.js';
 import { Stage } from './ui/stage.js';
 import { sidebar } from './ui/sidebar.js';
 import { inspector } from './ui/inspector.js';
@@ -31,6 +31,7 @@ async function boot() {
     return;
   }
   const env = { text };
+  try { await applyStoredFonts(text, await listFonts()); } catch (err) { console.warn('own fonts not loaded', err); }
 
   let id = currentId();
   let design = id ? await loadProject(id).catch(() => null) : null;
@@ -61,7 +62,7 @@ async function boot() {
   const project = projectSection(store, { getId: () => id, setId: (nid) => { id = nid; rememberCurrent(nid); }, today });
   // Preflight's Show (and a picture just added): the element on the Design tab.
   const show = (sid) => { if (stage.tab !== 'design') stage.setTab('design'); select(sid); };
-  const side = sidebar(store, { getParts, project, select: show });
+  const side = sidebar(store, { getParts, project, select: show, env });
   const top = topbar(document.querySelector('.topbar'), { store, env, getId: () => id, project, today, select: show });
   document.getElementById('sidebar').append(side.el);
   document.getElementById('inspector').append(insp.el);

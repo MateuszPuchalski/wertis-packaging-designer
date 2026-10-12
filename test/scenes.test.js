@@ -96,7 +96,7 @@ test('a pile is the same for a seed, and drops one pack after another', () => {
 test('every format gives the 3D view its faces', () => {
   const b = packFaces(design({ format: 'tuckBox' }), env());
   assert.deepEqual(Object.keys(b.faces).sort(), ['back', 'bottom', 'front', 'left', 'right', 'top']);
-  assert.deepEqual(b.size, { x: 95, y: 50, z: 65 });
+  assert.deepEqual(b.size, { x: 95, y: 50, z: 75 });
   for (const svg of Object.values(b.faces)) assert.match(svg, /^<svg [^>]*width="[\d.]+mm"/);
   const p = packFaces(design(), env());
   assert.equal(p.kind, 'pouch');

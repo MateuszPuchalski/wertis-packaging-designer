@@ -20,27 +20,28 @@ test('the walls add up to glue flap + 2L + 2W', () => {
     assert.deepEqual(body.info.faces.map((f) => [f.id, f.x, f.w]), [['back', 0, L], ['side1', L, W], ['front', L + W, L], ['side2', 2 * L + W, W]]);
   }
   const g = layout(defaults);
-  assert.equal(g.panels.find((p) => p.id === 'body').info.faces[3].w, 65 - 0.4, 'the last wall is narrower by the board allowance');
+  assert.equal(g.panels.find((p) => p.id === 'body').info.faces[3].w, defaults.width - defaults.board, 'the last wall is narrower by the board allowance');
 });
 
 test('the lid hangs on the back wall and the dust flaps on the sides', () => {
   const g = layout(defaults);
   const body = g.panels.find((p) => p.id === 'body');
   const lid = g.panels.find((p) => p.id === 'lid');
-  assert.deepEqual([lid.x, lid.y + lid.h, lid.w, lid.h], [body.x, body.y, 95, 65]);
+  assert.deepEqual([lid.x, lid.y + lid.h, lid.w, lid.h], [body.x, body.y, 95, defaults.width]);
   for (const id of ['dust1', 'dust2']) {
     const d = g.panels.find((p) => p.id === id);
     assert.equal(d.y + d.h, body.y);
-    assert.ok(d.h <= 65);
+    assert.ok(d.h <= defaults.width);
   }
   assert.equal(lid.y, defaults.tuck, 'the tuck flap is above the lid');
 });
 
 test('snap-lock and tuck bottoms', () => {
   const snap = layout(defaults);
-  assert.ok(Math.abs(snap.size.h - (65 + 18 + 50 + 0.757 * 65)) < 1e-9);
+  const { width: W, tuck: T } = defaults;
+  assert.ok(Math.abs(snap.size.h - (W + T + 50 + 0.767 * W)) < 1e-9);
   const tuck = layout({ ...defaults, bottom: 'tuck' });
-  assert.equal(tuck.size.h, 65 + 18 + 50 + 65 + 18);
+  assert.equal(tuck.size.h, W + T + 50 + W + T);
   for (const g of [snap, tuck]) {
     const all = [...g.sheetLines.cut, ...g.sheetLines.fold, ...g.trims].join('');
     assert.ok(!all.includes('NaN'));
@@ -49,10 +50,10 @@ test('snap-lock and tuck bottoms', () => {
   }
 });
 
-test('a new box is the universal one: L95 W65 H50, no technical data, product name or PAP mark', () => {
+test('a new box is the universal one: L95 W75 H50 (the printer’s die), no technical data, product name or PAP mark', () => {
   const d = design({ format: 'tuckBox' });
   assert.equal(d.template, 'boxGeneric');
-  assert.deepEqual([d.dims.length, d.dims.width, d.dims.height], [95, 65, 50]);
+  assert.deepEqual([d.dims.length, d.dims.width, d.dims.height], [95, 75, 50], 'the printer’s die: L95, sides 75, H50');
   assert.equal(d.options.recycle, 'none', 'no PAP mark');
   const els = renderSheet(d, env()).hits.map((h) => h.id);
   for (const id of ['back.specs', 'back.specsTitle', 'front.name', 'front.subtitle', 'front.sku', 'front.ean']) assert.ok(!els.includes(id), `${id} is not on the universal box`);

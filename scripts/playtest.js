@@ -236,6 +236,8 @@ export async function playtest() {
     // The Export menu works from the keyboard: arrows move, Esc closes and gives the focus back.
     await page.focus('#export-button');
     await page.keyboard.press('ArrowDown');
+    assert.equal(await page.evaluate(() => document.activeElement.dataset.export), 'all-zip');
+    await page.keyboard.press('ArrowDown');
     assert.equal(await page.evaluate(() => document.activeElement.dataset.export), 'print-pdf');
     await page.keyboard.press('ArrowDown');
     assert.equal(await page.evaluate(() => document.activeElement.dataset.export), 'dieline-dxf');

@@ -50,7 +50,7 @@ function isGuard(i) {
 //   module      module width in mm          barHeight  normal bar height in mm (22.85 at 100 %)
 //   text        the TextEngine, to draw the digits (they are left out without it)
 // bwr: bar width reduction in mm (GS1), the ink spread on press taken off each bar.
-export function ean13Svg({ code, x = 0, y = 0, module = EAN_MODULE, barHeight, color = '#000000', bg = '#ffffff', text, font = 'regular', marker = true, bwr = 0 }) {
+export function ean13Svg({ code, x = 0, y = 0, module = EAN_MODULE, barHeight, color = '#000000', bg = '#ffffff', text, font = 'digits', marker = true, bwr = 0 }) {
   const v = validateEan13(code);
   if (!v.ok) return { error: v.error };
   const m = module;
