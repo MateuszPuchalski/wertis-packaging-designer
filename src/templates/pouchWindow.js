@@ -169,7 +169,7 @@ export function back(ctx) {
   const addrBox = ctx.box('back.address', { x: F.x, y: band.y, w: F.w * 0.46, h: band.h });
   els.push({ id: 'back.address', label: 'Address', edits: ADDRESS_LINES, type: 'text', layer: 'fg', movable: true, resizable: true, font: 'regular', align: 'left', valign: 'bottom', lineHeight: 1.25,
     text: [c.company, addressLines(c.address), c.country, c.email].filter(Boolean).join('\n'),
-    box: addrBox, size: (F.h * 0.115 / 0.7) * Math.sqrt((addrBox.w * addrBox.h) / (F.w * 0.46 * band.h)), minSize: 1.4, colors: { fill: ink } });
+    box: addrBox, size: (F.h * 0.115 / 0.7) * (addrBox.h / band.h), minSize: 1.4, colors: { fill: ink } });
   const material = MATERIALS[ctx.options.recycle];
   // The disposal marks in the middle of the footer.
   const markSize = Math.min(F.h * 0.55, F.w * 0.075);
