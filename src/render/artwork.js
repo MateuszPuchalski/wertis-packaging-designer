@@ -10,6 +10,10 @@ import { logoSvg, fitLogo, partBox, LOGO_LAYOUTS } from '../brand/logo.js';
 import { resolveColor, refSwatchId, findSwatch, mix, cmykFromHex } from '../brand/palette.js';
 import { ean13Svg } from '../codes/ean13.js';
 import { qrSvg } from '../codes/qr.js';
+
+// The quiet zone round a QR code, in modules. ISO/IEC 18004 asks for 4, but the code sits on a flat colour with
+// nothing printed next to it, so 1 module scans fine and keeps the white margin small.
+const QR_QUIET = 1;
 import { recycleMark, tidyman } from '../brand/marks.js';
 
 // rc (render context): { design, text, defs: Map, used: Set, cmyk: Map, mode, uid() }
@@ -180,7 +184,7 @@ function labelSvg(rc, e) {
     const urlCap = smallCap;
     const qrSize = codesH - urlCap * 1.8;
     if (c.qr && qrSize > 4) {
-      const q = qrSvg({ text: c.qr, x: x + w - pad - qrSize, y: by, size: qrSize, color: bars, bg: fill, quiet: 4 });
+      const q = qrSvg({ text: c.qr, x: x + w - pad - qrSize, y: by, size: qrSize, color: bars, bg: fill, quiet: QR_QUIET });
       if (!q.error) out += q.svg;
       if (c.url) out += el('g', { fill: ink }, t.layout({ text: c.url, x: x + w - pad - qrSize * 1.6, y: by + qrSize + urlCap * 0.5, w: qrSize * 1.6, font: 'semibold', size: urlCap / 0.7, align: 'right' }).svg);
     }
@@ -211,7 +215,7 @@ function eanSvg(rc, e) {
 function qrElementSvg(rc, e) {
   const size = Math.min(e.box.w, e.box.h);
   const x = e.box.x + (e.box.w - size) / 2, y = e.box.y + (e.box.h - size) / 2;
-  const r = qrSvg({ text: e.text, x, y, size, color: colorOf(rc, e, 'dots'), bg: colorOf(rc, e, 'bg'), quiet: 4 });
+  const r = qrSvg({ text: e.text, x, y, size, color: colorOf(rc, e, 'dots'), bg: colorOf(rc, e, 'bg'), quiet: QR_QUIET });
   return { svg: r.error ? '' : r.svg, box: { x, y, w: size, h: size } };
 }
 

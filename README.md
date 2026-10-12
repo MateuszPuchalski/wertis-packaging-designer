@@ -104,7 +104,7 @@ logos, label and recycling marks on the preview. The editor speaks Polish or Eng
 
 "Quality You Can Trust" has its own size setting under **Format → Layout & window** (40 to 300 %). It stays right-aligned under the WERTIS word on the pouch back, the box front and the lid. On the pouch back it can also be moved and resized on the preview, like the logo: pull its corner, or type its height in the card.
 
-The pouch back carries a QR code above the website line, at the right. It links to the link field under Texts, and can be moved and resized too.
+The pouch back carries a QR code above the website line, at the right, with a 1-module white margin. It links to the link field under Texts, and can be moved and resized too.
 
 The pattern of parts icons comes in two styles: solid silhouettes, or outlines. The recycling
 marks (the triangle with the material code, plus the tidyman) are vector shapes; pick the
@@ -125,8 +125,8 @@ material under **Format → Layout & window**.
 - **Texts are edited on the element that shows them.** Select a text (or double-click it, or
   right-click → Edit the text) and its card offers exactly its words: the label its product
   name (the pack's main language first, the other languages folded under it), product code,
-  EAN-13 (checked as you type), QR link and website; the pouch's address its company, street
-  and e-mail (no heading); the box's address block the same, plus the country (Poland); the box's technical data
+  EAN-13 (checked as you type), QR link and website; the pouch's address its company, street,
+  country (Poland) and e-mail (no heading); the box's address block the same, plus the country (Poland); the box's technical data
   its heading and one line per item; and so on. A box drops its barcode when the EAN is empty,
   so its product code offers the EAN too.
 
