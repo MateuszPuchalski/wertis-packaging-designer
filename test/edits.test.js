@@ -148,3 +148,12 @@ test('the box address is one block of five lines at 6 pt or more, no "Produced f
     }
   }
 });
+
+test('the pouch footer: the address, the marks and the website all end on one bottom line', () => {
+  const els = panelsWithElements(createDesign(), env()).flatMap((p) => p.elements);
+  const byId = Object.fromEntries(els.map((e) => [e.id, e]));
+  const bottom = (id) => byId[id].box.y + byId[id].box.h;
+  assert.equal(byId['back.address'].valign, 'bottom');
+  assert.ok(Math.abs(bottom('back.address') - bottom('back.url')) < 1e-6);
+  assert.ok(Math.abs(bottom('back.marks') - bottom('back.url')) < 1e-6);
+});
