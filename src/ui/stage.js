@@ -12,6 +12,7 @@ import { elementMenuEntries } from './elementMenu.js';
 import { getPref, setPref } from './prefs.js';
 import { t, label, fmtNum } from '../i18n/index.js';
 import { renderSheet } from '../render/sheet.js';
+import { layoutKey } from '../design.js';
 import { renderProof } from '../render/proof.js';
 import { packFaces } from '../render/faces.js';
 import { SCENES, maxCount, scenesFor } from '../three/scenes.js';
@@ -463,7 +464,7 @@ export class Stage {
     const b = r.box;
     this.guides = r.guides;
     this.cursor = p;
-    this.store.set(['layout', d.id], { x: (b.x - P.x) / P.w, y: (b.y - P.y) / P.h, w: b.w / P.w, h: b.h / P.h }, { coalesce: `drag-${d.id}` });
+    this.store.set(['layout', layoutKey(this.store.get(), d.id)], { x: (b.x - P.x) / P.w, y: (b.y - P.y) / P.h, w: b.w / P.w, h: b.h / P.h }, { coalesce: `drag-${d.id}` });
   }
 
   pointerUp() {
@@ -505,7 +506,7 @@ export class Stage {
     const P = this.panelOf(hit);
     const b = hit.box;
     const x = clamp(b.x + dx, P.x, P.x + P.w - b.w), y = clamp(b.y + dy, P.y, P.y + P.h - b.h);
-    this.store.set(['layout', hit.id], { x: (x - P.x) / P.w, y: (y - P.y) / P.h, w: b.w / P.w, h: b.h / P.h }, { coalesce: `nudge-${hit.id}` });
+    this.store.set(['layout', layoutKey(this.store.get(), hit.id)], { x: (x - P.x) / P.w, y: (y - P.y) / P.h, w: b.w / P.w, h: b.h / P.h }, { coalesce: `nudge-${hit.id}` });
     return true;
   }
 }

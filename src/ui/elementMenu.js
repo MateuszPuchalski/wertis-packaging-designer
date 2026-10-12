@@ -1,6 +1,7 @@
 // The right-click menu on the preview: what can be done to the element under the pointer,
 // and the view. Every item has a data-action, so the playtest can find it.
 import { t, label } from '../i18n/index.js';
+import { layoutOf } from '../design.js';
 import { hide, resetLayout, resetColors, hasOwnColors, showAll, hiddenCount } from '../edit/actions.js';
 
 export function elementMenuEntries({ store, hit, design, view, editText }) {
@@ -10,7 +11,7 @@ export function elementMenuEntries({ store, hit, design, view, editText }) {
   if (hit) {
     out.push({ heading: label(hit.label) });
     out.push({ id: 'hide', label: t('menu.hide'), hint: t('keys.delete'), action: () => commit((d) => hide(d, hit.id)) });
-    if (hit.movable) out.push({ id: 'reset-position', label: t('menu.resetPos'), disabled: !design.layout?.[hit.id], action: () => commit((d) => resetLayout(d, hit.id)) });
+    if (hit.movable) out.push({ id: 'reset-position', label: t('menu.resetPos'), disabled: !layoutOf(design, hit.id), action: () => commit((d) => resetLayout(d, hit.id)) });
     if (hit.slots?.length) out.push({ id: 'reset-colours', label: t('menu.resetColours'), disabled: !hasOwnColors(design, hit.id), action: () => commit((d) => resetColors(d, hit.id)) });
     if (hit.edits?.length) out.push({ id: 'edit-text', label: t('menu.editText'), hint: t('keys.dblClick'), action: () => editText(hit.id) });
     out.push('sep');

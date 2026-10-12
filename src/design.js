@@ -44,7 +44,7 @@ export function createDesign({ format = 'flatPouch', template, date = '' } = {})
     options: defaultsOf(t.options),
     palette: clone(WERTIS_PALETTE),
     colors: {}, // `${elementId}.${slot}` → colour reference (see brand/palette.js)
-    layout: {}, // elementId → { x, y, w, h } as fractions of its panel
+    layout: {}, // `${size}|${elementId}` → { x, y, w, h } as fractions of its panel: a move is kept per size (see layoutKey)
     fonts: DEFAULT_FONT_SET, // 'wertis' (the printer's file: Century Gothic, Myriad Pro, Open Sans) or 'barlow'
     custom: null, // an imported dieline (formats/customDieline.js): { name, w, h, cut, fold, outline } in mm
     pictures: {}, // id → { panel, src, name, ratio }: images and .ai pages placed on a panel
@@ -69,17 +69,18 @@ export function migrate(input) {
   const base = createDesign({ format: json.format, template: json.template, date: json.proof?.date ?? '' });
   const f = FORMATS[base.format];
   const t = TEMPLATES[base.template];
+  const dims = normalizeDims(f.fields, json.dims);
   const d = {
     ...base,
     ...json,
     version: SCHEMA_VERSION,
     format: base.format,
     template: base.template,
-    dims: normalizeDims(f.fields, json.dims),
+    dims,
     options: normalizeDims(t.options, json.options),
     palette: Array.isArray(json.palette) && json.palette.length ? json.palette.map((s) => makeSwatch(s)) : base.palette,
     colors: { ...(json.colors ?? {}) },
-    layout: { ...(json.layout ?? {}) },
+    layout: scopeLayout(json.layout, dims),
     gradients: { ...(json.gradients ?? {}) },
     fonts: FONT_SETS[json.fonts] ? json.fonts : DEFAULT_FONT_SET,
     custom: cleanCustom(json.custom),
@@ -140,6 +141,23 @@ export function setIn(obj, path, value) {
   if (rest.length === 0 && value === undefined) delete next[k];
   else next[k] = setIn(base[k], rest, value);
   return next;
+}
+
+// A moved or resized element is remembered for the size it was moved at: the footer that fits a 14 x 20
+// pouch must not drag the 25 x 35 one along. The key is the size plus the element's id.
+export function sizeKey(design) {
+  const d = design.dims ?? {};
+  return [d.width, d.height, d.length].filter((v) => v !== undefined).join('x');
+}
+export const layoutKey = (design, id) => `${sizeKey(design)}|${id}`;
+// Every size's moves of one element (a deleted or re-homed picture leaves none behind).
+export const withoutLayout = (layout, id) => Object.fromEntries(Object.entries(layout ?? {}).filter(([k]) => k !== id && !k.endsWith(`|${id}`)));
+export const layoutOf = (design, id) => design.layout?.[layoutKey(design, id)];
+
+// Projects saved before that kept one set of moves for every size: they now belong to the size the project was saved at.
+function scopeLayout(layout, dims) {
+  const prefix = `${sizeKey({ dims })}|`;
+  return Object.fromEntries(Object.entries(layout ?? {}).map(([k, v]) => [k.includes('|') ? k : prefix + k, v]));
 }
 
 export function getIn(obj, path) {

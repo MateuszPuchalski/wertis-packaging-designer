@@ -1,6 +1,7 @@
 // Pictures placed on a panel: an image file or the page of an .ai / PDF, kept in the project as a data
 // URL. The picture is an element like the logo (move, resize, hide); these are the project changes.
 import { FORMATS } from '../registry.js';
+import { withoutLayout } from '../design.js';
 
 export const MAX_PICTURES = 20;
 const MAX_SRC = 12_000_000; // characters of data URL
@@ -40,8 +41,7 @@ export function removePicture(design, id) {
   const pictures = { ...design.pictures };
   delete pictures[id];
   const key = `pic.${id}`;
-  const layout = { ...design.layout }, hidden = { ...design.hidden };
-  delete layout[key];
+  const layout = withoutLayout(design.layout, key), hidden = { ...design.hidden };
   delete hidden[key];
   return { ...design, pictures, layout, hidden };
 }
@@ -49,7 +49,6 @@ export function removePicture(design, id) {
 // Moves a picture to another panel; where it sat on the old one means nothing on the new one.
 export function movePicture(design, id, panel) {
   if (!design.pictures?.[id]) return design;
-  const layout = { ...design.layout };
-  delete layout[`pic.${id}`];
+  const layout = withoutLayout(design.layout, `pic.${id}`);
   return { ...design, pictures: { ...design.pictures, [id]: { ...design.pictures[id], panel } }, layout };
 }

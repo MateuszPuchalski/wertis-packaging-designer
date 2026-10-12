@@ -4,6 +4,7 @@ import { fitPpm, clampPpm, wheelFactor, anchorScroll, percent, ppmForPercent, st
 import { rulerTicks, rulerStep } from '../src/edit/rulers.js';
 import { hide, show, showAll, resetLayout, resetColors, hasOwnColors, hiddenCount } from '../src/edit/actions.js';
 import { design } from './helpers.js';
+import { layoutKey } from '../src/design.js';
 
 test('fit, limits, percent', () => {
   // The old formula: the smaller of the two ratios, with 48 px to spare.
@@ -51,7 +52,7 @@ test('ruler ticks: a round step, numbered ticks far enough apart, finer ones bet
 });
 
 test('quick actions: hide, show all, reset the position or the colours', () => {
-  const d = { ...design(), hidden: {}, layout: { win: { x: 0.1, y: 0.1, w: 0.5, h: 0.5 } }, colors: { 'win.fill': { swatch: 'x' }, 'winter.fill': { swatch: 'y' }, 'win.edge': { none: true } } };
+  const d = { ...design(), hidden: {}, layout: { [layoutKey(design(), 'win')]: { x: 0.1, y: 0.1, w: 0.5, h: 0.5 } }, colors: { 'win.fill': { swatch: 'x' }, 'winter.fill': { swatch: 'y' }, 'win.edge': { none: true } } };
   const h1 = hide(d, 'logo');
   assert.equal(h1.hidden.logo, true);
   assert.equal(hiddenCount(hide(h1, 'win')), 2);
@@ -59,7 +60,7 @@ test('quick actions: hide, show all, reset the position or the colours', () => {
   assert.equal(show(d, 'logo'), d, 'nothing to do: the same design');
   assert.deepEqual(showAll(hide(h1, 'win')).hidden, {});
   assert.equal(showAll(d), d);
-  assert.equal(resetLayout(d, 'win').layout.win, undefined);
+  assert.equal(resetLayout(d, 'win').layout[layoutKey(d, 'win')], undefined);
   assert.equal(resetLayout(d, 'logo'), d);
   assert.ok(hasOwnColors(d, 'win'));
   const c = resetColors(d, 'win');

@@ -104,7 +104,7 @@ logos, label and recycling marks on the preview. The editor speaks Polish or Eng
 
 "Quality You Can Trust" has its own size setting under **Format → Layout & window** (40 to 300 %). It stays right-aligned under the WERTIS word on the pouch back, the box front and the lid. On the pouch back it can also be moved and resized on the preview, like the logo: pull its corner, or type its height in the card.
 
-The pouch back carries a QR code above the website line, at the right, with a 1-module white margin. It links to the link field under Texts, and can be moved and resized too.
+The pouch back carries a QR code above the website line, at the right, with a 1-module white margin. The print SVG is laid out in named layers (Front > Front_Background / Front_Content > one group per element: Front_Logo, Back_Address...), then the dieline, so Illustrator, Inkscape and Photopea show a tidy layer tree; a PDF carries no layers, so open the SVG when you want to edit the artwork. Moving or resizing any element is remembered for the pack size you made it at (14 × 20 cm, say): the other sizes, and every size in the zip of all files, keep the template's own bottom-aligned layout until you move things there too. It links to the link field under Texts, and can be moved and resized too.
 
 The pattern of parts icons comes in two styles: solid silhouettes, or outlines. The recycling
 marks (the triangle with the material code, plus the tidyman) are vector shapes; pick the

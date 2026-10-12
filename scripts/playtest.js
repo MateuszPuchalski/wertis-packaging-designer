@@ -103,7 +103,7 @@ export async function playtest() {
     await page.waitForTimeout(150);
     const after = await page.evaluate(() => window.wertis.stage.hit('front.window').box);
     assert.ok(Math.abs(after.x - before.x - 20) <= 1, `window moved ${after.x - before.x} mm, expected 20`);
-    assert.ok(await page.evaluate(() => !!window.wertis.store.get().layout['front.window']), 'the move is saved in the layout');
+    assert.ok(await page.evaluate(() => Object.keys(window.wertis.store.get().layout).some((k) => k.endsWith('|front.window'))), 'the move is saved in the layout');
     step('dragging the window with Alt moves it 20 mm, free of snapping');
 
     // Without Alt, dragging it back to 2 mm short of the panel's centre snaps it there, and
@@ -177,7 +177,7 @@ export async function playtest() {
     await page.waitForFunction(() => document.querySelector('.insp-title')?.textContent === 'Address');
     assert.equal(await page.evaluate(() => document.activeElement.id), 't-content-company', 'the cursor is in its first line');
     const fields = await page.evaluate(() => [...document.querySelectorAll('.insp-texts input, .insp-texts textarea')].map((i) => i.id));
-    assert.deepEqual(fields, ['t-content-company', 't-content-address', 't-content-email']);
+    assert.deepEqual(fields, ['t-content-company', 't-content-address', 't-content-country', 't-content-email']);
     await page.fill('#t-content-company', 'WERTIS Sp. z o.o. (test)');
     assert.equal(await page.evaluate(() => window.wertis.store.get().content.company), 'WERTIS Sp. z o.o. (test)');
     // The label offers the product name (main language first), the codes and the link.

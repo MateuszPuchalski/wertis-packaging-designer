@@ -6,6 +6,7 @@ import { mockupSvg } from '../src/render/mockup.js';
 import { printSvg } from '../src/export/documents.js';
 import { updateSwatch } from '../src/brand/palette.js';
 import { design, env } from './helpers.js';
+import { layoutKey } from '../src/design.js';
 
 test('the print file is real size with bleed and nothing a printer cannot read', () => {
   const svg = printSvg(design(), env());
@@ -57,7 +58,7 @@ test('hidden elements and "no colour" draw nothing', () => {
 
 test('a layout override moves the window', () => {
   const d = design();
-  d.layout['front.window'] = { x: 0.2, y: 0.4, w: 0.4, h: 0.2 };
+  d.layout[layoutKey(d, 'front.window')] = { x: 0.2, y: 0.4, w: 0.4, h: 0.2 };
   const hit = renderSheet(d, env()).hits.find((h) => h.id === 'front.window');
   assert.deepEqual(hit.box, { x: 50, y: 140, w: 100, h: 70 });
   d.options.backWindow = true;
