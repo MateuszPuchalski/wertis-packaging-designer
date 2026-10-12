@@ -37,8 +37,8 @@ export function recycleMark({ x, y, size, code, name, color, text }) {
     d += polyPath([off(st, -t / 2), off(en, -t / 2), off(en, -t * 1.15), [en[0] + u[0] * head, en[1] + u[1] * head], off(en, t * 1.15), off(en, t / 2), off(st, t / 2)]);
   }
   let svg = el('path', { d, fill: color });
-  if (text && code) svg += el('g', { fill: color }, text.layout({ text: code, x: 0, y: 43, w: 100, h: 24, font: 'bold', size: 30, align: 'center', valign: 'middle' }).svg);
-  if (text && name) svg += el('g', { fill: color }, text.layout({ text: name, x: 0, y: 86, w: 100, h: 14, font: 'bold', size: 18, align: 'center', valign: 'top' }).svg);
+  if (text && code) svg += el('g', { fill: color }, text.layout({ text: code, x: 0, y: 43, w: 100, h: 24, font: 'bold', size: 30, outline: true, align: 'center', valign: 'middle' }).svg);
+  if (text && name) svg += el('g', { fill: color }, text.layout({ text: name, x: 0, y: 86, w: 100, h: 14, font: 'bold', size: 18, outline: true, align: 'center', valign: 'top' }).svg);
   return { svg: el('g', { transform: `translate(${n(x)} ${n(y)}) scale(${n(s)})` }, svg), w: size, h: size };
 }
 

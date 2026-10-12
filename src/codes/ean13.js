@@ -73,7 +73,7 @@ export function ean13Svg({ code, x = 0, y = 0, module = EAN_MODULE, barHeight, c
   if (text) {
     const size = 9.5 * m / 0.95; // caps about 7 modules tall
     const top = y + bh + 1.2 * m;
-    const put = (s, cx, align = 'center') => text.layout({ text: s, x: cx, y: top, font, size, align }).svg;
+    const put = (s, cx, align = 'center') => text.layout({ text: s, x: cx, y: top, font, size, align, outline: true }).svg;
     digits += put(v.code[0], x0 - 7 * m);
     for (let i = 0; i < 6; i++) digits += put(v.code[1 + i], x0 + (3 + 7 * i + 3.5) * m);
     for (let i = 0; i < 6; i++) digits += put(v.code[7 + i], x0 + (50 + 7 * i + 3.5) * m);

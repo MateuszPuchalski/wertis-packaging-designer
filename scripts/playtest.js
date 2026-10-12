@@ -266,6 +266,20 @@ export async function playtest() {
       step(`Export → ${key} downloads ${dl.suggestedFilename()}`);
     }
 
+    // The editing exports: a PDF with layers (optional content, CMYK) and an SVG with live text.
+    {
+      const [lp] = await Promise.all([page.waitForEvent('download', { timeout: 120000 }), exportVia(page, 'layered-pdf')]);
+      const pdfText = (await readFile(await lp.path())).toString('latin1');
+      assert.match(lp.suggestedFilename(), /-layers\.pdf$/);
+      assert.ok(pdfText.includes('/OCProperties') && /\/Type \/OCG \/Name \(Front_Logo\)/.test(pdfText) && /\/Name \(Back_Address\)/.test(pdfText), 'the PDF has named layers');
+      assert.ok(pdfText.includes('/Order') && pdfText.includes('(Front)') && pdfText.includes('/Separation'), 'layer tree and spot inks');
+      assert.ok(!pdfText.includes('GTS_PDFX'), 'a layered file is not PDF/X');
+      const [ls] = await Promise.all([page.waitForEvent('download', { timeout: 60000 }), exportVia(page, 'print-svg-live')]);
+      const live = (await readFile(await ls.path())).toString('utf8');
+      assert.ok(/<text [^>]*font-family="'Century Gothic', 'Jost'"/.test(live) && live.includes('id="Back_Address"'), 'live text in named layers');
+      step('Export → PDF with layers (named OCG layers, spot inks, not PDF/X) and SVG with live text');
+    }
+
     // Everything for every size comes as one zip: a folder per size with the six files, and the project file.
     {
       const [dl] = await Promise.all([page.waitForEvent('download', { timeout: 280000 }), exportVia(page, 'all-zip')]);

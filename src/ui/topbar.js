@@ -6,7 +6,7 @@ import { icon } from './icons.js';
 import { menuButton } from './menu.js';
 import { switchLang } from './lang.js';
 import { t, msgOf, getLang, LANGUAGES } from '../i18n/index.js';
-import { printSvg, printSvgPixels, printDocument, proofSvg } from '../export/documents.js';
+import { printSvg, printSvgPixels, printSvgLive, printDocument, proofSvg } from '../export/documents.js';
 import { mockupSvg } from '../render/mockup.js';
 import { download, svgBlob, pngBlob, pdfBlob, slug } from '../export/files.js';
 import { dielineDxf } from '../export/dxf.js';
@@ -83,6 +83,10 @@ export function topbar(root, { store, env, getId, project, today, select }) {
       run: () => busy(t('export.printSvg'), async () => download(svgBlob(printSvg(d0(), env)), `${name()}-print.svg`)) },
     'print-svg-px': { label: t('export.printSvgPx'), hint: t('export.printSvgPxHint'),
       run: () => busy(t('export.printSvgPx'), async () => download(svgBlob(printSvgPixels(d0(), env)), `${name()}-print-300dpi.svg`)) },
+    'layered-pdf': { label: t('export.layeredPdf'), hint: t('export.layeredPdfHint'),
+      run: () => busy(t('export.layeredPdf'), async () => { const doc = printDocument(d0(), env, { date: today() }); download(await pdfBlob([doc.pages[0]], { ...doc, pdfx: null, layers: true }), `${name()}-layers.pdf`); }) },
+    'print-svg-live': { label: t('export.liveSvg'), hint: t('export.liveSvgHint'),
+      run: () => busy(t('export.liveSvg'), async () => download(svgBlob(printSvgLive(d0(), env)), `${name()}-live-text.svg`)) },
     'proof-pdf': { label: t('export.proofPdf'), hint: t('export.proofPdfHint'),
       run: () => busy(t('export.proofPdf'), async () => download(await pdfBlob(proofSvg(d0(), env, d0().proof.page ?? 'a3'), { title: `${d0().name} proof` }), `${name()}-proof.pdf`)) },
     'proof-png': { label: t('export.proofPng'), hint: t('export.proofPngHint'),
@@ -95,7 +99,8 @@ export function topbar(root, { store, env, getId, project, today, select }) {
   const group = (title, keys) => h('div', { class: 'menu-group', role: 'group', 'aria-label': title }, h('div', { class: 'menu-heading' }, title), keys.map(item));
   const menu = h('div', { id: 'export-menu', class: 'menu', role: 'menu', 'aria-label': t('top.export'), hidden: true },
     group(t('export.everything'), ['all-zip']),
-    group(t('export.forPrinter'), ['print-pdf', 'dieline-dxf', 'print-svg', 'print-svg-px']),
+    group(t('export.forPrinter'), ['print-pdf', 'dieline-dxf', 'print-svg']),
+    group(t('export.forEditing'), ['layered-pdf', 'print-svg-live', 'print-svg-px']),
     group(t('export.forApproval'), ['proof-pdf', 'proof-png']),
     group(t('export.presentation'), ['mockup-png']));
   const exportButton = h('button', { id: 'export-button', class: 'secondary', 'aria-controls': 'export-menu' }, icon('download'), h('span', {}, t('top.export')), icon('chevron', 14));

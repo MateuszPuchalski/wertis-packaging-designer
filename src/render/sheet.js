@@ -54,9 +54,9 @@ function freeText(e, ctx) {
   return { ...e, movable: true, resizable: true, box, size: e.size * k, minSize: e.minSize && e.minSize * k };
 }
 
-function renderContext(design, env, mode, labelOf) {
+function renderContext(design, env, mode, labelOf, live = false) {
   let i = 0;
-  return { design, text: env.text.view(design.fonts), defs: new Map(), used: new Set(), cmyk: new Map(), mode, labelOf, bleed: geometryBleed(design), uid: (p) => `${p}${++i}` };
+  return { design, text: env.text.view(design.fonts, { live }), defs: new Map(), used: new Set(), cmyk: new Map(), mode, labelOf, bleed: geometryBleed(design), uid: (p) => `${p}${++i}` };
 }
 
 function geometryBleed(design) {
@@ -67,9 +67,9 @@ function geometryBleed(design) {
 // `art: false` draws only the dieline (the second page of the print PDF). `labelOf` turns
 // the preview's own words (panel names, the window mark) into the editor's language; files
 // for the printer always use the English ones.
-export function renderSheet(design, env, { mode = 'design', margin = 0, dieline = true, guides = true, labels = true, art: withArt = true, inlineUses = false, labelOf = (s) => s } = {}) {
+export function renderSheet(design, env, { mode = 'design', margin = 0, dieline = true, guides = true, labels = true, art: withArt = true, inlineUses = false, liveText = false, labelOf = (s) => s } = {}) {
   const geo = geometry(design);
-  const rc = renderContext(design, env, mode, labelOf);
+  const rc = renderContext(design, env, mode, labelOf, liveText);
   rc.inlineUses = inlineUses;
   // The construction lines print in pure process colours.
   const lines = dielineColors(geo);
