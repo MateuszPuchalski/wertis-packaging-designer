@@ -296,6 +296,16 @@ function elementSvg(rc, e, panel) {
 }
 
 // One panel: returns { svg, hits, windows } in panel coordinates.
+// Layer names in the print file: "Front", "Front_Logo"... readable in Illustrator, Inkscape and Photopea, which show a
+// group's id as its layer name. Made unique, with characters an id may hold.
+export function layerId(rc, ...parts) {
+  const base = parts.map((s) => String(s ?? '').trim().replace(/[^A-Za-z0-9]+/g, '_').replace(/^_+|_+$/g, '')).filter(Boolean).join('_') || 'Layer';
+  rc.layerNames ??= new Map();
+  const k = rc.layerNames.get(base) ?? 0;
+  rc.layerNames.set(base, k + 1);
+  return k ? `${base}_${k + 1}` : base;
+}
+
 export function panelArt(rc, panel, elements) {
   const b = rc.bleed;
   const s = panel.bleedSides ?? { l: true, t: true, r: true, b: true };
@@ -317,7 +327,8 @@ export function panelArt(rc, panel, elements) {
       if (Math.abs(e.rotate) === 180) r.box = { x: 2 * pivot.x - r.box.x - r.box.w, y: 2 * pivot.y - r.box.y - r.box.h, w: r.box.w, h: r.box.h };
     }
     if (r.svg) {
-      const g = rc.mode === 'design' ? el('g', { 'data-el': e.id }, r.svg) : r.svg;
+      // The print file keeps every element as its own named layer, background pieces under the foreground ones.
+      const g = rc.mode === 'design' ? el('g', { 'data-el': e.id }, r.svg) : rc.mode === 'print' ? el('g', { id: layerId(rc, panel.label, e.label) }, r.svg) : r.svg;
       if (e.layer === 'bg') bg += g; else fg += g;
     }
     hits.push(hitOf(e, r.box));
@@ -325,7 +336,8 @@ export function panelArt(rc, panel, elements) {
   for (const w of windows) hits.push(hitOf(w, w.box));
   const knockout = windows.map(windowPath).join('');
   let svg = '';
-  if (bg) svg += el('g', { 'clip-path': clipDef(rc, outer + knockout, 'evenodd') }, bg);
+  const named = rc.mode === 'print';
+  if (bg) svg += el('g', { 'clip-path': clipDef(rc, outer + knockout, 'evenodd'), id: named ? layerId(rc, panel.label, 'Background') : null }, bg);
   // The window itself: clear film. Previews and the proof mark it in the transparent swatch.
   if (rc.mode !== 'print' && rc.mode !== 'mockup' && windows.length) {
     const tr = rc.design.palette.find((p) => p.role === 'transparent');
@@ -339,7 +351,7 @@ export function panelArt(rc, panel, elements) {
     }
     svg += rc.mode === 'design' ? el('g', { 'data-el': windows[0].id }, mark) : mark;
   }
-  if (fg) svg += el('g', { 'clip-path': clipDef(rc, outer) }, fg);
+  if (fg) svg += el('g', { 'clip-path': clipDef(rc, outer), id: named ? layerId(rc, panel.label, 'Content') : null }, fg);
   return { svg, hits, windows: windows.map((w) => ({ id: w.id, d: windowPath(w), box: w.box })) };
 }
 

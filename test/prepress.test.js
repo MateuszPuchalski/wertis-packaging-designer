@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { pdfName, addInfoKeys } from '../src/export/pdfx.js';
 import { flattenPath, dielineDxf, dielineShapes } from '../src/export/dxf.js';
+import { printSvg } from '../src/export/documents.js';
 import { preflight } from '../src/preflight.js';
 import { ean13Svg } from '../src/codes/ean13.js';
 import { qrSvg } from '../src/codes/qr.js';
@@ -83,4 +84,16 @@ test('GS1: bar width reduction thins the bars; QR codes keep 4 modules of quiet 
   a.forEach((w, i) => assert.ok(Math.abs(w - b[i] - 0.03) < 1e-6));
   const q = qrSvg({ text: 'https://www.wertis.com.pl', size: 29 });
   assert.equal(Math.round((29 / q.unit - q.modules) / 2), 4);
+});
+
+test('the print SVG is laid out in named layers: panel > background / content > one group per element', () => {
+  for (const format of ['flatPouch', 'standUpPouch', 'tuckBox']) {
+    const svg = printSvg(design({ format }), env());
+    const ids = [...svg.matchAll(/\sid="([^"]+)"/g)].map((m) => m[1]);
+    assert.equal(new Set(ids).size, ids.length, `${format}: every id is unique`);
+    const panel = format === 'tuckBox' ? 'Walls' : 'Front';
+    for (const id of [panel, `${panel}_Background`, `${panel}_Content`, 'artwork', 'dieline']) assert.ok(ids.includes(id), `${format}: layer ${id}`);
+    assert.ok(ids.some((id) => /^(Front|Walls)_Logo/.test(id)), `${format}: the logo is its own layer`);
+    assert.ok(ids.indexOf(`${panel}_Background`) < ids.indexOf(`${panel}_Content`), 'background under content');
+  }
 });

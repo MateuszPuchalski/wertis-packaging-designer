@@ -7,7 +7,7 @@
 import { FORMATS, TEMPLATES } from '../registry.js';
 import { layoutOf } from '../design.js';
 import { el, n, rectPath } from './svg.js';
-import { panelArt } from './artwork.js';
+import { panelArt, layerId } from './artwork.js';
 import { dielineSvg, dielineColors } from './dieline.js';
 import { cmykFromHex } from '../brand/palette.js';
 
@@ -81,7 +81,7 @@ export function renderSheet(design, env, { mode = 'design', margin = 0, dieline 
   const windows = [];
   for (const { panel, elements } of withArt ? parts : []) {
     const r = panelArt(rc, panel, elements);
-    art += el('g', { transform: `translate(${n(panel.x)} ${n(panel.y)})`, 'data-panel': mode === 'print' ? null : panel.id }, r.svg);
+    art += el('g', { transform: `translate(${n(panel.x)} ${n(panel.y)})`, 'data-panel': mode === 'print' ? null : panel.id, id: mode === 'print' && r.svg ? layerId(rc, panel.label) : null }, r.svg);
     for (const h of r.hits) hits.push({ ...h, panel: panel.id, box: { ...h.box, x: h.box.x + panel.x, y: h.box.y + panel.y } });
     for (const w of r.windows) windows.push({ ...w, px: panel.x, py: panel.y });
   }
