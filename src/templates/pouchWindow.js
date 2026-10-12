@@ -9,7 +9,7 @@
 // those texts when the element is selected.
 import { clamp } from '../render/svg.js';
 import { LANGS, addressLines } from '../brand/wertis.js';
-import { MATERIALS } from '../brand/marks.js';
+import { MATERIALS, MARK_STANDARD } from '../brand/marks.js';
 import { fitLogo, partBox, taglineUnder } from '../brand/logo.js';
 import { num, choice, toggle } from '../formats/common.js';
 
@@ -172,7 +172,8 @@ export function back(ctx) {
     box: addrBox, size: (F.h * 0.115 / 0.7) * (addrBox.h / band.h), minSize: 1.4, colors: { fill: ink } });
   const material = MATERIALS[ctx.options.recycle];
   // The disposal marks in the middle of the footer.
-  const markSize = Math.min(F.h * 0.55, F.w * 0.075);
+  const wanted = F.w * 0.075;
+  const markSize = Math.min(F.h * 0.55, F.w >= 120 ? Math.max(wanted, MARK_STANDARD.recycle) : wanted);
   const marks = [material?.code ? 'recycle' : null, ctx.options.tidyman ? 'tidyman' : null].filter(Boolean);
   if (marks.length) {
     const mw = marks.length * markSize + (marks.length - 1) * markSize * 0.25;

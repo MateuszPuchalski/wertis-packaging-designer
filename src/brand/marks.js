@@ -14,6 +14,11 @@ export const MATERIALS = {
   pap22: { label: 'PAP 22 (paper)', code: '22', name: 'PAP' },
 };
 
+// Smallest sizes (mm, the symbol's height) that stay readable and match common practice: the resin
+// identification code asks for about 1/2 inch (ASTM D7611), the tidyman for about 10 mm (the UK's
+// guidance sets no legal size). Templates start at these where the pack is big enough; preflight warns below.
+export const MARK_STANDARD = { recycle: 12, tidyman: 10 };
+
 // Three chasing arrows along a triangle, in a 100-unit box, plus the code inside and the
 // material name under it. Returns { svg, w, h } at (x, y), `size` mm wide.
 export function recycleMark({ x, y, size, code, name, color, text }) {

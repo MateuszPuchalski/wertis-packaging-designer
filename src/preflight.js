@@ -8,6 +8,7 @@ import { validateEan13 } from './codes/ean13.js';
 import { luminance } from './brand/palette.js';
 import { OUTPUT_INTENTS } from './export/documents.js';
 import { exportDefaults } from './design.js';
+import { MARK_STANDARD } from './brand/marks.js';
 
 const MIN_TEXT_MM = 2.1; // 6 pt: the smallest type that holds up on film and board, and for reversed type on a colour
 const MIN_EAN_MODULE = 0.264; // 80 % of nominal, GS1's minimum
@@ -67,6 +68,12 @@ export function preflight(design, env) {
       const laid = env.text.view(design.fonts).layout({ ...e.box, text: e.text, font: e.font, size: e.size, minSize: e.minSize, upper: e.upper, wrap: e.wrap, spacing: e.spacing, lineHeight: e.lineHeight, maxLines: e.maxLines });
       const pt = (laid.size / 0.3528).toFixed(1);
       if (laid.size < MIN_TEXT_MM) add('warn', 'Text', `“${e.label}” is ${pt} pt; under 6 pt may not print cleanly.`, e.id, 'pf.text.small', { el: L(e.label), pt });
+    }
+    for (const e of elements) {
+      if (design.hidden?.[e.id] || e.type !== 'marks') continue;
+      const hit = r.hits.find((x) => x.id === e.id);
+      const need = Math.max(...e.marks.map((m) => MARK_STANDARD[m] ?? 0));
+      if (hit && hit.box.h < need - 0.05) add('warn', 'Marks', `“${e.label}” is ${Math.round(hit.box.h * 10) / 10} mm high; the standard is at least ${need} mm (recycling code 12 mm, tidyman 10 mm).`, e.id, 'pf.marks.small', { el: L(e.label), mm: Math.round(hit.box.h * 10) / 10, need });
     }
     const faces = panel.info?.faces ?? (panel.info?.safe ? [{ ...panel.info.safe, safe: panel.info.safe, x0: 0 }] : []);
     for (const h of r.hits.filter((x) => x.panel === panel.id && ['text', 'label', 'ean', 'qr', 'logo', 'marks'].includes(x.type))) {

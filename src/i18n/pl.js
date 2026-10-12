@@ -390,6 +390,7 @@ export default {
   'pf.colour.inksWhite': 'Farby: {inks}, poddruk biały (plus wykrojnik, który się nie drukuje).',
   'pf.colour.noInks': 'brak',
   'pf.colour.richBlack': '„{name}” to głęboka czerń (C{c} M{m} Y{y} K{k}); drobny tekst w tym kolorze wymaga idealnego pasowania.',
+  'pf.marks.small': '„{el}” ma {mm} mm wysokości; standard to co najmniej {need} mm (kod recyklingu 12 mm, tidyman 10 mm).',
   'pf.text.small': '„{el}” ma {pt} pt; poniżej 6 pt druk może nie wyjść czysto.',
   'pf.layout.safe': '„{el}” ({panel}) wychodzi poza obszar bezpieczny (zgrzewy, bigi lub linię cięcia).',
   'pf.bleed.low': 'Spad wynosi {bleed} mm; większość drukarni wymaga 3 mm.',
