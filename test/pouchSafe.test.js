@@ -23,3 +23,16 @@ for (const format of ['flatPouch', 'standUpPouch']) {
     }
   });
 }
+
+test('the disposal marks start at their standard size where the pack is big enough, and preflight warns below it', async () => {
+  const { MARK_STANDARD } = await import('../src/brand/marks.js');
+  const { preflight } = await import('../src/preflight.js');
+  const markH = (d) => renderSheet(d, env(), {}).hits.find((x) => x.type === 'marks' && x.panel === 'back').box.h;
+  for (const [w, h] of POUCH_SIZES.filter(([w]) => w >= 140)) {
+    const d = setIn(setIn(design({ format: 'flatPouch' }), ['dims', 'width'], w), ['dims', 'height'], h);
+    assert.ok(markH(d) >= MARK_STANDARD.recycle - 0.05, `${w}×${h}: marks ${markH(d)} mm`);
+    assert.ok(!preflight(d, env()).items.some((i) => /high; the standard/.test(i.message)), `${w}×${h}: no mark warning`);
+  }
+  const small = setIn(setIn(design({ format: 'flatPouch' }), ['dims', 'width'], 100), ['dims', 'height'], 150);
+  assert.ok(preflight(small, env()).items.some((i) => /high; the standard is at least 12 mm/.test(i.message)), '10×15 cm warns');
+});

@@ -407,6 +407,7 @@ export default {
   'pf.colour.inksWhite': 'Inks: {inks}, White underprint (plus the dieline, which does not print).',
   'pf.colour.noInks': 'none',
   'pf.colour.richBlack': '“{name}” is a rich black (C{c} M{m} Y{y} K{k}); small text in it needs perfect registration.',
+  'pf.marks.small': '“{el}” is {mm} mm high; the standard is at least {need} mm (recycling code 12 mm, tidyman 10 mm).',
   'pf.text.small': '“{el}” is {pt} pt; under 6 pt may not print cleanly.',
   'pf.layout.safe': '“{el}” on the {panel} runs outside the safe area (seals, folds or the cut).',
   'pf.bleed.low': 'Bleed is {bleed} mm; most printers ask for 3 mm.',
