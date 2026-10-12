@@ -41,6 +41,13 @@ export function printSvg(design, env) {
   return printRender(design, env).svg;
 }
 
+// The same file sized in pixels for programs that rasterise an SVG at its stated size (Photopea opens a
+// size in mm at about 96 dpi, which looks blurry): 300 dpi by default. The drawing itself stays vector.
+export function printSvgPixels(design, env, dpi = 300) {
+  const k = dpi / 25.4;
+  return printSvg(design, env).replace(/^(<svg[^>]*?) width="([\d.]+)mm" height="([\d.]+)mm"/, (m, head, w, h) => `${head} width="${Math.round(w * k)}" height="${Math.round(h * k)}"`);
+}
+
 // Crop marks at the corners of the trim box, outside the bleed, and the slug line.
 function marksSvg(geo, text, slugText) {
   const { w, h } = geo.size;

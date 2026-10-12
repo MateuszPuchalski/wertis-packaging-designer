@@ -97,3 +97,14 @@ test('the print SVG is laid out in named layers: panel > background / content > 
     assert.ok(ids.indexOf(`${panel}_Background`) < ids.indexOf(`${panel}_Content`), 'background under content');
   }
 });
+
+test('the pixel-sized print SVG keeps the artwork and its layers, at 300 dpi', async () => {
+  const { printSvgPixels } = await import('../src/export/documents.js');
+  const d = design({ format: 'flatPouch' });
+  const mm = printSvg(d, env()), px = printSvgPixels(d, env());
+  const w = Number(/<svg[^>]* width="([\d.]+)mm"/.exec(mm)[1]);
+  assert.equal(Number(/<svg[^>]* width="(\d+)"/.exec(px)[1]), Math.round(w * 300 / 25.4));
+  assert.ok(!/<svg[^>]*mm"/.test(px.slice(0, 600)));
+  assert.equal(px.slice(px.indexOf('viewBox')), mm.slice(mm.indexOf('viewBox')), 'same drawing');
+  assert.ok(px.includes('id="Front_Logo"'));
+});

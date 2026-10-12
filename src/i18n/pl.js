@@ -38,6 +38,8 @@ export default {
   'export.dielineDxf': 'Wykrojnik DXF',
   'export.dielineDxfHint': 'Dla wykrojnikarni: warstwy CUT i CREASE w mm',
   'export.printSvg': 'SVG do druku',
+  'export.printSvgPx': 'SVG dla Photopea (300 dpi)',
+  'export.printSvgPxHint': 'Te same warstwy, w pikselach, żeby Photopea otworzyła plik ostro',
   'export.printSvgHint': 'Ta sama grafika jako edytowalny plik wektorowy',
   'export.proofPdf': 'Proof PDF',
   'export.proofPdfHint': 'Arkusz do akceptacji: grafika, wymiary, kolory i kody',
