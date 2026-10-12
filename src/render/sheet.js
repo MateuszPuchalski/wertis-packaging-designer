@@ -5,6 +5,7 @@
 //                  windows left empty, nothing else
 //   mode 'art'     artwork with the window marked (the proof and the mockups use it)
 import { FORMATS, TEMPLATES } from '../registry.js';
+import { layoutOf } from '../design.js';
 import { el, n, rectPath } from './svg.js';
 import { panelArt } from './artwork.js';
 import { dielineSvg, dielineColors } from './dieline.js';
@@ -22,7 +23,7 @@ export function panelsWithElements(design, env, geo = geometry(design)) {
     const ctx = {
       panel, geo, design, text: env.text.view(design.fonts), options: design.options,
       box(id, def) {
-        const o = design.layout?.[id];
+        const o = layoutOf(design, id);
         return o ? { x: o.x * panel.w, y: o.y * panel.h, w: o.w * panel.w, h: o.h * panel.h } : def;
       },
     };

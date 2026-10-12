@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { migrate, serialize, setIn, removeSwatch, slotsUsingSwatch, colorSlots, switchFormat, SCHEMA_VERSION } from '../src/design.js';
+import { migrate, serialize, setIn, removeSwatch, slotsUsingSwatch, colorSlots, switchFormat, SCHEMA_VERSION, layoutKey } from '../src/design.js';
 import { panelsWithElements } from '../src/render/sheet.js';
 import { Store } from '../src/store.js';
 import { design, env } from './helpers.js';
@@ -19,7 +19,7 @@ test('a new design has the WERTIS defaults', () => {
 test('a saved project loads back the same', () => {
   const d = design();
   d.content.sku = 'W09-0414';
-  d.layout['front.window'] = { x: 0.1, y: 0.4, w: 0.5, h: 0.3 };
+  d.layout[layoutKey(d, 'front.window')] = { x: 0.1, y: 0.4, w: 0.5, h: 0.3 };
   assert.deepEqual(migrate(serialize(d)), d);
 });
 

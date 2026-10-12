@@ -11,6 +11,7 @@ import { TRANSPARENT } from '../brand/palette.js';
 import { showAll, resetColors, hasOwnColors, hiddenCount } from '../edit/actions.js';
 import { removePicture, movePicture, panelIds } from '../edit/pictures.js';
 import { textFields } from './textFields.js';
+import { layoutKey, layoutOf } from '../design.js';
 
 const r1 = (v) => Math.round(v * 10) / 10;
 // Search ignores case and Polish letters' accents (ł is not decomposed by NFD).
@@ -84,11 +85,11 @@ export function inspector(store, { getParts, getHit, select, getSelected, showSe
         else if (k === 'h' && hit.keepAspect && box.h > 0) { box.w *= v / box.h; box.h = v; }
         else box[k] = v;
         if (box.w < 1 || box.h < 1) return;
-        store.set(['layout', elem.id], { x: box.x / panel.w, y: box.y / panel.h, w: box.w / panel.w, h: box.h / panel.h }, { coalesce: `pos-${elem.id}` });
+        store.set(['layout', layoutKey(store.get(), elem.id)], { x: box.x / panel.w, y: box.y / panel.h, w: box.w / panel.w, h: box.h / panel.h }, { coalesce: `pos-${elem.id}` });
       }, onchange: () => store.settle() });
       return [k, input];
     });
-    const reset = h('button', { class: 'ghost tiny', id: 'insp-reset-pos', onclick: () => { store.set(['layout', elem.id], undefined); store.settle(); } }, icon('reset', 14), t('insp.resetPos'));
+    const reset = h('button', { class: 'ghost tiny', id: 'insp-reset-pos', onclick: () => { store.set(['layout', layoutKey(store.get(), elem.id)], undefined); store.settle(); } }, icon('reset', 14), t('insp.resetPos'));
     const short = { x: 'X', y: 'Y', w: t('insp.short.w'), h: t('insp.short.h') };
     const grid = h('div', { class: 'pos-grid' }, fields.map(([k, input]) => h('label', { title: POS[k] }, h('span', {}, short[k]), input)));
     return {
@@ -99,7 +100,7 @@ export function inspector(store, { getParts, getHit, select, getSelected, showSe
           const vals = { x: cur.box.x - panel.x, y: cur.box.y - panel.y, w: cur.box.w, h: cur.box.h };
           for (const [k, input] of fields) syncValue(input, r1(vals[k]));
         }
-        reset.hidden = !design.layout[elem.id];
+        reset.hidden = !layoutOf(design, elem.id);
       },
     };
   }

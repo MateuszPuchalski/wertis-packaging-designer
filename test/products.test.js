@@ -4,7 +4,7 @@ import * as THREE from '../vendor/three/three.core.js';
 import { PRODUCTS, PARTS, productOf, bulge, partBulge, thicknessWith, arrange, rimShape, RIM, MATERIALS } from '../src/three/products.js';
 import { packFaces } from '../src/render/faces.js';
 import { placements, UNIT } from '../src/three/scenes.js';
-import { createDesign, migrate } from '../src/design.js';
+import { createDesign, migrate, layoutOf } from '../src/design.js';
 import { design, env } from './helpers.js';
 
 const kit = PRODUCTS.clutchDrum;
@@ -90,7 +90,7 @@ test('the parts sit behind the front window, and the pouch is lined', () => {
   assert.doesNotMatch(p.faces.filmBack, /<path/, 'no back window, no film there');
   assert.equal(p.product.id, 'clutchDrum');
   assert.equal(p.product.parts.length, 6);
-  const win = d.layout['front.window'];
+  const win = layoutOf(d, 'front.window');
   assert.equal(win, undefined, 'the default window');
   const xs = p.product.parts.map((q) => q.x);
   assert.ok(Math.min(...xs) > 22 && Math.max(...xs) < 228, 'across the window');

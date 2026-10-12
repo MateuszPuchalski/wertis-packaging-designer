@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { FORMATS } from '../src/registry.js';
-import { createDesign } from '../src/design.js';
+import { createDesign, layoutKey } from '../src/design.js';
 import { panelsWithElements } from '../src/render/sheet.js';
 import { env } from './helpers.js';
 
@@ -49,7 +49,7 @@ test('every text can be moved and resized, and a stored box applies to it', () =
   const d = createDesign({ format: 'flatPouch' });
   const find = (x) => panelsWithElements(x, env()).flatMap((p) => p.elements).find((e) => e.id === 'back.url');
   const before = find(d);
-  const moved = find({ ...d, layout: { 'back.url': { x: 0.1, y: 0.1, w: 0.2, h: before.box.h * 2 / 350 } } });
+  const moved = find({ ...d, layout: { [layoutKey(d, 'back.url')]: { x: 0.1, y: 0.1, w: 0.2, h: before.box.h * 2 / 350 } } });
   assert.ok(Math.abs(moved.box.x - 25) < 1e-6);
   assert.ok(moved.size > 0);
 });

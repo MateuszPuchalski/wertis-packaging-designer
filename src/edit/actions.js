@@ -1,3 +1,5 @@
+import { layoutKey } from '../design.js';
+
 // The quick actions of the preview's right-click menu and the elements list, as plain
 // design → design functions (the UI commits the result, so each is one undo step). DOM-free.
 
@@ -18,9 +20,10 @@ export function showAll(design) {
 
 // Back to where the template puts it.
 export function resetLayout(design, id) {
-  if (!design.layout?.[id]) return design;
+  const key = layoutKey(design, id);
+  if (!design.layout?.[key]) return design;
   const layout = { ...design.layout };
-  delete layout[id];
+  delete layout[key];
   return { ...design, layout };
 }
 

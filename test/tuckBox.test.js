@@ -7,6 +7,7 @@ import { renderProof } from '../src/render/proof.js';
 import { renderSheet, panelsWithElements } from '../src/render/sheet.js';
 import { mockupSvg } from '../src/render/mockup.js';
 import { design, env } from './helpers.js';
+import { layoutKey } from '../src/design.js';
 
 const defaults = normalizeDims(FIELDS, {});
 
@@ -138,9 +139,9 @@ test('the box follows print practice: safe margin 3 mm, the barcode at 100 %, no
     assert.ok(marks.every((m) => m.box.h >= 7 - 1e-6), `${t}: marks at least 7 mm`);
   }
   // A smaller barcode and tiny type are flagged.
-  const small = { ...d, layout: { 'front.ean': { x: 0.7, y: 0.5, w: 0.2, h: 0.12 } } };
+  const small = { ...d, layout: { [layoutKey(d, 'front.ean')]: { x: 0.7, y: 0.5, w: 0.2, h: 0.12 } } };
   const warns = preflight(small, env()).items.filter((i) => i.level !== 'ok').map((i) => i.i18n?.key);
   assert.ok(warns.some((k) => /pf\.ean\.(notNominal|small)/.test(k)), 'the barcode below 100 % is flagged');
-  const tiny = { ...d, layout: { 'front.subtitle': { x: 0.62, y: 0.4, w: 0.2, h: 0.03 } } };
+  const tiny = { ...d, layout: { [layoutKey(d, 'front.subtitle')]: { x: 0.62, y: 0.4, w: 0.2, h: 0.03 } } };
   assert.ok(preflight(tiny, env()).items.some((i) => i.i18n?.key === 'pf.text.small'), 'type under 6 pt is flagged');
 });
